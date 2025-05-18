@@ -1,0 +1,31 @@
+{
+  "kind": "collectionType",
+  "collectionName": "customers",
+  "info": {
+    "singularName": "customer",
+    "pluralName": "customers",
+    "displayName": "Customer"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "attributes": {
+    "name": {
+      "type": "string",
+      "required": true
+    },
+    "phone_number": {
+      "type": "string",
+      "regex": "^(0|\\+84)\\d{9}$",
+      "unique": true
+    },
+    "point": {
+      "type": "biginteger",
+      "default": "0",
+      "min": "0"
+    },
+    "address": {
+      "type": "text"
+    }
+  }
+}

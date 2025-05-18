@@ -8,6 +8,7 @@ import { Fragment } from "react"
 import LocalizedClientLink from "@modules/common/components/localized-client-link"
 import CountrySelect from "../country-select"
 import { HttpTypes } from "@medusajs/types"
+import MenuRoundedIcon from "@mui/icons-material/MenuRounded"
 
 const SideMenuItems = {
   Home: "/",
@@ -32,7 +33,7 @@ const SideMenu = ({ regions }: { regions: HttpTypes.StoreRegion[] | null }) => {
                   text-lg font-semibold uppercase
                   "
                 >
-                  Danh mục
+                  <MenuRoundedIcon />
                 </Popover.Button>
               </div>
 
