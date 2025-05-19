@@ -11,9 +11,11 @@
   },
   "attributes": {
     "name": {
-      "type": "string"
+      "type": "string",
+      "required": true,
+      "unique": true
     },
-    "image": {
+    "logo": {
       "allowedTypes": [
         "images",
         "files",
@@ -24,7 +26,9 @@
       "multiple": false
     },
     "isHighlight": {
-      "type": "boolean"
+      "type": "boolean",
+      "default": true,
+      "required": true
     }
   }
 }
