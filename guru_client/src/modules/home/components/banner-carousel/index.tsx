@@ -60,7 +60,7 @@ const BannerCarousel: React.FC = () => {
   console.log({ currentIndex })
 
   return (
-    <div className="relative w-full max-w-4xl mx-auto overflow-hidden touch-pan-x">
+    <div className="relative w-full mx-auto overflow-hidden touch-pan-x">
       <motion.div
         ref={carouselRef}
         className="flex cursor-grab active:cursor-grabbing select-none relative w-full h-64"

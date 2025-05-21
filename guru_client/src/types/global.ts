@@ -22,3 +22,11 @@ export type StoreFreeShippingPrice = StorePrice & {
   target_remaining: number
   remaining_percentage: number
 }
+
+//=============
+export interface Brand {
+  documentId: string
+  name: string
+  image: string
+  logo: string
+}
