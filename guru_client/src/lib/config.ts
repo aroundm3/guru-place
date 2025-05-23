@@ -30,6 +30,8 @@ export async function fetcher(
   path: string,
   options: FetcherOptions = {}
 ): Promise<any> {
+  console.log({ BASE_URL })
+
   const url = `${BASE_URL}${path}`
 
   const headers: HeadersInit = {

@@ -1,13 +1,15 @@
 import { Metadata } from "next"
 
+import FeaturedProducts from "@modules/home/components/featured-products"
+import Hero from "@modules/home/components/hero"
+import { listCollections } from "@lib/data/collections"
+import { getRegion } from "@lib/data/regions"
 import BannerCarousel from "@modules/home/components/banner-carousel"
 import HighlightService from "@modules/home/components/highlight-service"
 import Categories from "@modules/home/components/category"
-import BlockProduct from "@modules/home/components/product/BlockProduct"
-import { getListBanner } from "@lib/data/banner"
 
 export const metadata: Metadata = {
-  title: "Divi - Cửa hàng mỹ phẩm",
+  title: "Medusa Next.js Starter Template",
   description:
     "A performant frontend ecommerce starter template with Next.js 15 and Medusa.",
 }
@@ -29,20 +31,7 @@ export default async function Home(props: {
   //   return null
   // }
 
-  const banners = await getListBanner()
+  console.log("vdhgavhgsdvhasg")
 
-  return (
-    <>
-      <div className="lg:max-w-5xl max-w-4xl mx-auto flex sm:flex-row flex-col gap-10">
-        <BannerCarousel banners={banners} />
-      </div>
-
-      {/* <Hero /> */}
-      <HighlightService />
-      <BlockProduct />
-      <div className="lg:max-w-5xl max-w-4xl mx-auto lg:py-6 py-4 lg:px-0 px-4 flex sm:flex-row flex-col gap-10">
-        <Categories />
-      </div>
-    </>
-  )
+  return <div></div>
 }

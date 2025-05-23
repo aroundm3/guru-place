@@ -5,6 +5,7 @@ import { StoreRegion } from "@medusajs/types"
 import LocalizedClientLink from "@modules/common/components/localized-client-link"
 import CartButton from "@modules/layout/components/cart-button"
 import SideMenu from "@modules/layout/components/side-menu"
+import Image from "next/image"
 
 export default async function Nav() {
   // const regions = await listRegions().then((regions: StoreRegion[]) => regions)
@@ -25,7 +26,17 @@ export default async function Nav() {
               className="txt-compact-xlarge-plus hover:text-ui-fg-base uppercase"
               data-testid="nav-store-link"
             >
-              Medusa Store
+              <div className="txt-compact-xlarge-plus hover:text-ui-fg-base uppercase">
+                DIVI COSMETICS
+              </div>
+              {/* <Image
+                src={"/logo.png"}
+                alt={"Divi Cosmetics"}
+                width={80}
+                height={80}
+                className="my-auto"
+                sizes="100vw"
+              /> */}
             </LocalizedClientLink>
           </div>
 
