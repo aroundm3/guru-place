@@ -1,9 +1,12 @@
+"use server"
+
 import { fetcher, getFullLinkResource } from "@lib/config"
 import { Brand } from "types/global"
 
 export async function getListBrand(filter: {
   searchQuery?: string
   isHightlight?: boolean
+  categoryId?: string
 }): Promise<Brand[]> {
   try {
     const data = await fetcher(
@@ -14,6 +17,10 @@ export async function getListBrand(filter: {
       }${
         filter.searchQuery
           ? `&filters[name][$containsi]=${filter.searchQuery}`
+          : ""
+      }${
+        filter.categoryId
+          ? `&filters[categories][documentId]=${filter.categoryId}`
           : ""
       }`,
       {

@@ -13,7 +13,8 @@
   "attributes": {
     "name": {
       "type": "text",
-      "required": true
+      "required": true,
+      "unique": true
     },
     "short_description": {
       "type": "text",
@@ -40,14 +41,24 @@
       "relation": "oneToOne",
       "target": "api::category.category"
     },
-    "detail_description": {
-      "type": "blocks"
-    },
     "variants": {
       "type": "relation",
       "relation": "oneToMany",
       "target": "api::variant.variant",
       "mappedBy": "product"
+    },
+    "sold_quantity": {
+      "type": "biginteger",
+      "required": true,
+      "default": "399"
+    },
+    "slug": {
+      "type": "uid",
+      "targetField": "name",
+      "required": true
+    },
+    "detail_description": {
+      "type": "blocks"
     }
   }
 }

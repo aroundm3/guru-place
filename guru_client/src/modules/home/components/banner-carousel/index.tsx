@@ -1,55 +1,23 @@
 "use client"
 import React, { useState, useRef } from "react"
 import { motion } from "framer-motion"
+import { Banner } from "types/global"
+import KeyboardArrowLeftRoundedIcon from "@mui/icons-material/KeyboardArrowLeftRounded"
+import ChevronRightRoundedIcon from "@mui/icons-material/ChevronRightRounded"
 
-interface Banner {
-  id: number
-  image: string
-  text: string
-}
-
-const banners: Banner[] = [
-  {
-    id: 1,
-    image:
-      "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80",
-    text: "Biển Xanh",
-  },
-  {
-    id: 2,
-    image:
-      "https://images.unsplash.com/photo-1472214103451-9374bd1c798e?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80",
-    text: "Núi Rừng",
-  },
-  {
-    id: 3,
-    image:
-      "https://images.unsplash.com/photo-1472214103451-9374bd1c798e?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80",
-    text: "Hoàng Hôn",
-  },
-]
-
-const BannerCarousel: React.FC = () => {
+const BannerCarousel = ({ banners }: { banners: Banner[] }) => {
   const [currentIndex, setCurrentIndex] = useState<number>(0)
   const carouselRef = useRef<HTMLDivElement>(null)
 
-  const handleDragEnd = (_: any, info: { offset: { x: number } }) => {
-    const containerWidth = carouselRef.current?.offsetWidth || 1
-    const offset = info.offset.x
-    const threshold = containerWidth * 0.3
-
-    if (offset < -threshold) {
-      if (currentIndex === banners.length - 1) {
-        setCurrentIndex(0)
-        return
-      }
-      setCurrentIndex(currentIndex + 1)
-    } else if (offset > threshold) {
-      if (currentIndex === 0) {
-        setCurrentIndex(0)
-        return
-      }
+  const handlePrev = () => {
+    if (currentIndex > 0) {
       setCurrentIndex(currentIndex - 1)
+    }
+  }
+
+  const handleNext = () => {
+    if (currentIndex < banners.length - 1) {
+      setCurrentIndex(currentIndex + 1)
     }
   }
 
@@ -57,34 +25,42 @@ const BannerCarousel: React.FC = () => {
     setCurrentIndex(index)
   }
 
-  console.log({ currentIndex })
-
   return (
-    <div className="relative w-full mx-auto overflow-hidden touch-pan-x">
+    <div className="relative w-full mx-auto overflow-hidden">
       <motion.div
         ref={carouselRef}
-        className="flex cursor-grab active:cursor-grabbing select-none relative w-full h-64"
-        drag="x"
-        dragElastic={0}
-        dragMomentum={false}
-        onDragEnd={handleDragEnd}
+        className="flex select-none relative w-full sm:h-96 h-64"
         animate={{ x: `-${currentIndex * 100}%` }}
-        transition={{ type: "spring", stiffness: 150, damping: 25 }}
+        transition={{ type: "spring", stiffness: 200, damping: 30 }}
       >
         {banners.map((banner) => (
-          <div key={banner.id} className="min-w-full h-96 relative">
+          <div key={banner.id} className="min-w-full h-full relative">
             <img
               src={banner.image}
-              alt={banner.text}
-              className="w-inherit h-inherit object-cover pointer-events-none"
+              alt={"Banner"}
+              className="w-full object-cover pointer-events-none"
             />
-            <div className="absolute bottom-4 left-4 bg-black bg-opacity-50 text-white px-4 py-2 rounded">
-              {banner.text}
-            </div>
           </div>
         ))}
       </motion.div>
 
+      {/* Navigation Buttons */}
+      <button
+        onClick={handlePrev}
+        disabled={currentIndex === 0}
+        className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/50 text-white p-2 rounded-full disabled:opacity-30 transition-opacity"
+      >
+        <KeyboardArrowLeftRoundedIcon />
+      </button>
+      <button
+        onClick={handleNext}
+        disabled={currentIndex === banners.length - 1}
+        className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/50 text-white p-2 rounded-full disabled:opacity-30 transition-opacity"
+      >
+        <ChevronRightRoundedIcon />
+      </button>
+
+      {/* Indicator Dots */}
       <div className="flex justify-center mt-4 space-x-2 absolute left-1/2 -translate-x-1/2 bottom-4">
         {banners.map((_, index) => (
           <button

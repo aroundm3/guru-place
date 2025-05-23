@@ -32,8 +32,9 @@
     },
     "quantity": {
       "type": "biginteger",
-      "unique": true,
-      "default": "0"
+      "unique": false,
+      "default": "0",
+      "required": true
     },
     "product": {
       "type": "relation",
