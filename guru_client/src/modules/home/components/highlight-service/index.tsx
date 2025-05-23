@@ -12,7 +12,7 @@ export default async function HighlightService() {
   const brands = await getListBrand({ isHightlight: true })
 
   return (
-    <div className="max-w-4xl mx-auto lg:py-6 py-4 lg:px-0 px-4 flex flex-col gap-3">
+    <div className="max-w-4xl mx-auto lg:py-6 py-4 lg:px-0 px-4 flex flex-col sm:gap-10 gap-6">
       <div className="grid sm:grid-cols-6 grid-cols-4 gap-6">
         <div className="flex flex-col space-y-2 p-2 bg-pink-50 rounded hover:bg-pink-100 cursor-pointer duration-300 text-pink-700 hover:scale-105">
           <LocalShippingRoundedIcon className="mx-auto" />
@@ -64,7 +64,7 @@ export default async function HighlightService() {
         <Divider className="!my-auto bg-pink-500 w-20" />
       </div>
       <div className="flex flex-wrap sm:gap-x-6 gap-x-3 gap-y-2">
-        <div className="flex space-x-4 text-stone-400 mr-4">
+        <div className="space-x-4 text-stone-400 mr-4 sm:flex hidden">
           <h6 className="my-auto sm:text-2xl text-xl font-bold">
             Thương hiệu
             <br /> nổi bật
@@ -74,7 +74,7 @@ export default async function HighlightService() {
           return (
             <div
               key={brand.documentId}
-              className="flex h-fit space-x-2 bg-white rounded-lg border border-gray-100 pr-2 hover:bg-pink-50 cursor-pointer duration-300 text-pink-700"
+              className="flex h-fit space-x-2 bg-white rounded-lg border border-gray-100 pr-2 hover:bg-stone-100 cursor-pointer duration-300 text-pink-700"
             >
               <Image
                 src={brand.logo}

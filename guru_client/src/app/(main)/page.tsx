@@ -6,6 +6,7 @@ import { listCollections } from "@lib/data/collections"
 import { getRegion } from "@lib/data/regions"
 import BannerCarousel from "@modules/home/components/banner-carousel"
 import HighlightService from "@modules/home/components/highlight-service"
+import Categories from "@modules/home/components/category"
 
 export const metadata: Metadata = {
   title: "Medusa Next.js Starter Template",
@@ -37,6 +38,11 @@ export default async function Home(props: {
       <BannerCarousel />
       {/* <Hero /> */}
       <HighlightService />
+      <div className="max-w-4xl mx-auto lg:py-6 py-4 lg:px-0 px-4 flex flex-row-reverse gap-3">
+        <div></div>
+        <Categories />
+      </div>
+
       <div className="py-12">
         <ul className="flex flex-col gap-x-6">
           {/* <FeaturedProducts collections={collections} region={region} /> */}

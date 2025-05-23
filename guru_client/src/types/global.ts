@@ -30,3 +30,10 @@ export interface Brand {
   image: string
   logo: string
 }
+
+export interface Category {
+  documentId: string
+  name: string
+  description: string
+  brands: Brand[]
+}
