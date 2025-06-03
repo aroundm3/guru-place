@@ -20,6 +20,7 @@ const nextConfig = {
     ignoreBuildErrors: true,
   },
   images: {
+    loader: "default",
     remotePatterns: [
       {
         protocol: "http",
@@ -29,19 +30,7 @@ const nextConfig = {
         protocol: "http",
         hostname: "14.225.0.172",
         port: "1337",
-        pathname: "/uploads/**",
-      },
-      {
-        protocol: "https",
-        hostname: "medusa-public-images.s3.eu-west-1.amazonaws.com",
-      },
-      {
-        protocol: "https",
-        hostname: "medusa-server-testing.s3.amazonaws.com",
-      },
-      {
-        protocol: "https",
-        hostname: "medusa-server-testing.s3.us-east-1.amazonaws.com",
+        pathname: "**",
       },
     ],
   },
