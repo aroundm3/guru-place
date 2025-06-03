@@ -25,6 +25,18 @@ const BannerCarousel = ({ banners }: { banners: Banner[] }) => {
     setCurrentIndex(index)
   }
 
+  const handleDragEnd = (
+    _: MouseEvent | TouchEvent | PointerEvent,
+    info: { offset: { x: number } }
+  ) => {
+    const offsetX = info.offset.x
+    if (offsetX > 50 && currentIndex > 0) {
+      handlePrev()
+    } else if (offsetX < -50 && currentIndex < banners.length - 1) {
+      handleNext()
+    }
+  }
+
   return (
     <div className="relative w-full mx-auto overflow-hidden">
       <motion.div
@@ -32,15 +44,25 @@ const BannerCarousel = ({ banners }: { banners: Banner[] }) => {
         className="flex select-none relative w-full sm:h-96 h-64"
         animate={{ x: `-${currentIndex * 100}%` }}
         transition={{ type: "spring", stiffness: 200, damping: 30 }}
+        drag="x"
+        dragConstraints={{ left: 0, right: 0 }}
+        onDragEnd={handleDragEnd}
       >
         {banners.map((banner) => (
-          <div key={banner.id} className="min-w-full h-full relative">
+          <motion.div
+            key={banner.id}
+            className="min-w-full h-full relative"
+            drag="x"
+            dragElastic={0.2}
+            dragConstraints={{ left: 0, right: 0 }}
+            onDragEnd={handleDragEnd}
+          >
             <img
               src={banner.image}
               alt={"Banner"}
               className="w-full object-cover pointer-events-none"
             />
-          </div>
+          </motion.div>
         ))}
       </motion.div>
 
