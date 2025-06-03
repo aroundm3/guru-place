@@ -1,0 +1,29 @@
+{
+  "kind": "collectionType",
+  "collectionName": "product_list_blocks",
+  "info": {
+    "singularName": "product-list-block",
+    "pluralName": "product-list-blocks",
+    "displayName": "ProductListBlock",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "attributes": {
+    "index": {
+      "type": "integer",
+      "required": true,
+      "default": 1
+    },
+    "products": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::product.product"
+    },
+    "title": {
+      "type": "string",
+      "required": true
+    }
+  }
+}

@@ -1,91 +1,149 @@
 "use client"
 
-import { Popover, PopoverPanel, Transition } from "@headlessui/react"
-import { ArrowRightMini, XMark } from "@medusajs/icons"
-import { Text, clx, useToggleState } from "@medusajs/ui"
-import { Fragment } from "react"
-
-import LocalizedClientLink from "@modules/common/components/localized-client-link"
-import CountrySelect from "../country-select"
+import { Popover } from "@headlessui/react"
+import { Fragment, useState } from "react"
 import { HttpTypes } from "@medusajs/types"
 
-const SideMenuItems = {
-  Home: "/",
-  Store: "/store",
-  Account: "/account",
-  Cart: "/cart",
-}
+import { Drawer } from "@mui/material"
+import useGetListCategory from "./_hooks/useGetListCategory"
+import CategoryItem from "@modules/home/components/category/CategoryItem"
+import CategoryRoundedIcon from "@mui/icons-material/CategoryRounded"
+import LocalMallRoundedIcon from "@mui/icons-material/LocalMallRounded"
+import DateRangeRoundedIcon from "@mui/icons-material/DateRangeRounded"
 
 const SideMenu = ({ regions }: { regions: HttpTypes.StoreRegion[] | null }) => {
-  // const toggleState = useToggleState()
+  const [isOpenSideBar, setIsOpenSideBar] = useState(false)
+  const { listCategory, isLoading } = useGetListCategory()
+
+  const [currentCategory, setCurrentCategory] = useState("")
+
+  const closeSideBar = () => {
+    setIsOpenSideBar(false)
+  }
 
   return (
-    <div className="h-full">
-      <div className="flex items-center h-full">
-        <Popover className="h-full flex">
-          {({ open, close }) => (
-            <>
-              <div className="relative flex h-full">
-                <Popover.Button
-                  data-testid="nav-menu-button"
-                  className="relative h-full flex items-center transition-all ease-out duration-200 focus:outline-none hover:text-ui-fg-base
-                  text-lg font-semibold uppercase
-                  "
-                >
-                  Danh mục
-                </Popover.Button>
-              </div>
-
-              <Transition
-                show={open}
-                as={Fragment}
-                enter="transition ease-out duration-150"
-                enterFrom="opacity-0"
-                enterTo="opacity-100 backdrop-blur-2xl"
-                leave="transition ease-in duration-150"
-                leaveFrom="opacity-100 backdrop-blur-2xl"
-                leaveTo="opacity-0"
+    <Fragment>
+      <div className="h-full">
+        <div className="flex items-center h-full">
+          <Popover className="h-full flex">
+            <div className="relative flex h-full">
+              <div
+                onClick={() => setIsOpenSideBar(!isOpenSideBar)}
+                className="cursor-pointer relative h-full flex items-center transition-all ease-out duration-200 focus:outline-none hover:text-ui-fg-base text-lg font-semibold uppercase"
               >
-                <PopoverPanel className="flex flex-col absolute w-full pr-4 sm:pr-0 sm:w-1/3 2xl:w-1/4 sm:min-w-min h-[calc(100vh-1rem)] z-30 inset-x-0 text-sm text-ui-fg-on-color m-2 backdrop-blur-2xl">
+                {/* Custom Hamburger to X Icon */}
+                <div className="w-6 h-6 flex flex-col justify-center items-center gap-1.5">
+                  <span
+                    className={`bg-current h-0.5 w-5 transition-all duration-300 ease-in-out ${
+                      isOpenSideBar
+                        ? "rotate-45 translate-y-2"
+                        : "rotate-0 translate-y-0"
+                    }`}
+                  ></span>
+                  <span
+                    className={`bg-current h-0.5 w-5 transition-all duration-300 ease-in-out ${
+                      isOpenSideBar ? "opacity-0" : "opacity-100"
+                    }`}
+                  ></span>
+                  <span
+                    className={`bg-current h-0.5 w-5 transition-all duration-300 ease-in-out ${
+                      isOpenSideBar
+                        ? "-rotate-45 -translate-y-2"
+                        : "rotate-0 translate-y-0"
+                    }`}
+                  ></span>
+                </div>
+              </div>
+            </div>
+          </Popover>
+        </div>
+      </div>
+      <Drawer
+        anchor="left"
+        open={isOpenSideBar}
+        onClose={() => setIsOpenSideBar(false)}
+      >
+        <header className="relative h-16 mx-auto border-b duration-200 bg-stone-100 flex justify-end px-4 w-full">
+          <div className="h-full">
+            <div className="flex items-center h-full">
+              <Popover className="h-full flex">
+                <div className="relative flex h-full">
                   <div
-                    data-testid="nav-menu-popup"
-                    className="flex flex-col h-full bg-[rgba(3,7,18,0.5)] rounded-rounded justify-between p-6"
+                    onClick={() => setIsOpenSideBar(!isOpenSideBar)}
+                    className="cursor-pointer relative h-full flex items-center transition-all ease-out duration-200 focus:outline-none hover:text-ui-fg-base text-lg font-semibold uppercase"
                   >
-                    <div className="flex justify-end" id="xmark">
-                      <button data-testid="close-menu-button" onClick={close}>
-                        <XMark />
-                      </button>
-                    </div>
-                    <ul className="flex flex-col gap-6 items-start justify-start">
-                      {Object.entries(SideMenuItems).map(([name, href]) => {
-                        return (
-                          <li key={name}>
-                            <LocalizedClientLink
-                              href={href}
-                              className="text-3xl leading-10 hover:text-ui-fg-disabled"
-                              onClick={close}
-                              data-testid={`${name.toLowerCase()}-link`}
-                            >
-                              {name}
-                            </LocalizedClientLink>
-                          </li>
-                        )
-                      })}
-                    </ul>
-                    <div className="flex flex-col gap-y-6">
-                      <Text className="flex justify-between txt-compact-small">
-                        © {new Date().getFullYear()} Medusa Store. All rights
-                        reserved.
-                      </Text>
+                    {/* Custom Hamburger to X Icon */}
+                    <div className="w-6 h-6 flex flex-col justify-center items-center gap-1.5">
+                      <span
+                        className={`bg-current h-0.5 w-5 transition-all duration-300 ease-in-out ${
+                          isOpenSideBar
+                            ? "rotate-45 translate-y-2"
+                            : "rotate-0 translate-y-0"
+                        }`}
+                      ></span>
+                      <span
+                        className={`bg-current h-0.5 w-5 transition-all duration-300 ease-in-out ${
+                          isOpenSideBar ? "opacity-0" : "opacity-100"
+                        }`}
+                      ></span>
+                      <span
+                        className={`bg-current h-0.5 w-5 transition-all duration-300 ease-in-out ${
+                          isOpenSideBar
+                            ? "-rotate-45 -translate-y-2"
+                            : "rotate-0 translate-y-0"
+                        }`}
+                      ></span>
                     </div>
                   </div>
-                </PopoverPanel>
-              </Transition>
-            </>
-          )}
-        </Popover>
-      </div>
-    </div>
+                </div>
+              </Popover>
+            </div>
+          </div>
+        </header>
+
+        <div className="flex flex-col space-y-6 p-6">
+          <div className="flex flex-col space-y-4 w-full min-w-[250px] cursor-pointer">
+            <div className="mr-4 flex sm:space-x-1 space-x-0.5 text-gray-700 items-center">
+              <CategoryRoundedIcon className="sm:!h-5 !h-4" />
+              <h6 className="my-auto sm:text-lg text-base font-semibold">
+                Danh mục
+              </h6>
+            </div>
+            <div className="flex-col space-y-2 content-end flex pl-2">
+              {listCategory?.length && !isLoading
+                ? listCategory.map((category) => {
+                    return (
+                      <CategoryItem
+                        category={category}
+                        key={category.documentId}
+                        currentCategory={currentCategory}
+                        setCurrentCategory={setCurrentCategory}
+                        closeSideBar={closeSideBar}
+                      />
+                    )
+                  })
+                : ""}
+            </div>
+          </div>
+          <div className="flex flex-col space-y-4 w-full min-w-[250px] cursor-pointer">
+            <div className="mr-4 flex sm:space-x-1 space-x-0.5 text-gray-700 items-center">
+              <LocalMallRoundedIcon className="sm:!h-5 !h-4" />
+              <h6 className="my-auto sm:text-lg text-base font-semibold">
+                Xem đơn hàng
+              </h6>
+            </div>
+          </div>
+          <div className="flex flex-col space-y-4 w-full min-w-[250px] cursor-pointer">
+            <div className="mr-4 flex sm:space-x-1 space-x-0.5 text-gray-700 items-center">
+              <DateRangeRoundedIcon className="sm:!h-5 !h-4" />
+              <h6 className="my-auto sm:text-lg text-base font-semibold">
+                Đặt lịch online
+              </h6>
+            </div>
+          </div>
+        </div>
+      </Drawer>
+    </Fragment>
   )
 }
 

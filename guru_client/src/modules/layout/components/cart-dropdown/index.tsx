@@ -16,6 +16,7 @@ import LocalizedClientLink from "@modules/common/components/localized-client-lin
 import Thumbnail from "@modules/products/components/thumbnail"
 import { usePathname } from "next/navigation"
 import { Fragment, useEffect, useRef, useState } from "react"
+import LocalMallRoundedIcon from "@mui/icons-material/LocalMallRounded"
 
 const CartDropdown = ({
   cart: cartState,
@@ -82,10 +83,25 @@ const CartDropdown = ({
       <Popover className="relative h-full">
         <PopoverButton className="h-full">
           <LocalizedClientLink
-            className="hover:text-ui-fg-base"
+            className="hover:text-ui-fg-base relative"
             href="/cart"
             data-testid="nav-cart-link"
-          >{`Cart (${totalItems})`}</LocalizedClientLink>
+          >
+            <LocalMallRoundedIcon />
+            <div
+              className={`absolute rounded-full ${
+                !totalItems ? "bg-gray-300" : "bg-red-500"
+              } text-white`}
+              style={{
+                fontSize: "12px",
+                top: "-12px",
+                right: "-6px",
+                padding: "1px 5px",
+              }}
+            >
+              {totalItems}
+            </div>
+          </LocalizedClientLink>
         </PopoverButton>
         <Transition
           show={cartDropdownOpen}

@@ -1,13 +1,12 @@
 import { Metadata } from "next"
 
-import FeaturedProducts from "@modules/home/components/featured-products"
-import Hero from "@modules/home/components/hero"
-import { listCollections } from "@lib/data/collections"
-import { getRegion } from "@lib/data/regions"
 import BannerCarousel from "@modules/home/components/banner-carousel"
+import HighlightService from "@modules/home/components/highlight-service"
+import BlockProduct from "@modules/home/components/product/BlockProduct"
+import { getListBanner } from "@lib/data/banner"
 
 export const metadata: Metadata = {
-  title: "Medusa Next.js Starter Template",
+  title: "Divi - Cửa hàng mỹ phẩm",
   description:
     "A performant frontend ecommerce starter template with Next.js 15 and Medusa.",
 }
@@ -15,31 +14,20 @@ export const metadata: Metadata = {
 export default async function Home(props: {
   params: Promise<{ countryCode: string }>
 }) {
-  // const params = await props.params
-
-  // const { countryCode } = params
-
-  // const region = await getRegion(countryCode)
-
-  // const { collections } = await listCollections({
-  //   fields: "id, handle, title",
-  // })
-
-  // if (!collections || !region) {
-  //   return null
-  // }
-
-  console.log("vdhgavhgsdvhasg")
+  const banners = await getListBanner()
 
   return (
     <>
-      <BannerCarousel />
-      <Hero />
-      <div className="py-12">
-        <ul className="flex flex-col gap-x-6">
-          {/* <FeaturedProducts collections={collections} region={region} /> */}
-        </ul>
+      <div className="lg:max-w-5xl max-w-4xl mx-auto flex sm:flex-row flex-col gap-10">
+        <BannerCarousel banners={banners} />
       </div>
+
+      {/* <Hero /> */}
+      <HighlightService />
+      <BlockProduct />
+      {/* <div className="lg:max-w-5xl max-w-4xl mx-auto lg:py-6 py-4 lg:px-0 px-4 flex sm:flex-row flex-col gap-10">
+        <Categories />
+      </div> */}
     </>
   )
 }
