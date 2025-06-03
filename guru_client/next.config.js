@@ -27,7 +27,9 @@ const nextConfig = {
       },
       {
         protocol: "http",
-        hostname: "14.225.0.172:1337",
+        hostname: "14.225.0.172",
+        port: "1337",
+        pathname: "/uploads/**",
       },
       {
         protocol: "https",
