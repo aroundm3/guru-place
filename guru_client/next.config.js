@@ -27,7 +27,7 @@ const nextConfig = {
       },
       {
         protocol: "http",
-        hostname: "14.225.0.172",
+        hostname: "14.225.0.172:1337",
       },
       {
         protocol: "https",
