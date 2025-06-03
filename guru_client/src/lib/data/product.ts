@@ -68,7 +68,9 @@ export async function getListProducts(filter: {
 }
 
 //support data for landing page
-export async function getListProductsBlock(): Promise<ProductListBlock[]> {
+export async function getListProductsBlock(
+  id?: string
+): Promise<ProductListBlock[]> {
   try {
     const data = await fetcher(
       `/api/product-list-blocks?populate[products][populate]=media&pagination[pageSize]=100&populate[products][populate]=variants`,
