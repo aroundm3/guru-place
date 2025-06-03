@@ -8,7 +8,12 @@ import { getListBanner } from "@lib/data/banner"
 export const metadata: Metadata = {
   title: "Divi - Cửa hàng mỹ phẩm",
   description:
-    "A performant frontend ecommerce starter template with Next.js 15 and Medusa.",
+    "Dầu gội xả Delofil Silky Smooth sạch gàu, kiềm dầu, mềm mượt chống gãy · Kem ủ tóc Collagen Hair Mask Delofil phục hồi tóc hư tổn, làm mềm mượt.",
+  icons: {
+    icon: "/logo.png", // icon mặc định
+    shortcut: "/logo.png", // shortcut icon (nhỏ hơn)
+    apple: "/logo.png", // icon cho iOS
+  },
 }
 
 export default async function Home(props: {

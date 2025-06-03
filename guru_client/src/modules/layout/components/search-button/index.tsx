@@ -109,7 +109,7 @@ export default function SearchButton() {
         <div className="sm:w-[400px] w-screen mx-auto p-4 flex space-x-2 items-center">
           <div className="relative w-full">
             <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-              <SearchIcon className="h-4 w-4 text-stone-800" />
+              <SearchIcon className="h-4 w-4 text-white" />
             </div>
             <input
               type="text"
@@ -118,8 +118,8 @@ export default function SearchButton() {
               // value={query}
               onKeyDown={handleKeyDown}
               onChange={handleChangeValueInputSearch}
-              className="w-full bg-white border border-gray-300/50 rounded-lg pl-10 pr-4 py-2 text-sm 
-                    placeholder:text-stone-800 focus:outline-none focus:ring-2 focus:ring-gray-300/50
+              className="w-full bg-gray-900/30 border border-gray-300/50 rounded-lg pl-10 pr-4 py-2 text-sm text-white
+                    placeholder:text-white focus:outline-none focus:ring-2 focus:ring-pink-300/50
                     hover:border-gray-400/50 transition-colors"
               placeholder="Bạn đang tìm kiếm sản phẩm gì?"
             />

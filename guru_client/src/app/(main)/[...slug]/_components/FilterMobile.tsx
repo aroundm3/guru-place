@@ -1,75 +1,73 @@
-"use client"
-
-import { Fragment, useEffect, useState } from "react"
-import { Brand, Category, ProductListBlock } from "types/global"
-import { Button, Skeleton } from "@mui/material"
-import useGetListBrandByCategory from "../_hooks/useGetListBrandByCategory"
+import { Drawer, Skeleton } from "@mui/material"
 import Link from "next/link"
-import PlayArrowRoundedIcon from "@mui/icons-material/PlayArrowRounded"
+import { Fragment } from "react"
+import { Brand, Category, ProductListBlock } from "types/global"
+import { Popover } from "@headlessui/react"
 import Image from "next/image"
-import SortRoundedIcon from "@mui/icons-material/SortRounded"
-import FilterMobile from "./FilterMobile"
+import PlayArrowRoundedIcon from "@mui/icons-material/PlayArrowRounded"
 
-interface FilterProps {
-  brands: Brand[]
+interface FilterMobileProps {
+  isOpenSideBar: boolean
+  onClose: () => void
   categories: Category[]
   listProducBlock: ProductListBlock[]
+  isLoadingListBrandByCategory: boolean
+  listBrandToDisplay: Brand[]
   currentCategory?: Category
   currentBrand?: Brand
 }
 
-export default function Filter({
-  brands,
+export default function FilterMobile({
+  isOpenSideBar,
+  onClose,
   categories,
   listProducBlock,
+  isLoadingListBrandByCategory,
+  listBrandToDisplay,
   currentCategory,
   currentBrand,
-}: FilterProps) {
-  const [currentCategorySelect, setCurrentCategorySelect] = useState("")
-  const [listBrandToDisplay, setListBrandToDisplay] = useState(brands)
-  const { isLoadingListBrandByCategory, listBrandByCategory } =
-    useGetListBrandByCategory(currentCategorySelect)
-  const [isOpenFilterMobile, setIsOpenFilterMobile] = useState(false)
-
-  useEffect(() => {
-    if (currentCategory) {
-      setCurrentCategorySelect(currentCategory.documentId)
-      if (listBrandByCategory?.length) {
-        setListBrandToDisplay(listBrandByCategory)
-      } else {
-        setListBrandToDisplay(brands)
-      }
-    }
-  }, [currentCategory, listBrandByCategory, brands])
-
+}: FilterMobileProps) {
   return (
-    <Fragment>
-      <FilterMobile
-        categories={categories}
-        isLoadingListBrandByCategory={isLoadingListBrandByCategory}
-        listBrandToDisplay={listBrandToDisplay}
-        listProducBlock={listProducBlock}
-        currentBrand={currentBrand}
-        currentCategory={currentCategory}
-        isOpenSideBar={isOpenFilterMobile}
-        onClose={() => setIsOpenFilterMobile(false)}
-      />
-      <div className="flex justify-end w-full sm:hidden">
-        <Button
-          variant="text"
-          className="!flex !space-x-1 !text-gray-600 !px-2 !justify-center"
-          onClick={() => setIsOpenFilterMobile(true)}
-        >
-          <span className="text-md font-semibold my-auto normal-case">
-            Bộ lọc sản phẩm
-          </span>
-          <SortRoundedIcon className="!h-5 my-auto" />
-        </Button>
-      </div>
-      <div className="bg-[#fffdf8] sm:min-w-[200px] sm:flex hidden flex-col">
-        <span className="text-md font-semibold text-gray-600 my-auto">
-          Bộ lọc sản phẩm
-        </span>
+    <Drawer anchor="right" open={isOpenSideBar} onClose={onClose}>
+      <header className="relative h-16 mx-auto border-b duration-200 bg-stone-100 flex justify-start px-4 w-full">
+        <div className="h-full">
+          <div className="flex items-center h-full">
+            <Popover className="h-full flex">
+              <div className="relative flex h-full">
+                <div
+                  onClick={onClose}
+                  className="cursor-pointer relative h-full flex items-center transition-all ease-out duration-200 focus:outline-none hover:text-ui-fg-base text-lg font-semibold uppercase"
+                >
+                  {/* Custom Hamburger to X Icon */}
+                  <div className="w-6 h-6 flex flex-col justify-center items-center gap-1.5">
+                    <span
+                      className={`bg-current h-0.5 w-5 transition-all duration-300 ease-in-out ${
+                        isOpenSideBar
+                          ? "rotate-45 translate-y-2"
+                          : "rotate-0 translate-y-0"
+                      }`}
+                    ></span>
+                    <span
+                      className={`bg-current h-0.5 w-5 transition-all duration-300 ease-in-out ${
+                        isOpenSideBar ? "opacity-0" : "opacity-100"
+                      }`}
+                    ></span>
+                    <span
+                      className={`bg-current h-0.5 w-5 transition-all duration-300 ease-in-out ${
+                        isOpenSideBar
+                          ? "-rotate-45 -translate-y-2"
+                          : "rotate-0 translate-y-0"
+                      }`}
+                    ></span>
+                  </div>
+                </div>
+              </div>
+            </Popover>
+          </div>
+        </div>
+      </header>
+
+      <div className="flex flex-col p-6 min-w-[250px]">
         <div className="flex flex-col space-y-2 mt-8">
           <p className="flex space-x-2 text-xs font-sm uppercase font-semibold text-gray-400 cursor-pointer">
             Thương hiệu
@@ -124,7 +122,7 @@ export default function Filter({
             {}
           </div>
         </div>
-        <div className="sm:flex hidden flex-col space-y-2 mt-4">
+        <div className="flex flex-col space-y-2 mt-4">
           <p className="flex space-x-2 text-xs font-sm uppercase font-semibold text-gray-400 cursor-pointer">
             Danh mục
           </p>
@@ -157,7 +155,7 @@ export default function Filter({
             })}
           </div>
         </div>
-        <div className="sm:flex hidden flex-col space-y-2 mt-4">
+        <div className="flex flex-col space-y-2 mt-4">
           <p className="flex space-x-2 text-xs font-sm uppercase font-semibold text-gray-400 cursor-pointer">
             Bộ sản phẩm
           </p>
@@ -191,6 +189,6 @@ export default function Filter({
           </div>
         </div>
       </div>
-    </Fragment>
+    </Drawer>
   )
 }

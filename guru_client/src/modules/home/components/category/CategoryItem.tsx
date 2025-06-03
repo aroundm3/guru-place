@@ -47,14 +47,14 @@ export default function CategoryItem({
   return (
     <div
       key={category.documentId}
-      className="flex flex-col space-y-1 text-gray-600 hover:text-gray-700 duration-300 cursor-pointer"
+      className="flex flex-col space-y-1.5 text-gray-600 hover:text-gray-700 duration-300 cursor-pointer"
     >
       <div className="flex space-x-2">
         <span
           className="sm:text-base text-base font-semibold"
           onClick={handleCategoryClick}
         >
-          {category.name} {isLoading ? <CircularProgress size={14} /> : ""}
+          {category.name}
         </span>
         <Link
           href={`/category_${category.slug}`}
@@ -69,7 +69,7 @@ export default function CategoryItem({
       </div>
 
       <Collapse in={isExpand}>
-        <div className="flex flex-col space-y-0.5 pl-1">
+        <div className="flex flex-col space-y-1 pl-1">
           {listBrands.length
             ? listBrands.map((brand) => {
                 return (

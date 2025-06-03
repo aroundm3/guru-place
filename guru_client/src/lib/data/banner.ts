@@ -6,7 +6,7 @@ import { Banner } from "types/global"
 export async function getListBanner(): Promise<Banner[]> {
   try {
     const data = await fetcher(
-      `/api/banners?=&pagination[page]=1&pagination[pageSize]=100&populate=image`,
+      `/api/banners?=&pagination[page]=1&pagination[pageSize]=100&populate=image&sort=index:asc`,
       {
         next: { revalidate: 10 },
       }
