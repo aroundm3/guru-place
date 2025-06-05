@@ -15,7 +15,7 @@ export default function ListProducts({ products }: ListProductsProps) {
       })}
     </div>
   ) : (
-    <p className="text-2xl font-bold text-stone-300 mx-auto my-auto">
+    <p className="text-2xl font-bold text-stone-300 mx-auto my-auto mt-10">
       Không tìm thấy sản phẩm nào
     </p>
   )

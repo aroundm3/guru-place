@@ -89,15 +89,9 @@ export default async function Home(props: { params: { slug: string[] } }) {
         currentBlockProduct = listProducBlock.find(
           (block) => block.documentId === listParamsToFilter[1]
         )
-        currentBrand = brands.find(
-          (brandItem) => brandItem.slug === listParamsToFilter[2]
-        )
-        if (currentCategory && currentBrand) {
-          subRouteTitle = `Thương hiệu: ${currentBrand.name}`
-          products = await getListProducts({
-            brandId: currentBrand.documentId,
-            categoryId: currentCategory.documentId,
-          })
+        if (currentBlockProduct) {
+          subRouteTitle = `${currentBlockProduct.title}`
+          products = currentBlockProduct.products
         }
 
         break
@@ -156,6 +150,7 @@ export default async function Home(props: { params: { slug: string[] } }) {
           listProducBlock={listProducBlock}
           currentBrand={currentBrand}
           currentCategory={currentCategory}
+          currentBlockProduct={currentBlockProduct}
         />
         <ListProducts products={products} />
       </div>

@@ -16,6 +16,7 @@ interface FilterProps {
   listProducBlock: ProductListBlock[]
   currentCategory?: Category
   currentBrand?: Brand
+  currentBlockProduct?: ProductListBlock
 }
 
 export default function Filter({
@@ -24,6 +25,7 @@ export default function Filter({
   listProducBlock,
   currentCategory,
   currentBrand,
+  currentBlockProduct,
 }: FilterProps) {
   const [currentCategorySelect, setCurrentCategorySelect] = useState("")
   const [listBrandToDisplay, setListBrandToDisplay] = useState(brands)
@@ -172,12 +174,12 @@ export default function Filter({
                     <Link
                       href={`/collection_${block.documentId}`}
                       className={`text-sm ${
-                        currentCategory?.documentId === block.documentId
+                        currentBlockProduct?.documentId === block.documentId
                           ? "font-semibold text-pink-700"
                           : "font-normal pl-4"
                       }`}
                     >
-                      {currentCategory?.documentId === block.documentId ? (
+                      {currentBlockProduct?.documentId === block.documentId ? (
                         <PlayArrowRoundedIcon className="!w-4" />
                       ) : (
                         ""
