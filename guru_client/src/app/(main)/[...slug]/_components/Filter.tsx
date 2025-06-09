@@ -100,15 +100,15 @@ export default function Filter({
                         ""
                       )}
                       <span className="uppercase">{brand.name}</span>
-                      <Image
+                      {/* <Image
                         src={brand.logo}
                         alt={brand.name}
                         height={0}
                         width={0}
-                        className="h-3.5 w-3.5 object-cover my-auto rounded-full"
+                        className="h-3.5 w-3.5 object-scale-down my-auto rounded-full"
                         loading="eager"
                         sizes="80vw"
-                      />
+                      /> */}
                     </Link>
                   </div>
                 </div>

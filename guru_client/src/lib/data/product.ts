@@ -4,6 +4,54 @@ import { fetcher, getFullLinkResource } from "@lib/config"
 import { PAGINATION_CONFIG } from "@lib/constants/pagination"
 import { Product, ProductListBlock } from "types/global"
 
+export const getProductBySlug = async (slug: string) => {
+  try {
+    const data = await fetcher(
+      `/api/products?filters[slug][$eq]=product-2&populate[brand]=true&populate[category]=true&populate[media]=true&populate[variants][populate][variant_image]=true`,
+      {
+        next: { revalidate: 10 },
+      }
+    )
+
+    const productRs = data.data[0]
+
+    if (productRs) {
+      return {
+        ...productRs,
+        images: productRs.media.map((itemImage: any) => {
+          return {
+            small: getFullLinkResource(itemImage.formats.small.url),
+            thumbnail: getFullLinkResource(itemImage.formats.thumbnail.url),
+            default: getFullLinkResource(itemImage.url),
+          }
+        }),
+
+        priceBaseRange: productRs.variants.reduce(
+          ([min, max]: [number, number], v: { base_price: number }) => [
+            Math.min(min, Number(v.base_price)),
+            Math.max(max, Number(v.base_price)),
+          ],
+          [Infinity, -Infinity]
+        ),
+        priceSaleRange: productRs.variants.reduce(
+          ([min, max]: [number, number], v: { sale_price: number }) => [
+            Math.min(min, Number(v.sale_price)),
+            Math.max(max, Number(v.sale_price)),
+          ],
+          [Infinity, -Infinity]
+        ),
+        totalQuantity: productRs.variants.reduce(
+          (total: number, v: { quantity: number }) =>
+            total + Number(v.quantity),
+          0
+        ),
+      }
+    }
+  } catch (ex) {
+    return
+  }
+}
+
 export async function getListProducts(filter: {
   searchQuery?: string
   page?: number

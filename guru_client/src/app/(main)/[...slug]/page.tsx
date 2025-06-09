@@ -8,6 +8,7 @@ import { Breadcrumbs, Typography } from "@mui/material"
 import Link from "next/link"
 import { Product } from "types/global"
 import Filter from "./_components/Filter"
+import { notFound } from "next/navigation"
 
 export async function generateMetadata(
   {
@@ -161,8 +162,6 @@ export default async function Home(props: { params: { slug: string[] } }) {
   const typeSearch = listParamsToFilter[0]
     ? decodeURIComponent(listParamsToFilter[0] as string)
     : ""
-
-  console.log({ listParamsToFilter })
 
   const categories = await getListCategories({})
   const brands = await getListBrand({})

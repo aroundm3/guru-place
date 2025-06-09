@@ -98,7 +98,7 @@ export default function FilterMobile({
                         ""
                       )}
                       <span className="uppercase">{brand.name}</span>
-                      <Image
+                      {/* <Image
                         src={brand.logo}
                         alt={brand.name}
                         height={0}
@@ -106,7 +106,7 @@ export default function FilterMobile({
                         className="h-3.5 w-3.5 object-cover my-auto rounded-full"
                         loading="eager"
                         sizes="80vw"
-                      />
+                      /> */}
                     </Link>
                   </div>
                 </div>
