@@ -28,7 +28,7 @@ export default function Filter({
   currentBlockProduct,
 }: FilterProps) {
   const [currentCategorySelect, setCurrentCategorySelect] = useState("")
-  const [listBrandToDisplay, setListBrandToDisplay] = useState(brands)
+  const [listBrandToDisplay, setListBrandToDisplay] = useState<Brand[]>([])
   const { isLoadingListBrandByCategory, listBrandByCategory } =
     useGetListBrandByCategory(currentCategorySelect)
   const [isOpenFilterMobile, setIsOpenFilterMobile] = useState(false)
@@ -38,8 +38,6 @@ export default function Filter({
       setCurrentCategorySelect(currentCategory.documentId)
       if (listBrandByCategory?.length) {
         setListBrandToDisplay(listBrandByCategory)
-      } else {
-        setListBrandToDisplay(brands)
       }
     }
   }, [currentCategory, listBrandByCategory, brands])
@@ -55,6 +53,8 @@ export default function Filter({
         currentCategory={currentCategory}
         isOpenSideBar={isOpenFilterMobile}
         onClose={() => setIsOpenFilterMobile(false)}
+        brands={brands}
+        currentBlockProduct={currentBlockProduct}
       />
       <div className="flex justify-end w-full sm:hidden">
         <Button
@@ -70,7 +70,7 @@ export default function Filter({
       </div>
       <div className="bg-[#fffdf8] sm:min-w-[200px] sm:flex hidden flex-col">
         <span className="text-md font-semibold text-gray-600 my-auto">
-          Bộ lọc sản phẩm
+          Bộ lọc sản phẩm {currentBrand?.name}
         </span>
         <div className="flex flex-col space-y-2 mt-8">
           <p className="flex space-x-2 text-xs font-sm uppercase font-semibold text-gray-400 cursor-pointer">
@@ -93,7 +93,8 @@ export default function Filter({
                           : "font-normal pl-5"
                       }`}
                     >
-                      {currentBrand?.documentId === brand.documentId ? (
+                      {currentBrand?.documentId === brand.documentId &&
+                      !currentCategory ? (
                         <PlayArrowRoundedIcon className="!w-4" />
                       ) : (
                         ""
@@ -124,9 +125,9 @@ export default function Filter({
               return (
                 <div
                   key={category.documentId}
-                  className="flex flex-col space-y-2 text-gray-600 hover:text-gray-700 duration-300 cursor-pointer"
+                  className="flex flex-col text-gray-600 hover:text-gray-700 duration-300 cursor-pointer"
                 >
-                  <div className="flex flex-col space-y-2">
+                  <div className="flex flex-col">
                     <Link
                       href={`/category_${category.slug}`}
                       className={`text-sm ${
@@ -146,7 +147,7 @@ export default function Filter({
                     <Collapse
                       in={currentCategory?.documentId === category.documentId}
                     >
-                      <div className="ml-1 flex flex-col space-y-2">
+                      <div className="ml-1 mt-2 flex flex-col space-y-2">
                         {listBrandToDisplay.map((brand) => {
                           return (
                             <div
@@ -160,11 +161,11 @@ export default function Filter({
                                       ? `/brand&category_${currentCategory.slug}_${brand.slug}`
                                       : `/brand_${brand.slug}`
                                   }
-                                  className={`text-xs text-stone-400 flex space-x-1 items-center pl-5 duration-300 ${
+                                  className={`text-xs flex space-x-1 items-center pl-5 duration-300 ${
                                     currentBrand?.documentId ===
                                     brand.documentId
                                       ? "font-semibold text-pink-700"
-                                      : "font-normal duration-300 hover:text-stone-500"
+                                      : "font-normal duration-300 hover:text-stone-500 "
                                   }`}
                                 >
                                   <span className="uppercase">

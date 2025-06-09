@@ -38,6 +38,8 @@ export async function fetcher(
     ...(options.headers || {}),
   }
 
+  console.log({ url, headers })
+
   const res = await fetch(url, {
     ...options,
     headers,
