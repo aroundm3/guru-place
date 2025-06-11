@@ -1,12 +1,7 @@
+export const dynamic = "force-dynamic"
 import { Metadata, ResolvingMetadata } from "next"
 
-import { getListCategories } from "@lib/data/category"
-import { getListBrand } from "@lib/data/brand"
-import {
-  getListProducts,
-  getListProductsBlock,
-  getProductBySlug,
-} from "@lib/data/product"
+import { getProductBySlug } from "@lib/data/product"
 
 import { Breadcrumbs, Typography } from "@mui/material"
 import Link from "next/link"
