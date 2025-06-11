@@ -47,6 +47,11 @@
       "type": "boolean",
       "default": false,
       "required": true
+    },
+    "index": {
+      "type": "integer",
+      "default": 1,
+      "required": true
     }
   }
 }

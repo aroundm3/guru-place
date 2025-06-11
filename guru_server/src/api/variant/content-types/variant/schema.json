@@ -11,14 +11,6 @@
     "draftAndPublish": true
   },
   "attributes": {
-    "variant_option": {
-      "type": "string",
-      "required": true
-    },
-    "variant_value": {
-      "type": "string",
-      "required": true
-    },
     "variant_image": {
       "type": "media",
       "multiple": false,
@@ -60,6 +52,10 @@
       "relation": "oneToMany",
       "target": "api::order-item.order-item",
       "mappedBy": "variant"
+    },
+    "variant_value": {
+      "type": "string",
+      "required": true
     }
   }
 }
