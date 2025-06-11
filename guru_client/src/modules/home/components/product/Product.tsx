@@ -2,6 +2,7 @@ import { formatBigNumber } from "@lib/util/format-big-number"
 import Image from "next/image"
 import { Product as ProductData } from "types/global"
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart"
+import Link from "next/link"
 
 interface ProductProps {
   data: ProductData
@@ -9,7 +10,10 @@ interface ProductProps {
 
 export default function Product({ data }: ProductProps) {
   return (
-    <div className="bg-white border border-stone-300 rounded-lg flex flex-col justify-between shadow-sm cursor-pointer hover:shadow-lg duration-300 w-full">
+    <Link
+      href={`/product/${data.slug}`}
+      className="bg-white border border-stone-300 rounded-lg flex flex-col justify-between shadow-sm cursor-pointer hover:shadow-lg duration-300 w-full"
+    >
       <div className="flex flex-col">
         <Image
           src={data.images[0].default}
@@ -44,6 +48,6 @@ export default function Product({ data }: ProductProps) {
         </div>
         <ShoppingCartIcon className="my-auto text-stone-800" />
       </div>
-    </div>
+    </Link>
   )
 }

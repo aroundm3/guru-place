@@ -59,6 +59,22 @@
     },
     "detail_description": {
       "type": "blocks"
+    },
+    "product_list_block": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::product-list-block.product-list-block",
+      "inversedBy": "products"
+    },
+    "base_price": {
+      "type": "biginteger",
+      "required": true,
+      "default": "100000"
+    },
+    "sale_price": {
+      "required": true,
+      "default": "100000",
+      "type": "biginteger"
     }
   }
 }

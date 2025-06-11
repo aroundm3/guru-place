@@ -53,26 +53,46 @@ export type ImageMedia = {
   default: string
 }
 
+export interface RichTextBlock {
+  type: string
+  children: {
+    text: string
+    bold?: boolean
+    italic?: boolean
+    underline?: boolean
+  }[]
+  level?: number
+  url?: string
+}
+
+export interface Variant {
+  id: number
+  documentId: string
+  variant_value: string
+  quantity: string
+  createdAt: string
+  updatedAt: string
+  publishedAt: string
+  base_price: number
+  sale_price: number
+  SKU: string
+  variant_image: ImageMedia
+}
+
 export interface Product {
   documentId: string
   name: string
   short_description: string
-  detail_description: {
-    type: string
-    children: {
-      type: string
-      children: {
-        text: string
-        type: string
-      }
-    }[]
-  }[]
+  detail_description: RichTextBlock[]
   sold_quantity: number
   slug: string
   images: ImageMedia[]
   priceBaseRange: number[]
   priceSaleRange: number[]
   totalQuantity: number
+  variants: Variant[]
+  category: Category
+  brand: Brand
 }
 
 export interface ProductListBlock {
@@ -80,4 +100,13 @@ export interface ProductListBlock {
   index: number
   title: string
   products: Product[]
+}
+
+export interface StoreMetadata {
+  documentId: string
+  background_color: string
+  phone_number: string
+  address: string
+  email_contact: string
+  facebook_link: string
 }

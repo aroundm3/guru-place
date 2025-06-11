@@ -1,155 +1,140 @@
-import { listCategories } from "@lib/data/categories"
-import { listCollections } from "@lib/data/collections"
+import { getListBrand } from "@lib/data/brand"
+import { getListCategories } from "@lib/data/category"
 import { Text, clx } from "@medusajs/ui"
-
 import LocalizedClientLink from "@modules/common/components/localized-client-link"
-import MedusaCTA from "@modules/layout/components/medusa-cta"
+import Link from "next/link"
+import { StoreMetadata } from "types/global"
+import LocalPhoneIcon from "@mui/icons-material/LocalPhone"
+import EmailIcon from "@mui/icons-material/Email"
+import FacebookIcon from "@mui/icons-material/Facebook"
 
-export default async function Footer() {
-  const { collections } = await listCollections({
-    fields: "*products",
-  })
-  const productCategories = await listCategories()
+interface FooterProps {
+  metada: StoreMetadata
+}
+
+export default async function Footer({ metada }: FooterProps) {
+  const categories = await getListCategories({})
+  const brands = await getListBrand({})
 
   return (
-    <footer className="border-t border-ui-border-base w-full">
+    <footer className="border-t border-ui-border-base w-full bg-stone-100">
       <div className="content-container flex flex-col w-full">
-        <div className="flex flex-col gap-y-6 xsmall:flex-row items-start justify-between py-40">
+        <div className="flex flex-col gap-y-6 xsmall:flex-row items-start justify-between py-20">
           <div>
             <LocalizedClientLink
               href="/"
               className="txt-compact-xlarge-plus text-ui-fg-subtle hover:text-ui-fg-base uppercase"
             >
-              Medusa Store
+              DIVI Cosmetics
             </LocalizedClientLink>
           </div>
           <div className="text-small-regular gap-10 md:gap-x-16 grid grid-cols-2 sm:grid-cols-3">
-            {productCategories && productCategories?.length > 0 && (
+            {categories && categories?.length > 0 && (
               <div className="flex flex-col gap-y-2">
-                <span className="txt-small-plus txt-ui-fg-base">
-                  Categories
-                </span>
+                <span className="txt-small-plus txt-ui-fg-base">Danh mục</span>
                 <ul
                   className="grid grid-cols-1 gap-2"
                   data-testid="footer-categories"
                 >
-                  {productCategories?.slice(0, 6).map((c) => {
-                    if (c.parent_category) {
-                      return
-                    }
-
-                    const children =
-                      c.category_children?.map((child) => ({
-                        name: child.name,
-                        handle: child.handle,
-                        id: child.id,
-                      })) || null
-
+                  {categories.map((category) => {
                     return (
                       <li
                         className="flex flex-col gap-2 text-ui-fg-subtle txt-small"
-                        key={c.id}
+                        key={category.documentId}
                       >
-                        <LocalizedClientLink
+                        <Link
                           className={clx(
                             "hover:text-ui-fg-base",
-                            children && "txt-small-plus"
+                            "txt-small-plus"
                           )}
-                          href={`/categories/${c.handle}`}
+                          href={`/category_${category.slug}`}
                           data-testid="category-link"
                         >
-                          {c.name}
-                        </LocalizedClientLink>
-                        {children && (
-                          <ul className="grid grid-cols-1 ml-3 gap-2">
-                            {children &&
-                              children.map((child) => (
-                                <li key={child.id}>
-                                  <LocalizedClientLink
-                                    className="hover:text-ui-fg-base"
-                                    href={`/categories/${child.handle}`}
-                                    data-testid="category-link"
-                                  >
-                                    {child.name}
-                                  </LocalizedClientLink>
-                                </li>
-                              ))}
-                          </ul>
-                        )}
+                          {category.name}
+                        </Link>
                       </li>
                     )
                   })}
                 </ul>
               </div>
             )}
-            {collections && collections.length > 0 && (
+            {brands && brands.length > 0 && (
               <div className="flex flex-col gap-y-2">
                 <span className="txt-small-plus txt-ui-fg-base">
-                  Collections
+                  Thương hiệu
                 </span>
                 <ul
                   className={clx(
                     "grid grid-cols-1 gap-2 text-ui-fg-subtle txt-small",
                     {
-                      "grid-cols-2": (collections?.length || 0) > 3,
+                      "grid-cols-2": (brands?.length || 0) > 3,
                     }
                   )}
                 >
-                  {collections?.slice(0, 6).map((c) => (
-                    <li key={c.id}>
-                      <LocalizedClientLink
+                  {brands.map((brand) => (
+                    <li key={brand.documentId}>
+                      <Link
                         className="hover:text-ui-fg-base"
-                        href={`/collections/${c.handle}`}
+                        href={`/brand_${brand.slug}`}
                       >
-                        {c.title}
-                      </LocalizedClientLink>
+                        {brand.name}
+                      </Link>
                     </li>
                   ))}
                 </ul>
               </div>
             )}
             <div className="flex flex-col gap-y-2">
-              <span className="txt-small-plus txt-ui-fg-base">Medusa</span>
+              <span className="txt-small-plus txt-ui-fg-base">Contact</span>
               <ul className="grid grid-cols-1 gap-y-2 text-ui-fg-subtle txt-small">
-                <li>
-                  <a
-                    href="https://github.com/medusajs"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="hover:text-ui-fg-base"
-                  >
-                    GitHub
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="https://docs.medusajs.com"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="hover:text-ui-fg-base"
-                  >
-                    Documentation
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="https://github.com/medusajs/nextjs-starter-medusa"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="hover:text-ui-fg-base"
-                  >
-                    Source code
-                  </a>
-                </li>
+                {metada.phone_number && (
+                  <li>
+                    <a
+                      href={`tel:${metada.phone_number}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="hover:text-ui-fg-base flex items-center"
+                    >
+                      <LocalPhoneIcon className="!h-4" />
+                      {metada.phone_number}
+                    </a>
+                  </li>
+                )}
+                {metada.email_contact && (
+                  <li>
+                    <a
+                      href={`mailTo:${metada.phone_number}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="hover:text-ui-fg-base flex items-center"
+                    >
+                      <EmailIcon className="!h-4" />
+                      {metada.email_contact}
+                    </a>
+                  </li>
+                )}
+
+                {metada.facebook_link && (
+                  <li>
+                    <a
+                      href={metada.facebook_link}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="hover:text-ui-fg-base flex items-center"
+                    >
+                      <FacebookIcon className="!h-4" />
+                      Facebook
+                    </a>
+                  </li>
+                )}
               </ul>
             </div>
           </div>
         </div>
         <div className="flex w-full mb-16 justify-between text-ui-fg-muted">
           <Text className="txt-compact-small">
-            © {new Date().getFullYear()} Medusa Store. All rights reserved.
+            © {new Date().getFullYear()} Divi Cosmetics Store.
           </Text>
-          <MedusaCTA />
         </div>
       </div>
     </footer>

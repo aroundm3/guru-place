@@ -33,7 +33,7 @@ export default function Brands({ brands }: { brands: Brand[] }) {
       <div className="relative">
         <button
           onClick={scrollLeft}
-          className="absolute left-4 opacity-60 hover:opacity-100 duration-300 top-1/2 -translate-y-1/2 z-10 p-2 bg-white rounded-full shadow-md hover:bg-gray-100"
+          className="absolute left-4 opacity-30 hover:opacity-100 duration-300 top-1/2 -translate-y-1/2 z-10 p-2 bg-white rounded-full shadow-md hover:bg-gray-100"
           aria-label="Scroll left"
         >
           <svg
@@ -53,7 +53,7 @@ export default function Brands({ brands }: { brands: Brand[] }) {
 
         <button
           onClick={scrollRight}
-          className="top-1/2 -translate-y-1/2 absolute right-4 opacity-60 hover:opacity-100 duration-300 z-10 p-2 bg-white rounded-full shadow-md hover:bg-gray-100"
+          className="top-1/2 -translate-y-1/2 absolute right-4 opacity-30 hover:opacity-100 duration-300 z-10 p-2 bg-white rounded-full shadow-md hover:bg-gray-100"
           aria-label="Scroll right"
         >
           <svg
@@ -82,15 +82,18 @@ export default function Brands({ brands }: { brands: Brand[] }) {
                   key={brand.documentId}
                   className="flex flex-col h-fit bg-white rounded-lg border border-stone-300 cursor-pointer duration-300 text-pink-700"
                 >
-                  <Image
-                    src={brand.logo}
-                    alt={brand.name}
-                    height={0}
-                    width={0}
-                    className="sm:h-32 h-28 sm:w-32 w-28 object-cover my-auto rounded-t-lg"
-                    loading="eager"
-                    sizes="80vw"
-                  />
+                  <div className="sm:h-20 h-16 sm:w-32 w-28 px-2 py-1">
+                    <Image
+                      src={brand.logo}
+                      alt={brand.name}
+                      height={0}
+                      width={0}
+                      className="object-scale-down my-auto rounded-t-lg w-full h-full"
+                      loading="eager"
+                      sizes="80vw"
+                    />
+                  </div>
+
                   <div className="text-center w-full py-2">
                     <span className="text-xs font-semibold">{brand.name}</span>
                   </div>

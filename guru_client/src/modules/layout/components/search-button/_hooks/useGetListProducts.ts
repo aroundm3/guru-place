@@ -2,17 +2,20 @@ import { getListProducts } from "@lib/data/product"
 import useSWR from "swr"
 import { Product } from "types/global"
 
-const useGetListProducts = (filter: {
-  searchQuery?: string
-  page?: number
-  brandId?: string
-  categoryId?: string
-}) => {
+const useGetListProducts = (
+  filter: {
+    searchQuery?: string
+    page?: number
+    brandId?: string
+    categoryId?: string
+  },
+  isNotFetch?: boolean
+) => {
   const { searchQuery, page, brandId, categoryId } = filter
   const { data, isLoading, mutate } = useSWR<Product[]>(
-    [searchQuery, page, brandId, categoryId],
+    isNotFetch ? null : [searchQuery, page, brandId, categoryId],
     async (url) => {
-      return await getListProducts(filter)
+      return await getListProducts(filter).then(({ data }) => data)
     },
     { revalidateIfStale: false, revalidateOnFocus: false }
   )

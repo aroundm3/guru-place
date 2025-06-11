@@ -54,5 +54,5 @@ export async function fetcher(
 }
 
 export const getFullLinkResource = (urlResponseFromServer: string) => {
-  return BASE_URL + urlResponseFromServer
+  return urlResponseFromServer ? BASE_URL + urlResponseFromServer : "/logo.png"
 }

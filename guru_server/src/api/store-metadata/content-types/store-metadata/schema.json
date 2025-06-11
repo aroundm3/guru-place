@@ -1,0 +1,29 @@
+{
+  "kind": "singleType",
+  "collectionName": "store_metadatas",
+  "info": {
+    "singularName": "store-metadata",
+    "pluralName": "store-metadatas",
+    "displayName": "Store Metadata"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "attributes": {
+    "background_color": {
+      "type": "string"
+    },
+    "phone_number": {
+      "type": "string"
+    },
+    "address": {
+      "type": "string"
+    },
+    "email_contact": {
+      "type": "email"
+    },
+    "facebook_link": {
+      "type": "string"
+    }
+  }
+}

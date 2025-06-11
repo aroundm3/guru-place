@@ -1,4 +1,4 @@
-import { Metadata } from "next"
+import { Metadata, ResolvingMetadata } from "next"
 
 import { getListCategories } from "@lib/data/category"
 import { getListBrand } from "@lib/data/brand"
@@ -9,22 +9,23 @@ import Link from "next/link"
 import { Product } from "types/global"
 import Filter from "./_components/Filter"
 
-export const metadata: Metadata = {
-  title: "Medusa Next.js Starter Template",
-  description:
-    "A performant frontend ecommerce starter template with Next.js 15 and Medusa.",
-}
+export async function generateMetadata(
+  {
+    params,
+    searchParams,
+  }: {
+    params: Promise<{ slug: string[] }>
+    searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+  },
+  _: ResolvingMetadata
+): Promise<Metadata> {
+  const slug = (await params).slug
 
-export default async function Home(props: { params: { slug: string[] } }) {
-  const params = await props.params
-
-  const listParamsToFilter = params.slug[0].split("_")
+  const listParamsToFilter = slug[0].split("_")
 
   const typeSearch = listParamsToFilter[0]
     ? decodeURIComponent(listParamsToFilter[0] as string)
     : ""
-
-  console.log({ listParamsToFilter })
 
   const categories = await getListCategories({})
   const brands = await getListBrand({})
@@ -37,6 +38,7 @@ export default async function Home(props: { params: { slug: string[] } }) {
   let currentCategory
   let currentBrand
   let currentBlockProduct
+  let pageCount = 1
 
   if (listParamsToFilter.length) {
     switch (typeSearch) {
@@ -47,9 +49,12 @@ export default async function Home(props: { params: { slug: string[] } }) {
 
         if (currentCategory) {
           subRouteTitle = `Danh mục: ${currentCategory.name}`
-          products = await getListProducts({
+          const productsRs = await getListProducts({
             categoryId: currentCategory.documentId,
           })
+
+          products = productsRs.data
+          pageCount = productsRs.pageCount
         }
 
         break
@@ -61,9 +66,12 @@ export default async function Home(props: { params: { slug: string[] } }) {
         )
         if (currentBrand) {
           subRouteTitle = `Thương hiệu: ${currentBrand.name}`
-          products = await getListProducts({
+          const productsRs = await getListProducts({
             brandId: currentBrand.documentId,
           })
+
+          products = productsRs.data
+          pageCount = productsRs.pageCount
         }
 
         break
@@ -77,10 +85,13 @@ export default async function Home(props: { params: { slug: string[] } }) {
         )
         if (currentCategory && currentBrand) {
           subRouteTitle = `Thương hiệu: ${currentBrand.name}`
-          products = await getListProducts({
+          const productsRs = await getListProducts({
             brandId: currentBrand.documentId,
             categoryId: currentCategory.documentId,
           })
+
+          products = productsRs.data
+          pageCount = productsRs.pageCount
         }
 
         break
@@ -89,15 +100,14 @@ export default async function Home(props: { params: { slug: string[] } }) {
         currentBlockProduct = listProducBlock.find(
           (block) => block.documentId === listParamsToFilter[1]
         )
-        currentBrand = brands.find(
-          (brandItem) => brandItem.slug === listParamsToFilter[2]
-        )
-        if (currentCategory && currentBrand) {
-          subRouteTitle = `Thương hiệu: ${currentBrand.name}`
-          products = await getListProducts({
-            brandId: currentBrand.documentId,
-            categoryId: currentCategory.documentId,
+        if (currentBlockProduct) {
+          subRouteTitle = `${currentBlockProduct.title}`
+          const productsRs = await getListProducts({
+            blockProductId: currentBlockProduct.documentId,
           })
+
+          products = productsRs.data
+          pageCount = productsRs.pageCount
         }
 
         break
@@ -112,15 +122,157 @@ export default async function Home(props: { params: { slug: string[] } }) {
           subRouteTitle = `Từ khoá tìm kiếm: ${searchQuery}`
         }
 
-        products = await getListProducts({
+        const productsRs = await getListProducts({
           searchQuery: searchQuery,
         })
+
+        products = productsRs.data
+        pageCount = productsRs.pageCount
 
         break
       }
 
       case "products": {
-        products = await getListProducts({})
+        const productsRs = await getListProducts({})
+
+        products = productsRs.data
+        pageCount = productsRs.pageCount
+
+        break
+      }
+    }
+  }
+
+  return {
+    title: `Divi | ${subRouteTitle ? subRouteTitle : "Tất cả sản phẩm"}`,
+    icons: {
+      icon: "/logo.png", // icon mặc định
+      shortcut: "/logo.png", // shortcut icon (nhỏ hơn)
+      apple: "/logo.png", // icon cho iOS
+    },
+  }
+}
+
+export default async function Home(props: { params: { slug: string[] } }) {
+  const params = await props.params
+
+  const listParamsToFilter = params.slug[0].split("_")
+
+  const typeSearch = listParamsToFilter[0]
+    ? decodeURIComponent(listParamsToFilter[0] as string)
+    : ""
+
+  const categories = await getListCategories({})
+  const brands = await getListBrand({})
+  const listProducBlock = await getListProductsBlock()
+
+  let products: Product[] = []
+
+  let subRouteTitle = ""
+
+  let currentCategory
+  let currentBrand
+  let currentBlockProduct
+  let pageCount = 1
+
+  if (listParamsToFilter.length) {
+    switch (typeSearch) {
+      case "category": {
+        currentCategory = categories.find(
+          (categoryItem) => categoryItem.slug === listParamsToFilter[1]
+        )
+
+        if (currentCategory) {
+          subRouteTitle = `Danh mục: ${currentCategory.name}`
+          const productsRs = await getListProducts({
+            categoryId: currentCategory.documentId,
+          })
+
+          products = productsRs.data
+          pageCount = productsRs.pageCount
+        }
+
+        break
+      }
+
+      case "brand": {
+        currentBrand = brands.find(
+          (brandItem) => brandItem.slug === listParamsToFilter[1]
+        )
+        if (currentBrand) {
+          subRouteTitle = `Thương hiệu: ${currentBrand.name}`
+          const productsRs = await getListProducts({
+            brandId: currentBrand.documentId,
+          })
+
+          products = productsRs.data
+          pageCount = productsRs.pageCount
+        }
+
+        break
+      }
+      case "brand&category": {
+        currentCategory = categories.find(
+          (categoryItem) => categoryItem.slug === listParamsToFilter[1]
+        )
+        currentBrand = brands.find(
+          (brandItem) => brandItem.slug === listParamsToFilter[2]
+        )
+        if (currentCategory && currentBrand) {
+          subRouteTitle = `Thương hiệu: ${currentBrand.name}`
+          const productsRs = await getListProducts({
+            brandId: currentBrand.documentId,
+            categoryId: currentCategory.documentId,
+          })
+
+          products = productsRs.data
+          pageCount = productsRs.pageCount
+        }
+
+        break
+      }
+      case "collection": {
+        currentBlockProduct = listProducBlock.find(
+          (block) => block.documentId === listParamsToFilter[1]
+        )
+        if (currentBlockProduct) {
+          subRouteTitle = `${currentBlockProduct.title}`
+          const productsRs = await getListProducts({
+            blockProductId: currentBlockProduct.documentId,
+          })
+
+          products = productsRs.data
+          pageCount = productsRs.pageCount
+        }
+
+        break
+      }
+
+      case "search": {
+        const searchQuery = listParamsToFilter[1]
+          ? decodeURIComponent(listParamsToFilter[1] as string)
+          : ""
+
+        if (searchQuery) {
+          subRouteTitle = `Từ khoá tìm kiếm: ${searchQuery}`
+        }
+
+        const productsRs = await getListProducts({
+          searchQuery: searchQuery,
+        })
+
+        products = productsRs.data
+        pageCount = productsRs.pageCount
+
+        break
+      }
+
+      case "products": {
+        const productsRs = await getListProducts({})
+
+        products = productsRs.data
+        pageCount = productsRs.pageCount
+
         break
       }
     }
@@ -156,8 +308,9 @@ export default async function Home(props: { params: { slug: string[] } }) {
           listProducBlock={listProducBlock}
           currentBrand={currentBrand}
           currentCategory={currentCategory}
+          currentBlockProduct={currentBlockProduct}
         />
-        <ListProducts products={products} />
+        <ListProducts products={products} pageCount={pageCount} />
       </div>
     </div>
   )

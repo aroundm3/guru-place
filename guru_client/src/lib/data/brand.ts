@@ -10,7 +10,7 @@ export async function getListBrand(filter: {
 }): Promise<Brand[]> {
   try {
     const data = await fetcher(
-      `/api/brands?populate=logo&pagination[page]=1&pagination[pageSize]=100${
+      `/api/brands?populate=logo&pagination[page]=1&pagination[pageSize]=100&sort=index:asc&${
         typeof filter.isHightlight === "boolean"
           ? `&filters[isHighlight][$eq]=${filter.isHightlight}`
           : ""

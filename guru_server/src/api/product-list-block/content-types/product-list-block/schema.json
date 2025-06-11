@@ -19,7 +19,8 @@
     "products": {
       "type": "relation",
       "relation": "oneToMany",
-      "target": "api::product.product"
+      "target": "api::product.product",
+      "mappedBy": "product_list_block"
     },
     "title": {
       "type": "string",

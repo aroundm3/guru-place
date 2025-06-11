@@ -85,7 +85,6 @@ export default async function HighlightService() {
       </div>
       <div className="lg:px-0 px-4 flex flex-col sm:gap-y-10 gap-y-6">
         <div className="flex w-full justify-center">
-          <Divider className="!my-auto bg-pink-500 w-20" />
           <Image
             src={"/logo.png"}
             alt={"Divi Cosmetics"}
@@ -94,7 +93,6 @@ export default async function HighlightService() {
             className="my-auto"
             sizes="100vw"
           />
-          <Divider className="!my-auto bg-pink-500 w-20" />
         </div>
         <Categories isShowList />
         <Brands brands={brands} />

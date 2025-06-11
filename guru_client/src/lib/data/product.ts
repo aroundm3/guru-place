@@ -1,19 +1,88 @@
 "use server"
 
 import { fetcher, getFullLinkResource } from "@lib/config"
+import { PAGINATION_CONFIG } from "@lib/constants/pagination"
 import { Product, ProductListBlock } from "types/global"
+
+export const getProductBySlug = async (slug: string) => {
+  try {
+    const data = await fetcher(
+      `/api/products?filters[slug][$eq]=${slug}&populate[brand]=true&populate[category]=true&populate[media]=true&populate[variants][populate][variant_image]=true`,
+      {
+        next: { revalidate: 10 },
+      }
+    )
+
+    const productRs = data.data[0]
+
+    if (productRs) {
+      return {
+        ...productRs,
+        images: productRs.media.map((itemImage: any) => {
+          return {
+            small: getFullLinkResource(
+              itemImage.formats?.small?.url ?? itemImage.url
+            ),
+            thumbnail: getFullLinkResource(
+              itemImage.formats?.thumbnail?.url ?? itemImage.url
+            ),
+            default: getFullLinkResource(itemImage.url),
+          }
+        }),
+        priceBaseRange: productRs.variants.reduce(
+          ([min, max]: [number, number], v: { base_price: number }) => [
+            Math.min(min, Number(v.base_price)),
+            Math.max(max, Number(v.base_price)),
+          ],
+          [Infinity, -Infinity]
+        ),
+        priceSaleRange: productRs.variants.reduce(
+          ([min, max]: [number, number], v: { sale_price: number }) => [
+            Math.min(min, Number(v.sale_price)),
+            Math.max(max, Number(v.sale_price)),
+          ],
+          [Infinity, -Infinity]
+        ),
+        totalQuantity: productRs.variants.reduce(
+          (total: number, v: { quantity: number }) =>
+            total + Number(v.quantity),
+          0
+        ),
+        variants: productRs.variants.map((variant: any) => {
+          return {
+            ...variant,
+            variant_image: {
+              small: getFullLinkResource(
+                variant.variant_image?.formats?.small?.url ??
+                  variant.variant_image?.url
+              ),
+              thumbnail: getFullLinkResource(
+                variant.variant_image?.formats?.thumbnail?.url ??
+                  variant.variant_image?.url
+              ),
+              default: getFullLinkResource(variant.variant_image?.url),
+            },
+          }
+        }),
+      }
+    }
+  } catch (ex) {
+    return
+  }
+}
 
 export async function getListProducts(filter: {
   searchQuery?: string
   page?: number
   brandId?: string
   categoryId?: string
-}): Promise<Product[]> {
+  blockProductId?: string
+}): Promise<{ data: Product[]; pageCount: number }> {
   try {
     const data = await fetcher(
       `/api/products?pagination[page]=${
         filter.page ?? 1
-      }&pagination[pageSize]=12&populate=media&${
+      }&pagination[pageSize]=${PAGINATION_CONFIG.pageSize}&populate=media&${
         filter.searchQuery
           ? `filters[$or][0][name][$containsi]=${filter.searchQuery}&filters[$or][1][brand][name][$containsi]=${filter.searchQuery}&filters[$or][2][category][name][$containsi]=${filter.searchQuery}`
           : ""
@@ -23,47 +92,61 @@ export async function getListProducts(filter: {
           : ""
       }${
         filter.brandId ? `&filters[brand][documentId]=${filter.brandId}` : ""
+      }${
+        filter.blockProductId
+          ? `&filters[product_list_block][documentId]=${filter.blockProductId}`
+          : ""
       }&[populate]=variants`,
       {
         next: { revalidate: 10 },
       }
     )
 
-    return data.data.map((item: any) => {
-      return {
-        ...item,
+    return {
+      data: data.data.map((item: any) => {
+        return {
+          ...item,
 
-        images: item.media.map((itemImage: any) => {
-          return {
-            small: getFullLinkResource(itemImage.formats.small.url),
-            thumbnail: getFullLinkResource(itemImage.formats.thumbnail.url),
-            default: getFullLinkResource(itemImage.url),
-          }
-        }),
+          images: item.media.map((itemImage: any) => {
+            return {
+              small: getFullLinkResource(
+                itemImage.formats?.small?.url ?? itemImage.url
+              ),
+              thumbnail: getFullLinkResource(
+                itemImage.formats?.thumbnail?.url ?? itemImage.url
+              ),
+              default: getFullLinkResource(itemImage.url),
+            }
+          }),
 
-        priceBaseRange: item.variants.reduce(
-          ([min, max]: [number, number], v: { base_price: number }) => [
-            Math.min(min, Number(v.base_price)),
-            Math.max(max, Number(v.base_price)),
-          ],
-          [Infinity, -Infinity]
-        ),
-        priceSaleRange: item.variants.reduce(
-          ([min, max]: [number, number], v: { sale_price: number }) => [
-            Math.min(min, Number(v.sale_price)),
-            Math.max(max, Number(v.sale_price)),
-          ],
-          [Infinity, -Infinity]
-        ),
-        totalQuantity: item.variants.reduce(
-          (total: number, v: { quantity: number }) =>
-            total + Number(v.quantity),
-          0
-        ),
-      }
-    })
+          priceBaseRange: item.variants.reduce(
+            ([min, max]: [number, number], v: { base_price: number }) => [
+              Math.min(min, Number(v.base_price)),
+              Math.max(max, Number(v.base_price)),
+            ],
+            [Infinity, -Infinity]
+          ),
+          priceSaleRange: item.variants.reduce(
+            ([min, max]: [number, number], v: { sale_price: number }) => [
+              Math.min(min, Number(v.sale_price)),
+              Math.max(max, Number(v.sale_price)),
+            ],
+            [Infinity, -Infinity]
+          ),
+          totalQuantity: item.variants.reduce(
+            (total: number, v: { quantity: number }) =>
+              total + Number(v.quantity),
+            0
+          ),
+        }
+      }),
+      pageCount: data.meta.pagination.pageCount,
+    }
   } catch (ex) {
-    return []
+    return {
+      data: [],
+      pageCount: 1,
+    }
   }
 }
 
@@ -73,7 +156,7 @@ export async function getListProductsBlock(
 ): Promise<ProductListBlock[]> {
   try {
     const data = await fetcher(
-      `/api/product-list-blocks?populate[products][populate]=media&pagination[pageSize]=100&populate[products][populate]=variants`,
+      `/api/product-list-blocks?populate[products][populate]=media&pagination[pageSize]=100&sort=index:asc&populate[products][populate]=variants`,
       {
         next: { revalidate: 10 },
       }
@@ -87,8 +170,12 @@ export async function getListProductsBlock(
             ...productItem,
             images: productItem.media.map((itemImage: any) => {
               return {
-                small: getFullLinkResource(itemImage.formats.small.url),
-                thumbnail: getFullLinkResource(itemImage.formats.thumbnail.url),
+                small: getFullLinkResource(
+                  itemImage.formats?.small?.url ?? itemImage.url
+                ),
+                thumbnail: getFullLinkResource(
+                  itemImage.formats?.thumbnail?.url ?? itemImage.url
+                ),
                 default: getFullLinkResource(itemImage.url),
               }
             }),
