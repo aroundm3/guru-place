@@ -25,8 +25,6 @@ export default function CategoriesFlatList({
     }
   }
 
-  console.log({ categories })
-
   return (
     <div className="relative flex flex-col bg-[#fffdf8] border pt-3 pb-4 border-stone-300 rounded-lg">
       <div className="mr-4 flex sm:space-x-1 space-x-0.5 px-4 text-gray-700 items-center">

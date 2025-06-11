@@ -14,157 +14,38 @@ import { Product } from "types/global"
 import { notFound } from "next/navigation"
 import ImageCarousel from "./_compoents/ImageCarousel"
 import RichTextBlockRender from "@modules/home/components/rich-text-block-render/RichTextBlockRender"
+import Options from "./_compoents/Options"
+import BlockProduct from "@modules/home/components/product/BlockProduct"
 
-// export async function generateMetadata(
-//   {
-//     params,
-//     searchParams,
-//   }: {
-//     params: Promise<{ slug: string[] }>
-//     searchParams: Promise<{ [key: string]: string | string[] | undefined }>
-//   },
-//   _: ResolvingMetadata
-// ): Promise<Metadata> {
-//   const slug = (await params).slug
+export async function generateMetadata(
+  {
+    params,
+    searchParams,
+  }: {
+    params: Promise<{ slug: string }>
+    searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+  },
+  _: ResolvingMetadata
+): Promise<Metadata> {
+  const slug = (await params).slug
 
-//   const listParamsToFilter = slug[0].split("_")
+  const productDetail: Product = await getProductBySlug(slug)
 
-//   const typeSearch = listParamsToFilter[0]
-//     ? decodeURIComponent(listParamsToFilter[0] as string)
-//     : ""
-
-//   const categories = await getListCategories({})
-//   const brands = await getListBrand({})
-//   const listProducBlock = await getListProductsBlock()
-
-//   let products: Product[] = []
-
-//   let subRouteTitle = ""
-
-//   let currentCategory
-//   let currentBrand
-//   let currentBlockProduct
-//   let pageCount = 1
-
-//   if (listParamsToFilter.length) {
-//     switch (typeSearch) {
-//       case "category": {
-//         currentCategory = categories.find(
-//           (categoryItem) => categoryItem.slug === listParamsToFilter[1]
-//         )
-
-//         if (currentCategory) {
-//           subRouteTitle = `Danh mục: ${currentCategory.name}`
-//           const productsRs = await getListProducts({
-//             categoryId: currentCategory.documentId,
-//           })
-
-//           products = productsRs.data
-//           pageCount = productsRs.pageCount
-//         }
-
-//         break
-//       }
-
-//       case "brand": {
-//         currentBrand = brands.find(
-//           (brandItem) => brandItem.slug === listParamsToFilter[1]
-//         )
-//         if (currentBrand) {
-//           subRouteTitle = `Thương hiệu: ${currentBrand.name}`
-//           const productsRs = await getListProducts({
-//             brandId: currentBrand.documentId,
-//           })
-
-//           products = productsRs.data
-//           pageCount = productsRs.pageCount
-//         }
-
-//         break
-//       }
-//       case "brand&category": {
-//         currentCategory = categories.find(
-//           (categoryItem) => categoryItem.slug === listParamsToFilter[1]
-//         )
-//         currentBrand = brands.find(
-//           (brandItem) => brandItem.slug === listParamsToFilter[2]
-//         )
-//         if (currentCategory && currentBrand) {
-//           subRouteTitle = `Thương hiệu: ${currentBrand.name}`
-//           const productsRs = await getListProducts({
-//             brandId: currentBrand.documentId,
-//             categoryId: currentCategory.documentId,
-//           })
-
-//           products = productsRs.data
-//           pageCount = productsRs.pageCount
-//         }
-
-//         break
-//       }
-//       case "collection": {
-//         currentBlockProduct = listProducBlock.find(
-//           (block) => block.documentId === listParamsToFilter[1]
-//         )
-//         if (currentBlockProduct) {
-//           subRouteTitle = `${currentBlockProduct.title}`
-//           const productsRs = await getListProducts({
-//             blockProductId: currentBlockProduct.documentId,
-//           })
-
-//           products = productsRs.data
-//           pageCount = productsRs.pageCount
-//         }
-
-//         break
-//       }
-
-//       case "search": {
-//         const searchQuery = listParamsToFilter[1]
-//           ? decodeURIComponent(listParamsToFilter[1] as string)
-//           : ""
-
-//         if (searchQuery) {
-//           subRouteTitle = `Từ khoá tìm kiếm: ${searchQuery}`
-//         }
-
-//         const productsRs = await getListProducts({
-//           searchQuery: searchQuery,
-//         })
-
-//         products = productsRs.data
-//         pageCount = productsRs.pageCount
-
-//         break
-//       }
-
-//       case "products": {
-//         const productsRs = await getListProducts({})
-
-//         products = productsRs.data
-//         pageCount = productsRs.pageCount
-
-//         break
-//       }
-//     }
-//   }
-
-//   return {
-//     title: `Divi | ${subRouteTitle ? subRouteTitle : "Tất cả sản phẩm"}`,
-//     icons: {
-//       icon: "/logo.png", // icon mặc định
-//       shortcut: "/logo.png", // shortcut icon (nhỏ hơn)
-//       apple: "/logo.png", // icon cho iOS
-//     },
-//   }
-// }
+  return {
+    title: `Divi | ${productDetail.name}`,
+    description: productDetail.short_description,
+    icons: {
+      icon: "/logo.png", // icon mặc định
+      shortcut: "/logo.png", // shortcut icon (nhỏ hơn)
+      apple: "/logo.png", // icon cho iOS
+    },
+  }
+}
 
 export default async function Home(props: { params: { slug: string } }) {
   const params = await props.params
 
   const productDetail: Product = await getProductBySlug(params.slug)
-
-  console.log({ productDetail })
 
   if (!productDetail) {
     return notFound()
@@ -177,12 +58,24 @@ export default async function Home(props: { params: { slug: string } }) {
           <Link href="/" className="text-sm font-semibold">
             Trang chủ
           </Link>
-          <Typography
-            sx={{ color: "text.primary" }}
-            className="!text-sm !font-semibold"
-          >
-            {/* {subRouteTitle ? subRouteTitle : "Tất cả sản phẩm"} */}
-          </Typography>
+          <Link href={`/category_${productDetail.category.slug}`}>
+            {" "}
+            <Typography
+              sx={{ color: "text.primary" }}
+              className="!text-sm !font-semibold"
+            >
+              {productDetail.category.name}
+            </Typography>
+          </Link>
+          <Link href={`/brand_${productDetail.brand.slug}`}>
+            {" "}
+            <Typography
+              sx={{ color: "text.primary" }}
+              className="!text-sm !font-semibold"
+            >
+              {productDetail.brand.name}
+            </Typography>
+          </Link>
         </Breadcrumbs>
         <Link
           href={`/products`}
@@ -206,12 +99,17 @@ export default async function Home(props: { params: { slug: string } }) {
           <p className="sm:text-base text-sm">
             {productDetail.short_description}
           </p>
+          <div className="!mt-10">
+            <Options productData={productDetail} />
+          </div>
         </div>
       </div>
       <div className="flex flex-col space-y-6">
         <p className="sm: text-lg text=md font-semibold">Mô tả</p>
         <RichTextBlockRender blocks={productDetail.detail_description} />
       </div>
+
+      <BlockProduct />
     </div>
   )
 }

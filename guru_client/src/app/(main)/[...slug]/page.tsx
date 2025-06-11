@@ -8,7 +8,6 @@ import { Breadcrumbs, Typography } from "@mui/material"
 import Link from "next/link"
 import { Product } from "types/global"
 import Filter from "./_components/Filter"
-import { notFound } from "next/navigation"
 
 export async function generateMetadata(
   {

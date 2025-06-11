@@ -68,9 +68,9 @@ export default function Filter({
           <SortRoundedIcon className="!h-5 my-auto" />
         </Button>
       </div>
-      <div className="bg-[#fffdf8] sm:min-w-[200px] sm:flex hidden flex-col">
+      <div className="bg-[#fffdf8] sm:min-w-[200px] sm:flex hidden flex-col p-4 rounded">
         <span className="text-md font-semibold text-gray-600 my-auto">
-          Bộ lọc sản phẩm {currentBrand?.name}
+          Bộ lọc sản phẩm
         </span>
         <div className="flex flex-col space-y-2 mt-8">
           <p className="flex space-x-2 text-xs font-sm uppercase font-semibold text-gray-400 cursor-pointer">

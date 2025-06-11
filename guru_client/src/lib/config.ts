@@ -38,8 +38,6 @@ export async function fetcher(
     ...(options.headers || {}),
   }
 
-  console.log({ url, headers })
-
   const res = await fetch(url, {
     ...options,
     headers,
@@ -56,5 +54,5 @@ export async function fetcher(
 }
 
 export const getFullLinkResource = (urlResponseFromServer: string) => {
-  return BASE_URL + urlResponseFromServer
+  return urlResponseFromServer ? BASE_URL + urlResponseFromServer : "/logo.png"
 }

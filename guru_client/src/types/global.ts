@@ -65,6 +65,20 @@ export interface RichTextBlock {
   url?: string
 }
 
+export interface Variant {
+  id: number
+  documentId: string
+  variant_value: string
+  quantity: string
+  createdAt: string
+  updatedAt: string
+  publishedAt: string
+  base_price: number
+  sale_price: number
+  SKU: string
+  variant_image: ImageMedia
+}
+
 export interface Product {
   documentId: string
   name: string
@@ -76,6 +90,9 @@ export interface Product {
   priceBaseRange: number[]
   priceSaleRange: number[]
   totalQuantity: number
+  variants: Variant[]
+  category: Category
+  brand: Brand
 }
 
 export interface ProductListBlock {
@@ -83,4 +100,13 @@ export interface ProductListBlock {
   index: number
   title: string
   products: Product[]
+}
+
+export interface StoreMetadata {
+  documentId: string
+  background_color: string
+  phone_number: string
+  address: string
+  email_contact: string
+  facebook_link: string
 }

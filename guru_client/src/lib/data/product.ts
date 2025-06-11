@@ -29,7 +29,6 @@ export const getProductBySlug = async (slug: string) => {
             default: getFullLinkResource(itemImage.url),
           }
         }),
-
         priceBaseRange: productRs.variants.reduce(
           ([min, max]: [number, number], v: { base_price: number }) => [
             Math.min(min, Number(v.base_price)),
@@ -49,6 +48,22 @@ export const getProductBySlug = async (slug: string) => {
             total + Number(v.quantity),
           0
         ),
+        variants: productRs.variants.map((variant: any) => {
+          return {
+            ...variant,
+            variant_image: {
+              small: getFullLinkResource(
+                variant.variant_image?.formats?.small?.url ??
+                  variant.variant_image?.url
+              ),
+              thumbnail: getFullLinkResource(
+                variant.variant_image?.formats?.thumbnail?.url ??
+                  variant.variant_image?.url
+              ),
+              default: getFullLinkResource(variant.variant_image?.url),
+            },
+          }
+        }),
       }
     }
   } catch (ex) {
@@ -94,8 +109,12 @@ export async function getListProducts(filter: {
 
           images: item.media.map((itemImage: any) => {
             return {
-              small: getFullLinkResource(itemImage.formats.small.url),
-              thumbnail: getFullLinkResource(itemImage.formats.thumbnail.url),
+              small: getFullLinkResource(
+                itemImage.formats?.small?.url ?? itemImage.url
+              ),
+              thumbnail: getFullLinkResource(
+                itemImage.formats?.thumbnail?.url ?? itemImage.url
+              ),
               default: getFullLinkResource(itemImage.url),
             }
           }),
@@ -137,7 +156,7 @@ export async function getListProductsBlock(
 ): Promise<ProductListBlock[]> {
   try {
     const data = await fetcher(
-      `/api/product-list-blocks?populate[products][populate]=media&pagination[pageSize]=100&populate[products][populate]=variants`,
+      `/api/product-list-blocks?populate[products][populate]=media&pagination[pageSize]=100&sort=index:asc&populate[products][populate]=variants`,
       {
         next: { revalidate: 10 },
       }
@@ -151,8 +170,12 @@ export async function getListProductsBlock(
             ...productItem,
             images: productItem.media.map((itemImage: any) => {
               return {
-                small: getFullLinkResource(itemImage.formats.small.url),
-                thumbnail: getFullLinkResource(itemImage.formats.thumbnail.url),
+                small: getFullLinkResource(
+                  itemImage.formats?.small?.url ?? itemImage.url
+                ),
+                thumbnail: getFullLinkResource(
+                  itemImage.formats?.thumbnail?.url ?? itemImage.url
+                ),
                 default: getFullLinkResource(itemImage.url),
               }
             }),

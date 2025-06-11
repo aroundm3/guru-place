@@ -114,7 +114,7 @@ export default function ImageCarousel({
           aria-label="Scroll left"
         >
           <svg
-            className="w-6 h-6 text-pink-700"
+            className="w-4 h-4 text-pink-700"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -134,7 +134,7 @@ export default function ImageCarousel({
           aria-label="Scroll right"
         >
           <svg
-            className="w-6 h-6 text-pink-700"
+            className="w-4 h-4 text-pink-700"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -157,7 +157,7 @@ export default function ImageCarousel({
                 <div
                   onClick={() => handleIndexClick(idx)}
                   key={idx}
-                  className={`sm:h-16 h-12 aspect-square p-1 bg-white border rounded ${
+                  className={`sm:h-16 cursor-pointer h-12 aspect-square p-1 bg-white border rounded ${
                     currentIndex === idx
                       ? "border-pink-600"
                       : "border-stone-400"
