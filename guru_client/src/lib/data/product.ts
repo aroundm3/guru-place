@@ -7,7 +7,7 @@ import { Product, ProductListBlock } from "types/global"
 export const getProductBySlug = async (slug: string) => {
   try {
     const data = await fetcher(
-      `/api/products?filters[slug][$eq]=product-2&populate[brand]=true&populate[category]=true&populate[media]=true&populate[variants][populate][variant_image]=true`,
+      `/api/products?filters[slug][$eq]=${slug}&populate[brand]=true&populate[category]=true&populate[media]=true&populate[variants][populate][variant_image]=true`,
       {
         next: { revalidate: 10 },
       }
@@ -20,8 +20,12 @@ export const getProductBySlug = async (slug: string) => {
         ...productRs,
         images: productRs.media.map((itemImage: any) => {
           return {
-            small: getFullLinkResource(itemImage.formats.small.url),
-            thumbnail: getFullLinkResource(itemImage.formats.thumbnail.url),
+            small: getFullLinkResource(
+              itemImage.formats?.small?.url ?? itemImage.url
+            ),
+            thumbnail: getFullLinkResource(
+              itemImage.formats?.thumbnail?.url ?? itemImage.url
+            ),
             default: getFullLinkResource(itemImage.url),
           }
         }),
@@ -138,8 +142,6 @@ export async function getListProductsBlock(
         next: { revalidate: 10 },
       }
     )
-
-    console.log({ data })
 
     return data.data.map((item: any) => {
       return {

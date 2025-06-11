@@ -53,20 +53,23 @@ export type ImageMedia = {
   default: string
 }
 
+export interface RichTextBlock {
+  type: string
+  children: {
+    text: string
+    bold?: boolean
+    italic?: boolean
+    underline?: boolean
+  }[]
+  level?: number
+  url?: string
+}
+
 export interface Product {
   documentId: string
   name: string
   short_description: string
-  detail_description: {
-    type: string
-    children: {
-      type: string
-      children: {
-        text: string
-        type: string
-      }
-    }[]
-  }[]
+  detail_description: RichTextBlock[]
   sold_quantity: number
   slug: string
   images: ImageMedia[]

@@ -13,6 +13,7 @@ import Link from "next/link"
 import { Product } from "types/global"
 import { notFound } from "next/navigation"
 import ImageCarousel from "./_compoents/ImageCarousel"
+import RichTextBlockRender from "@modules/home/components/rich-text-block-render/RichTextBlockRender"
 
 // export async function generateMetadata(
 //   {
@@ -163,11 +164,11 @@ export default async function Home(props: { params: { slug: string } }) {
 
   const productDetail: Product = await getProductBySlug(params.slug)
 
+  console.log({ productDetail })
+
   if (!productDetail) {
     return notFound()
   }
-
-  console.log({ productDetail })
 
   return (
     <div className="lg:max-w-5xl max-w-4xl lg:px-0 px-4 mx-auto flex flex-col space-y-10">
@@ -194,10 +195,11 @@ export default async function Home(props: { params: { slug: string } }) {
         <div className="sm:w-1/2 w-full">
           <ImageCarousel
             images={productDetail.images.map((image) => image.default)}
+            thumbImages={productDetail.images.map((image) => image.thumbnail)}
             productTitle={productDetail.name}
           />
         </div>
-        <div className="flex flex-col space-y-2">
+        <div className="flex flex-col space-y-2 sm:w-1/2 w-full">
           <h6 className="sm:text-2xl text-xl font-bold">
             {productDetail.name}
           </h6>
@@ -205,6 +207,10 @@ export default async function Home(props: { params: { slug: string } }) {
             {productDetail.short_description}
           </p>
         </div>
+      </div>
+      <div className="flex flex-col space-y-6">
+        <p className="sm: text-lg text=md font-semibold">Mô tả</p>
+        <RichTextBlockRender blocks={productDetail.detail_description} />
       </div>
     </div>
   )
