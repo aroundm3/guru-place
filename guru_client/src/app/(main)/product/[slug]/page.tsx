@@ -24,16 +24,24 @@ export async function generateMetadata(
 ): Promise<Metadata> {
   const slug = (await params).slug
 
-  const productDetail: Product = await getProductBySlug(slug)
+  try {
+    const productDetail: Product = await getProductBySlug(slug)
 
-  return {
-    title: `Divi | ${productDetail.name}`,
-    description: productDetail.short_description,
-    icons: {
-      icon: "/logo.png", // icon mặc định
-      shortcut: "/logo.png", // shortcut icon (nhỏ hơn)
-      apple: "/logo.png", // icon cho iOS
-    },
+    return {
+      title: `Divi | ${productDetail.name}`,
+      description: productDetail.short_description,
+      icons: {
+        icon: "/logo.png",
+        shortcut: "/logo.png",
+        apple: "/logo.png",
+      },
+    }
+  } catch (err) {
+    console.error("Failed to fetch product metadata", err)
+    return {
+      title: "Divi - Cửa hàng mỹ phẩm",
+      description: "Dầu gội xả Delofil Silky Smooth sạch gàu, kiềm dầu, mềm mượt chống gãy · Kem ủ tóc Collagen Hair Mask Delofil phục hồi tóc hư tổn, làm mềm mượt.",
+    }
   }
 }
 
