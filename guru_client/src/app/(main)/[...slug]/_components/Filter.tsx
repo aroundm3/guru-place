@@ -69,7 +69,7 @@ export default function Filter({
         </Button>
       </div>
       <div className="bg-[#fffdf8] sm:min-w-[200px] sm:flex hidden flex-col p-4 rounded">
-        <span className="text-md font-semibold text-gray-600 my-auto">
+        <span className="text-md font-semibold text-gray-600">
           Bộ lọc sản phẩm
         </span>
         <div className="flex flex-col space-y-2 mt-8">
