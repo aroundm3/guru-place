@@ -159,6 +159,11 @@ export async function generateMetadata(
     return {
       title: "Divi - Cửa hàng mỹ phẩm",
       description: "Dầu gội xả Delofil Silky Smooth sạch gàu, kiềm dầu, mềm mượt chống gãy · Kem ủ tóc Collagen Hair Mask Delofil phục hồi tóc hư tổn, làm mềm mượt.",
+      icons: {
+        icon: "/logo.png", // icon mặc định
+        shortcut: "/logo.png", // shortcut icon (nhỏ hơn)
+        apple: "/logo.png", // icon cho iOS
+      },
     }
   }
   

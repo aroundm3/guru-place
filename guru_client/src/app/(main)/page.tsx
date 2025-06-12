@@ -1,5 +1,6 @@
-import { Metadata } from "next"
+export const dynamic = "force-dynamic";
 
+import { Metadata } from "next"
 import BannerCarousel from "@modules/home/components/banner-carousel"
 import HighlightService from "@modules/home/components/highlight-service"
 import BlockProduct from "@modules/home/components/product/BlockProduct"
