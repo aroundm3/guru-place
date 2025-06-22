@@ -152,7 +152,9 @@ export default function SearchButton() {
           ) : listProduct?.length ? (
             listProduct.map((product) => {
               return (
-                <div
+                <Link
+                  href={`/product/${product.slug}`}
+                  onClick={() => setIsShowSearchList(false)}
                   key={product.documentId}
                   className="flex sm:flex-col flex-row gap-2 bg-white rounded-lg p-3 cursor-pointer"
                 >
@@ -186,7 +188,7 @@ export default function SearchButton() {
                       </div>
                     </div>
                   </div>
-                </div>
+                </Link>
               )
             })
           ) : (

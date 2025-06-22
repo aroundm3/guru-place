@@ -14,6 +14,10 @@ export default function Options({ productData }: OptionsProps) {
   const { variants } = productData
   const [currentPicked, setCurrentPicked] = useState<Variant | undefined>()
 
+  const [quantityPicked, setQuantityPicked] = useState(1)
+
+  console.log({ quantityPicked })
+
   return (
     <div className="flex flex-col space-y-4">
       {variants.length ? (
@@ -108,6 +112,45 @@ export default function Options({ productData }: OptionsProps) {
           </div>
         )}
       </div>
+      {/* <div className="flex space-x-1">
+        <Button
+          onClick={() => {
+            if (quantityPicked === 1) {
+              return
+            }
+
+            setQuantityPicked(quantityPicked - 1)
+          }}
+          variant="contained"
+          className="!bg-neutral-200 !py-2 !px-1"
+        >
+          <span className="text-lg font-semibold text-neutral-600 leading-4">
+            -
+          </span>
+        </Button>
+        <input value={quantityPicked} type="number" className="no-spinner" />
+        <Button
+          onClick={() => {
+            if (
+              (currentPicked &&
+                quantityPicked >= Number(currentPicked.quantity ?? 0)) ||
+              (!currentPicked &&
+                quantityPicked >= Number(productData.quantity ?? 0))
+            ) {
+              console.log("vdgavshdvs")
+
+              return
+            }
+            setQuantityPicked(quantityPicked + 1)
+          }}
+          variant="contained"
+          className="!bg-neutral-200 !py-2 !px-1"
+        >
+          <span className="text-lg font-semibold text-neutral-600 leading-4">
+            +
+          </span>
+        </Button>
+      </div> */}
       <Button
         variant="contained"
         className="!bg-neutral-900 !text-white !normal-case !font-semibold"
