@@ -84,6 +84,11 @@
     "isTopSelling": {
       "type": "boolean",
       "default": false
+    },
+    "isFreeShip": {
+      "type": "boolean",
+      "required": false,
+      "default": false
     }
   }
 }

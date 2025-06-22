@@ -32,8 +32,8 @@ export default function Options({ productData }: OptionsProps) {
                 <Image
                   src={variant.variant_image?.thumbnail || "/logo.png"}
                   alt={variant.variant_value}
-                  width={28}
-                  height={28}
+                  width={36}
+                  height={36}
                   sizes="100vh"
                   className="object-cover rounded-tl rounded-bl"
                 />
@@ -78,33 +78,33 @@ export default function Options({ productData }: OptionsProps) {
 
         {currentPicked ? (
           <div className="flex items-end flex-col gap-1">
-            <span className="text-sm font-normal">
+            <span className="text-sm font-normal text-neutral-600">
               Sẵn:{" "}
               <span className="text-base font-semibold">
-                {formatBigNumber(Number(currentPicked.quantity))}
+                {formatBigNumber(Number(currentPicked.quantity ?? 0))}
               </span>
             </span>
-            {/* <span className="text-sm font-normal">
+            <span className="text-sm font-normal text-neutral-600">
               Đã bán:{" "}
               <span className="text-base font-semibold">
-                {productData.sold_quantity}
+                {formatBigNumber(Number(currentPicked.sold_quantity ?? 0))}
               </span>
-            </span> */}
+            </span>
           </div>
         ) : (
           <div className="flex items-end flex-col gap-1">
-            <span className="text-sm font-normal">
+            <span className="text-sm font-normal text-neutral-600">
               Sẵn:{" "}
               <span className="text-base font-semibold">
-                {formatBigNumber(Number(productData.totalQuantity))}
+                {formatBigNumber(Number(productData.quantity ?? 0))}
               </span>
             </span>
-            {/* <span className="text-sm font-normal">
+            <span className="text-sm font-normal text-neutral-600">
               Đã bán:{" "}
               <span className="text-base font-semibold">
-                {productData.sold_quantity}
+                {formatBigNumber(Number(productData.sold_quantity ?? 0))}
               </span>
-            </span> */}
+            </span>
           </div>
         )}
       </div>

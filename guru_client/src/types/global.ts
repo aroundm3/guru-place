@@ -70,6 +70,7 @@ export interface Variant {
   documentId: string
   variant_value: string
   quantity: string
+  sold_quantity: string
   createdAt: string
   updatedAt: string
   publishedAt: string
@@ -92,9 +93,12 @@ export interface Product {
   base_price: number
   sale_price: number
   totalQuantity: number
+  quantity: number
   variants: Variant[]
   category: Category
   brand: Brand
+  isTopSelling: boolean
+  isFreeShip: boolean
 }
 
 export interface ProductListBlock {

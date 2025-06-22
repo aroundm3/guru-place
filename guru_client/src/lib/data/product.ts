@@ -43,11 +43,11 @@ export const getProductBySlug = async (slug: string) => {
           ],
           [Infinity, -Infinity]
         ),
-        totalQuantity: productRs.variants.reduce(
-          (total: number, v: { quantity: number }) =>
-            total + Number(v.quantity),
-          0
-        ),
+        // totalQuantity: productRs.variants.reduce(
+        //   (total: number, v: { quantity: number }) =>
+        //     total + Number(v.quantity),
+        //   0
+        // ),
         variants: productRs.variants.map((variant: any) => {
           return {
             ...variant,

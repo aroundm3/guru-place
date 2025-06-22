@@ -11,6 +11,8 @@ import ImageCarousel from "./_compoents/ImageCarousel"
 import RichTextBlockRender from "@modules/home/components/rich-text-block-render/RichTextBlockRender"
 import Options from "./_compoents/Options"
 import BlockProduct from "@modules/home/components/product/BlockProduct"
+import { Divider } from "@medusajs/ui"
+import LocalShippingIcon from "@mui/icons-material/LocalShipping"
 
 export async function generateMetadata(
   {
@@ -105,18 +107,38 @@ export default async function Home(props: { params: { slug: string } }) {
             productTitle={productDetail.name}
           />
         </div>
-        <div className="flex flex-col space-y-2 sm:w-1/2 w-full">
-          <h6 className="sm:text-2xl text-xl font-bold">
-            {productDetail.name}
-          </h6>
-          <p className="sm:text-base text-sm">
-            {productDetail.short_description}
-          </p>
+        <div className="flex flex-col space-y-2 justify-between sm:w-1/2 w-full">
+          <div className="flex flex-col space-y-2">
+            <h6 className="sm:text-2xl text-xl font-bold">
+              {productDetail.name}
+            </h6>
+            <p className="sm:text-base text-sm">
+              {productDetail.short_description}
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {productDetail.isTopSelling && (
+                <div className="px-2 cursor-pointer bg-orange-100 rounded">
+                  <span className="text-orange-700 text-xs font-semibold">
+                    Sản phẩm bán chạy
+                  </span>
+                </div>
+              )}
+              {productDetail.isFreeShip && (
+                <div className="px-2 rounded cursor-pointer bg-teal-50 flex space-x-1 items-center">
+                  <LocalShippingIcon className="text-teal-700 !h-4" />
+                  <span className="text-teal-700 text-xs font-semibold">
+                    Free ship - miễn phí ship nội thành Hà Nội
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
           <div className="!mt-10">
             <Options productData={productDetail} />
           </div>
         </div>
       </div>
+      <Divider />
       <div className="flex flex-col space-y-6">
         <p className="sm: text-lg text=md font-semibold">Mô tả</p>
         <RichTextBlockRender blocks={productDetail.detail_description} />
