@@ -35,7 +35,7 @@ const nextConfig = {
       {
         protocol: "https",
         hostname: "admin.myphamdivi.com",
-        port: "1337",
+        port: "",
         pathname: "**",
       },
     ],
