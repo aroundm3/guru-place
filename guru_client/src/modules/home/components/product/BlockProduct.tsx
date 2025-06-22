@@ -23,18 +23,18 @@ export default async function BlockProduct() {
               {block.products.slice(0, 6).map((product) => {
                 return <Product data={product} key={product.documentId} />
               })}
-              {block.products.length > 6 ? (
-                <Link href={`/collection_${block.documentId}`}>
-                  <div className="bg-white border border-stone-300 h-full rounded-lg flex flex-col justify-between shadow-sm cursor-pointer hover:shadow-lg duration-300 w-full">
-                    <span className="text-blue-600 text-sm font-semibold mx-auto my-auto underline">
-                      Xem thêm
-                    </span>
-                  </div>
-                </Link>
-              ) : (
-                ""
-              )}
             </div>
+            {block.products.length > 6 ? (
+              <div className="w-full flex justify-center">
+                <Link href={`/products`}>
+                  <span className="text-sm font-semibold cursor-pointer hover:text-pink-600 duration-300">
+                    Xem thêm
+                  </span>
+                </Link>
+              </div>
+            ) : (
+              ""
+            )}
           </div>
         ) : (
           ""
@@ -53,18 +53,18 @@ export default async function BlockProduct() {
             {productsRs.data.map((product) => {
               return <Product data={product} key={product.documentId} />
             })}
-            {productsRs.pageCount > 1 ? (
-              <Link href={`/products`}>
-                <div className="bg-white border border-stone-300 h-full rounded-lg flex flex-col justify-between shadow-sm cursor-pointer hover:shadow-lg duration-300 w-full">
-                  <span className="text-blue-600 text-sm font-semibold mx-auto my-auto underline">
-                    Xem thêm
-                  </span>
-                </div>
-              </Link>
-            ) : (
-              ""
-            )}
           </div>
+          {productsRs.pageCount > 1 ? (
+            <div className="w-full flex justify-center">
+              <Link href={`/products`}>
+                <span className="text-sm font-semibold cursor-pointer hover:text-pink-600 duration-300">
+                  Xem thêm
+                </span>
+              </Link>
+            </div>
+          ) : (
+            ""
+          )}
         </div>
       ) : (
         ""

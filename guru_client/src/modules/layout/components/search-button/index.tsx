@@ -21,6 +21,7 @@ export default function SearchButton() {
   const { listProduct, isLoading } = useGetListProducts({
     searchQuery: query,
     page: 1,
+    pageSizeCustom: 3,
   })
 
   const debounceSearch = debounce((inputValue) => setQuery(inputValue), 500)
@@ -43,13 +44,6 @@ export default function SearchButton() {
 
   return (
     <Fragment>
-      {/* <div
-        onClick={() => setIsShowSearchList(!isShowSearchList)}
-        className="sm:flex space-x-2 items-center border border-stone-300 cursor-pointer hidden py-1.5 pl-2 pr-6 bg-stone-100 hover:bg-white duration-200 rounded-full"
-      >
-        <SearchIcon className="text-stone-300" />
-        <span>Bạn đang tìm kiếm sản phẩm gì?</span>
-      </div> */}
       <div
         className="sm:flex hidden justify-center items-center cursor-pointer"
         onClick={() => setIsShowSearchList(true)}
@@ -106,7 +100,7 @@ export default function SearchButton() {
           },
         }}
       >
-        <div className="sm:w-[400px] w-screen mx-auto p-4 flex space-x-2 items-center">
+        <div className="sm:w-[400px] w-screen mx-auto p-4 flex space-x-2 items-center sticky top-0">
           <div className="relative w-full">
             <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
               <SearchIcon className="h-4 w-4 text-white" />
@@ -160,7 +154,7 @@ export default function SearchButton() {
               return (
                 <div
                   key={product.documentId}
-                  className="flex sm:flex-col flex-row gap-2 bg-white rounded-lg p-2 cursor-pointer"
+                  className="flex sm:flex-col flex-row gap-2 bg-white rounded-lg p-3 cursor-pointer"
                 >
                   <Image
                     src={product.images[0].default}
@@ -173,18 +167,18 @@ export default function SearchButton() {
                     sizes="10vh"
                   />
                   <div>
-                    <span className="text-stone-800 text-sm font-semibold">
+                    <span className="text-stone-800 text-sm font-semibold sm:line-clamp-3 line-clamp-2 whitespace-pre-line truncate">
                       {product.name}
                     </span>
-                    <div className="flex justify-between space-x-2">
+                    <div className="flex justify-between space-x-2 sm:mt-2">
                       <div className="flex flex-col my-auto">
-                        <span className="text-xs font-bold text-pink-600">
-                          {formatBigNumber(product.priceSaleRange[0], true)}
+                        <span className="text-sm font-bold text-pink-600">
+                          {formatBigNumber(product.sale_price, true)}
                         </span>
-                        {product.priceBaseRange[0] >
-                        product.priceSaleRange[0] ? (
+                        {Number(product.base_price) >
+                        Number(product.sale_price) ? (
                           <span className="line-through text-[10px] font-medium text-gray-400">
-                            {formatBigNumber(product.priceBaseRange[0], true)}
+                            {formatBigNumber(product.base_price, true)}
                           </span>
                         ) : (
                           ""

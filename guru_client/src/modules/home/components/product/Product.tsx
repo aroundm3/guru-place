@@ -36,17 +36,17 @@ export default function Product({ data }: ProductProps) {
       <div className="flex justify-between space-x-2 px-4 pb-4">
         <div className="flex flex-col my-auto">
           <span className="text-base font-bold text-pink-600">
-            {formatBigNumber(data.priceSaleRange[0], true)}
+            {formatBigNumber(data.sale_price, true)}
           </span>
-          {data.priceBaseRange[0] > data.priceSaleRange[0] ? (
+          {Number(data.base_price) > Number(data.sale_price) ? (
             <span className="line-through text-xs font-medium text-gray-400">
-              {formatBigNumber(data.priceBaseRange[0], true)}
+              {formatBigNumber(data.base_price, true)}
             </span>
           ) : (
             ""
           )}
         </div>
-        <ShoppingCartIcon className="my-auto text-stone-800" />
+        <ShoppingCartIcon className="my-auto text-stone-600 !h-5" />
       </div>
     </Link>
   )

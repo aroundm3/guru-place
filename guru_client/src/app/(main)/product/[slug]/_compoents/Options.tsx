@@ -64,11 +64,11 @@ export default function Options({ productData }: OptionsProps) {
         ) : (
           <div className="flex flex-col my-auto">
             <span className="sm:text-2xl text-xl font-bold text-pink-600">
-              {formatBigNumber(productData.priceSaleRange[0], true)}
+              {formatBigNumber(productData.sale_price, true)}
             </span>
-            {productData.priceBaseRange[0] > productData.priceSaleRange[0] ? (
+            {Number(productData.base_price) > Number(productData.sale_price) ? (
               <span className="line-through text-xs font-medium text-gray-400">
-                {formatBigNumber(productData.priceBaseRange[0], true)}
+                {formatBigNumber(productData.base_price, true)}
               </span>
             ) : (
               ""

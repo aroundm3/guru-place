@@ -77,12 +77,17 @@ export async function getListProducts(filter: {
   brandId?: string
   categoryId?: string
   blockProductId?: string
+  pageSizeCustom?: number
 }): Promise<{ data: Product[]; pageCount: number }> {
   try {
     const data = await fetcher(
       `/api/products?pagination[page]=${
         filter.page ?? 1
-      }&pagination[pageSize]=${PAGINATION_CONFIG.pageSize}&populate=media&${
+      }&pagination[pageSize]=${
+        filter.pageSizeCustom
+          ? filter.pageSizeCustom
+          : PAGINATION_CONFIG.pageSize
+      }&populate=media&${
         filter.searchQuery
           ? `filters[$or][0][name][$containsi]=${filter.searchQuery}&filters[$or][1][brand][name][$containsi]=${filter.searchQuery}&filters[$or][2][category][name][$containsi]=${filter.searchQuery}`
           : ""

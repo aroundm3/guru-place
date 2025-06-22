@@ -40,7 +40,8 @@ export async function generateMetadata(
     console.error("Failed to fetch product metadata", err)
     return {
       title: "Divi - Cửa hàng mỹ phẩm",
-      description: "Dầu gội xả Delofil Silky Smooth sạch gàu, kiềm dầu, mềm mượt chống gãy · Kem ủ tóc Collagen Hair Mask Delofil phục hồi tóc hư tổn, làm mềm mượt.",
+      description:
+        "Dầu gội xả Delofil Silky Smooth sạch gàu, kiềm dầu, mềm mượt chống gãy · Kem ủ tóc Collagen Hair Mask Delofil phục hồi tóc hư tổn, làm mềm mượt.",
     }
   }
 }
@@ -61,24 +62,33 @@ export default async function Home(props: { params: { slug: string } }) {
           <Link href="/" className="text-sm font-semibold">
             Trang chủ
           </Link>
-          <Link href={`/category_${productDetail.category.slug}`}>
-            {" "}
-            <Typography
-              sx={{ color: "text.primary" }}
-              className="!text-sm !font-semibold"
-            >
-              {productDetail.category.name}
-            </Typography>
-          </Link>
-          <Link href={`/brand_${productDetail.brand.slug}`}>
-            {" "}
-            <Typography
-              sx={{ color: "text.primary" }}
-              className="!text-sm !font-semibold"
-            >
-              {productDetail.brand.name}
-            </Typography>
-          </Link>
+          {productDetail.category ? (
+            <Link href={`/category_${productDetail.category.slug}`}>
+              {" "}
+              <Typography
+                sx={{ color: "text.primary" }}
+                className="!text-sm !font-semibold"
+              >
+                {productDetail.category.name}
+              </Typography>
+            </Link>
+          ) : (
+            ""
+          )}
+
+          {productDetail.brand ? (
+            <Link href={`/brand_${productDetail.brand.slug}`}>
+              {" "}
+              <Typography
+                sx={{ color: "text.primary" }}
+                className="!text-sm !font-semibold"
+              >
+                {productDetail.brand.name}
+              </Typography>
+            </Link>
+          ) : (
+            ""
+          )}
         </Breadcrumbs>
         <Link
           href={`/products`}

@@ -89,6 +89,8 @@ export interface Product {
   images: ImageMedia[]
   priceBaseRange: number[]
   priceSaleRange: number[]
+  base_price: number
+  sale_price: number
   totalQuantity: number
   variants: Variant[]
   category: Category

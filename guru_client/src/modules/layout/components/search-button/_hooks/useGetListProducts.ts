@@ -8,6 +8,7 @@ const useGetListProducts = (
     page?: number
     brandId?: string
     categoryId?: string
+    pageSizeCustom?: number
   },
   isNotFetch?: boolean
 ) => {
