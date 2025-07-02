@@ -27,6 +27,8 @@ export default function Filter({
   currentBrand,
   currentBlockProduct,
 }: FilterProps) {
+  console.log({ categories })
+
   const [currentCategorySelect, setCurrentCategorySelect] = useState("")
   const [listBrandToDisplay, setListBrandToDisplay] = useState<Brand[]>([])
   const { isLoadingListBrandByCategory, listBrandByCategory } =
@@ -68,7 +70,7 @@ export default function Filter({
           <SortRoundedIcon className="!h-5 my-auto" />
         </Button>
       </div>
-      <div className="bg-[#fffdf8] sm:min-w-[200px] sm:flex hidden flex-col p-4 rounded">
+      <div className="bg-[#fffdf8] sm:min-w-[200px] sm:flex hidden flex-col p-4 rounded h-fit pb-10 sticky top-24">
         <span className="text-md font-semibold text-gray-600">
           Bộ lọc sản phẩm
         </span>

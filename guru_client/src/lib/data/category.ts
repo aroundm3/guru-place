@@ -8,7 +8,7 @@ export async function getListCategories(filter: {
 }): Promise<Category[]> {
   try {
     const data = await fetcher(
-      `/api/categories?populate=image&populate=brands&pagination[page]=1&pagination[pageSize]=100${
+      `/api/categories?populate=image&populate=brands&pagination[page]=1&pagination[pageSize]=100&sort=index:asc&${
         filter.searchQuery
           ? `&filters[name][$containsi]=${filter.searchQuery}`
           : ""

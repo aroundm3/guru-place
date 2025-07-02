@@ -37,6 +37,22 @@ export async function generateMetadata(
         shortcut: "/logo.png",
         apple: "/logo.png",
       },
+      openGraph: {
+        title: `Divi | ${productDetail.name}`,
+        description: productDetail.short_description,
+        url: `https://www.myphamdivi.com/product/${productDetail.slug}`,
+        siteName: "Divi",
+        images: [
+          {
+            url: productDetail.images[0]?.default || "/logo.png",
+            width: 800,
+            height: 600,
+            alt: productDetail.name,
+          },
+        ],
+        locale: "vi_VN",
+        type: "website",
+      },
     }
   } catch (err) {
     console.error("Failed to fetch product metadata", err)
@@ -143,7 +159,7 @@ export default async function Home(props: { params: { slug: string } }) {
         <p className="sm: text-lg text=md font-semibold">Mô tả</p>
         <RichTextBlockRender blocks={productDetail.detail_description} />
       </div>
-
+      <Divider />
       <BlockProduct />
     </div>
   )
