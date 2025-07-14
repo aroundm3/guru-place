@@ -5,6 +5,8 @@ import { Button } from "@mui/material"
 import Image from "next/image"
 import { useState } from "react"
 import { Product, Variant } from "types/global"
+import RemoveRoundedIcon from "@mui/icons-material/RemoveRounded"
+import AddRoundedIcon from "@mui/icons-material/AddRounded"
 
 interface OptionsProps {
   productData: Product
@@ -16,7 +18,50 @@ export default function Options({ productData }: OptionsProps) {
 
   const [quantityPicked, setQuantityPicked] = useState(1)
 
-  console.log({ quantityPicked })
+  const handleAddToCart = () => {
+    console.log({
+      currentPicked,
+      quantityPicked,
+      productId: productData.documentId,
+    })
+
+    // if (!productData) return
+
+    // const cartItem = {
+    //   variantId: currentPicked?.id || null,
+    //   quantity: quantityPicked,
+    //   product: {
+    //     productData,
+    //   },
+    // }
+
+    // // Đọc giỏ hàng hiện tại từ localStorage
+    // let cart: any[] = []
+    // if (typeof window !== "undefined") {
+    //   const cartStr = localStorage.getItem("cart")
+    //   if (cartStr) {
+    //     cart = JSON.parse(cartStr)
+    //   }
+
+    //   // Kiểm tra sản phẩm đã có trong giỏ chưa (theo productId + variantId)
+    //   const existingIndex = cart.findIndex(
+    //     (item) =>
+    //       item.productId === cartItem.productId &&
+    //       item.variantId === cartItem.variantId
+    //   )
+
+    //   if (existingIndex > -1) {
+    //     // Nếu đã có thì cộng dồn số lượng
+    //     cart[existingIndex].quantity += cartItem.quantity
+    //   } else {
+    //     // Nếu chưa có thì thêm mới
+    //     cart.push(cartItem)
+    //   }
+
+    //   // Lưu lại vào localStorage
+    //   localStorage.setItem("cart", JSON.stringify(cart))
+    // }
+  }
 
   return (
     <div className="flex flex-col space-y-4">
@@ -112,48 +157,50 @@ export default function Options({ productData }: OptionsProps) {
           </div>
         )}
       </div>
-      {/* <div className="flex space-x-1">
-        <Button
-          onClick={() => {
-            if (quantityPicked === 1) {
-              return
-            }
+      <div className="flex flex-col space-y-1">
+        <span className="text-xs font-semibold text-gray-400">
+          Chọn số lượng
+        </span>
+        <div className="flex space-x-1">
+          <div
+            onClick={() => {
+              if (quantityPicked === 1) {
+                return
+              }
 
-            setQuantityPicked(quantityPicked - 1)
-          }}
-          variant="contained"
-          className="!bg-neutral-200 !py-2 !px-1"
-        >
-          <span className="text-lg font-semibold text-neutral-600 leading-4">
-            -
-          </span>
-        </Button>
-        <input value={quantityPicked} type="number" className="no-spinner" />
-        <Button
-          onClick={() => {
-            if (
-              (currentPicked &&
-                quantityPicked >= Number(currentPicked.quantity ?? 0)) ||
-              (!currentPicked &&
-                quantityPicked >= Number(productData.quantity ?? 0))
-            ) {
-              console.log("vdgavshdvs")
+              setQuantityPicked(quantityPicked - 1)
+            }}
+            className="px-2 py-1 bg-neutral-100 cursor-pointer hover:bg-neutral-50 duration-300 border border-stone-300 rounded"
+          >
+            <RemoveRoundedIcon className="!w-5" />
+          </div>
+          <div className="text-sm font-semibold px-4 min-w-20 flex items-center justify-center bg-neutral-100 cursor-pointer hover:bg-neutral-50 duration-300 border border-stone-300 rounded">
+            <span className="mx-auto my-auto">{quantityPicked}</span>
+          </div>
 
-              return
-            }
-            setQuantityPicked(quantityPicked + 1)
-          }}
-          variant="contained"
-          className="!bg-neutral-200 !py-2 !px-1"
-        >
-          <span className="text-lg font-semibold text-neutral-600 leading-4">
-            +
-          </span>
-        </Button>
-      </div> */}
+          <div
+            onClick={() => {
+              if (
+                (currentPicked &&
+                  quantityPicked >= Number(currentPicked.quantity ?? 0)) ||
+                (!currentPicked &&
+                  quantityPicked >= Number(productData.quantity ?? 0))
+              ) {
+                return
+              }
+              setQuantityPicked(quantityPicked + 1)
+            }}
+            className="px-2 py-1 bg-neutral-100 cursor-pointer hover:bg-neutral-50 duration-300 border border-stone-300 rounded"
+          >
+            <AddRoundedIcon className="!w-5" />
+          </div>
+        </div>
+      </div>
+
       <Button
         variant="contained"
         className="!bg-neutral-900 !text-white !normal-case !font-semibold"
+        onClick={handleAddToCart}
       >
         Thêm vào giỏ
       </Button>

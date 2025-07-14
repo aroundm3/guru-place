@@ -13,6 +13,7 @@ import Options from "./_compoents/Options"
 import BlockProduct from "@modules/home/components/product/BlockProduct"
 import { Divider } from "@medusajs/ui"
 import LocalShippingIcon from "@mui/icons-material/LocalShipping"
+import { Fragment } from "react"
 
 export async function generateMetadata(
   {
@@ -74,93 +75,95 @@ export default async function Home(props: { params: { slug: string } }) {
   }
 
   return (
-    <div className="lg:max-w-5xl max-w-4xl lg:px-0 px-4 mx-auto flex flex-col space-y-10">
-      <div className="relative flex space-x-2 justify-between bg-[#fffdf8] border border-stone-300 rounded-lg mt-10 p-4">
-        <Breadcrumbs aria-label="breadcrumb" separator="›">
-          <Link href="/" className="text-sm font-semibold">
-            Trang chủ
-          </Link>
-          {productDetail.category ? (
-            <Link href={`/category_${productDetail.category.slug}`}>
-              {" "}
-              <Typography
-                sx={{ color: "text.primary" }}
-                className="!text-sm !font-semibold"
-              >
-                {productDetail.category.name}
-              </Typography>
+    <Fragment>
+      <div className="lg:max-w-5xl max-w-4xl lg:px-0 px-4 mx-auto flex flex-col space-y-10">
+        <div className="relative flex space-x-2 justify-between bg-[#fffdf8] border border-stone-300 rounded-lg mt-10 p-4">
+          <Breadcrumbs aria-label="breadcrumb" separator="›">
+            <Link href="/" className="text-sm font-semibold">
+              Trang chủ
             </Link>
-          ) : (
-            ""
-          )}
+            {productDetail.category ? (
+              <Link href={`/category_${productDetail.category.slug}`}>
+                {" "}
+                <Typography
+                  sx={{ color: "text.primary" }}
+                  className="!text-sm !font-semibold"
+                >
+                  {productDetail.category.name}
+                </Typography>
+              </Link>
+            ) : (
+              ""
+            )}
 
-          {productDetail.brand ? (
-            <Link href={`/brand_${productDetail.brand.slug}`}>
-              {" "}
-              <Typography
-                sx={{ color: "text.primary" }}
-                className="!text-sm !font-semibold"
-              >
-                {productDetail.brand.name}
-              </Typography>
-            </Link>
-          ) : (
-            ""
-          )}
-        </Breadcrumbs>
-        <Link
-          href={`/products`}
-          className="underline text-xs font-medium my-auto"
-        >
-          Tất cả sản phẩm
-        </Link>
-      </div>
-      <div className="flex sm:flex-row flex-col sm:gap-10 gap-6">
-        <div className="sm:w-1/2 w-full">
-          <ImageCarousel
-            images={productDetail.images.map((image) => image.default)}
-            thumbImages={productDetail.images.map((image) => image.thumbnail)}
-            productTitle={productDetail.name}
-          />
+            {productDetail.brand ? (
+              <Link href={`/brand_${productDetail.brand.slug}`}>
+                {" "}
+                <Typography
+                  sx={{ color: "text.primary" }}
+                  className="!text-sm !font-semibold"
+                >
+                  {productDetail.brand.name}
+                </Typography>
+              </Link>
+            ) : (
+              ""
+            )}
+          </Breadcrumbs>
+          <Link
+            href={`/products`}
+            className="underline text-xs font-medium my-auto"
+          >
+            Tất cả sản phẩm
+          </Link>
         </div>
-        <div className="flex flex-col space-y-2 justify-between sm:w-1/2 w-full">
-          <div className="flex flex-col space-y-2">
-            <h6 className="sm:text-2xl text-xl font-bold">
-              {productDetail.name}
-            </h6>
-            <p className="sm:text-base text-sm">
-              {productDetail.short_description}
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {productDetail.isTopSelling && (
-                <div className="px-2 cursor-pointer bg-orange-100 rounded">
-                  <span className="text-orange-700 text-xs font-semibold">
-                    Sản phẩm bán chạy
-                  </span>
-                </div>
-              )}
-              {productDetail.isFreeShip && (
-                <div className="px-2 rounded cursor-pointer bg-teal-50 flex space-x-1 items-center">
-                  <LocalShippingIcon className="text-teal-700 !h-4" />
-                  <span className="text-teal-700 text-xs font-semibold">
-                    Free ship - miễn phí ship nội thành Hà Nội
-                  </span>
-                </div>
-              )}
+        <div className="flex sm:flex-row flex-col sm:gap-10 gap-6">
+          <div className="sm:w-1/2 w-full">
+            <ImageCarousel
+              images={productDetail.images.map((image) => image.default)}
+              thumbImages={productDetail.images.map((image) => image.thumbnail)}
+              productTitle={productDetail.name}
+            />
+          </div>
+          <div className="flex flex-col space-y-2 justify-between sm:w-1/2 w-full">
+            <div className="flex flex-col space-y-2">
+              <h6 className="sm:text-2xl text-xl font-bold">
+                {productDetail.name}
+              </h6>
+              <p className="sm:text-base text-sm">
+                {productDetail.short_description}
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {productDetail.isTopSelling && (
+                  <div className="px-2 cursor-pointer bg-orange-100 rounded">
+                    <span className="text-orange-700 text-xs font-semibold">
+                      Sản phẩm bán chạy
+                    </span>
+                  </div>
+                )}
+                {productDetail.isFreeShip && (
+                  <div className="px-2 rounded cursor-pointer bg-teal-50 flex space-x-1 items-center">
+                    <LocalShippingIcon className="text-teal-700 !h-4" />
+                    <span className="text-teal-700 text-xs font-semibold">
+                      Free ship - miễn phí ship nội thành Hà Nội
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="!mt-10">
+              <Options productData={productDetail} />
             </div>
           </div>
-          <div className="!mt-10">
-            <Options productData={productDetail} />
-          </div>
         </div>
+        <Divider />
+        <div className="flex flex-col space-y-6">
+          <p className="sm: text-lg text=md font-semibold">Mô tả</p>
+          <RichTextBlockRender blocks={productDetail.detail_description} />
+        </div>
+        <Divider />
       </div>
-      <Divider />
-      <div className="flex flex-col space-y-6">
-        <p className="sm: text-lg text=md font-semibold">Mô tả</p>
-        <RichTextBlockRender blocks={productDetail.detail_description} />
-      </div>
-      <Divider />
       <BlockProduct />
-    </div>
+    </Fragment>
   )
 }

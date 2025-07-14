@@ -17,6 +17,7 @@ export const sdk = new Medusa({
 
 const BASE_URL = process.env.BASE_URL
 const API_KEY = process.env.API_KEY
+const API_KEY_FOR_ORDER = process.env.API_KEY_FOR_ORDER
 
 type FetcherOptions = RequestInit & {
   next?: {
@@ -35,6 +36,33 @@ export async function fetcher(
   const headers: HeadersInit = {
     "Content-Type": "application/json",
     Authorization: `Bearer ${API_KEY}`,
+    ...(options.headers || {}),
+  }
+
+  const res = await fetch(url, {
+    ...options,
+    headers,
+    next: options.next,
+    cache: options.cache,
+  })
+
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}))
+    throw new Error(errorData?.message || "API request failed")
+  }
+
+  return res.json()
+}
+
+export async function fetcherForOrderModule(
+  path: string,
+  options: FetcherOptions = {}
+): Promise<any> {
+  const url = `${BASE_URL}${path}`
+
+  const headers: HeadersInit = {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${API_KEY_FOR_ORDER}`,
     ...(options.headers || {}),
   }
 
