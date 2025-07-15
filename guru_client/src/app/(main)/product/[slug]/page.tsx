@@ -135,17 +135,17 @@ export default async function Home(props: { params: { slug: string } }) {
               </p>
               <div className="flex flex-wrap gap-2">
                 {productDetail.isTopSelling && (
-                  <div className="px-2 cursor-pointer bg-orange-100 rounded">
+                  <div className="px-2 py-0.5 cursor-pointer border border-orange-700 bg-orange-100 rounded">
                     <span className="text-orange-700 text-xs font-semibold">
                       Sản phẩm bán chạy
                     </span>
                   </div>
                 )}
                 {productDetail.isFreeShip && (
-                  <div className="px-2 rounded cursor-pointer bg-teal-50 flex space-x-1 items-center">
+                  <div className="px-2 py-0.5 border border-teal-700 rounded cursor-pointer bg-teal-50 flex space-x-1 items-center">
                     <LocalShippingIcon className="text-teal-700 !h-4" />
                     <span className="text-teal-700 text-xs font-semibold">
-                      Free ship - miễn phí ship nội thành Hà Nội
+                      Free ship
                     </span>
                   </div>
                 )}

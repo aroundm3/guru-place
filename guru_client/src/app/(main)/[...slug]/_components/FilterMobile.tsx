@@ -30,8 +30,13 @@ export default function FilterMobile({
   currentBlockProduct,
 }: FilterMobileProps) {
   return (
-    <Drawer anchor="right" open={isOpenSideBar} onClose={onClose}>
-      <header className="relative h-16 mx-auto border-b duration-200 bg-stone-100 flex justify-start px-4 w-full">
+    <Drawer
+      anchor="right"
+      open={isOpenSideBar}
+      onClose={onClose}
+      className="overflow-y-scroll"
+    >
+      <div className="sticky top-0 py-5 mx-auto border-b duration-200 bg-stone-100 flex justify-start px-4 w-full">
         <div className="h-full">
           <div className="flex items-center h-full">
             <Popover className="h-full flex">
@@ -67,7 +72,7 @@ export default function FilterMobile({
             </Popover>
           </div>
         </div>
-      </header>
+      </div>
 
       <div className="flex flex-col p-6 min-w-[250px]">
         <div className="flex flex-col space-y-2 mt-8">

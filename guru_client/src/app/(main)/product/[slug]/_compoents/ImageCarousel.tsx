@@ -66,7 +66,7 @@ export default function ImageCarousel({
       <div className="relative w-full mx-auto overflow-hidden border border-stone-400 rounded-lg">
         <motion.div
           ref={carouselRef}
-          className="flex select-none relative w-full sm:h-96 h-64"
+          className="flex select-none relative w-full aspect-square"
           animate={{ x: `-${currentIndex * 100}%` }}
           transition={{ type: "spring", stiffness: 200, damping: 30 }}
           drag="x"
@@ -107,7 +107,8 @@ export default function ImageCarousel({
           <ChevronRightRoundedIcon />
         </button>
       </div>
-      <div className="relative mt-2">
+      {/* list thumbs */}
+      {/* <div className="relative mt-2">
         <button
           onClick={scrollLeft}
           className="absolute left-4 opacity-30 hover:opacity-100 duration-300 top-1/2 -translate-y-1/2 z-10 p-2 bg-white rounded-full shadow-md hover:bg-stone-100"
@@ -147,6 +148,8 @@ export default function ImageCarousel({
             />
           </svg>
         </button>
+
+       
         <div
           className="w-full overflow-x-scroll no-scrollbar bg-white"
           ref={scrollRef}
@@ -177,7 +180,7 @@ export default function ImageCarousel({
             })}
           </div>
         </div>
-      </div>
+      </div> */}
     </div>
   )
 }

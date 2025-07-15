@@ -4,18 +4,24 @@ import { Popover } from "@headlessui/react"
 import { Fragment, useState } from "react"
 import { HttpTypes } from "@medusajs/types"
 
-import { Drawer } from "@mui/material"
+import { Collapse, Drawer } from "@mui/material"
 import useGetListCategory from "./_hooks/useGetListCategory"
-import CategoryItem from "@modules/home/components/category/CategoryItem"
 import CategoryRoundedIcon from "@mui/icons-material/CategoryRounded"
 import LocalMallRoundedIcon from "@mui/icons-material/LocalMallRounded"
 import DateRangeRoundedIcon from "@mui/icons-material/DateRangeRounded"
+import KeyboardArrowDownRoundedIcon from "@mui/icons-material/KeyboardArrowDownRounded"
+import BrandingWatermarkRoundedIcon from "@mui/icons-material/BrandingWatermarkRounded"
+import Link from "next/link"
+import useGetListBrand from "./_hooks/useGetListBrands"
 
 const SideMenu = ({ regions }: { regions: HttpTypes.StoreRegion[] | null }) => {
   const [isOpenSideBar, setIsOpenSideBar] = useState(false)
   const { listCategory, isLoading } = useGetListCategory()
+  const { listbrand } = useGetListBrand()
 
   const [currentCategory, setCurrentCategory] = useState("")
+  const [isExpandCate, setIsExpandCate] = useState(false)
+  const [isExpandBand, setIsExpandBrand] = useState(false)
 
   const closeSideBar = () => {
     setIsOpenSideBar(false)
@@ -101,29 +107,80 @@ const SideMenu = ({ regions }: { regions: HttpTypes.StoreRegion[] | null }) => {
           </div>
         </header>
 
-        <div className="flex flex-col space-y-6 p-6">
+        <div className="flex flex-col p-6">
           <div className="flex flex-col space-y-4 w-full min-w-[250px] cursor-pointer">
-            <div className="mr-4 flex sm:space-x-1 space-x-0.5 text-gray-700 items-center">
-              <CategoryRoundedIcon className="sm:!h-5 !h-4" />
-              <h6 className="my-auto sm:text-lg text-base font-semibold">
-                Danh mục
-              </h6>
+            <div
+              className="mr-4 flex justify-between text-gray-700 items-center"
+              onClick={() => setIsExpandCate((prevValue) => !prevValue)}
+            >
+              <div className="flex sm:space-x-1 space-x-0.5">
+                <CategoryRoundedIcon className="sm:!h-5 !h-4 my-auto" />
+                <h6 className="my-auto sm:text-lg text-base font-semibold">
+                  Danh mục sản phẩm
+                </h6>
+              </div>
+              <KeyboardArrowDownRoundedIcon
+                className={`${isExpandCate ? "rotate-180" : ""} duration-300`}
+              />
             </div>
-            <div className="flex-col space-y-2 content-end flex pl-2">
-              {listCategory?.length && !isLoading
-                ? listCategory.map((category) => {
-                    return (
-                      <CategoryItem
-                        category={category}
-                        key={category.documentId}
-                        currentCategory={currentCategory}
-                        setCurrentCategory={setCurrentCategory}
-                        closeSideBar={closeSideBar}
-                      />
-                    )
-                  })
-                : ""}
+            <Collapse in={isExpandCate}>
+              <div className="flex-col space-y-3 content-end flex pl-3 pb-4">
+                {listCategory?.length && !isLoading
+                  ? listCategory.map((category) => {
+                      return (
+                        <Link
+                          href={`/category_${category.slug}`}
+                          key={category.documentId}
+                          className="flex text-gray-500 hover:text-gray-700 duration-300 cursor-pointer"
+                        >
+                          <div className="flex space-x-2">
+                            <span className="sm:text-sm text-xs font-semibold">
+                              {category.name}
+                            </span>
+                          </div>
+                        </Link>
+                      )
+                    })
+                  : ""}
+              </div>
+            </Collapse>
+          </div>
+          <div className="flex flex-col space-y-4 w-full min-w-[250px] cursor-pointer">
+            <div
+              className="mr-4 flex justify-between text-gray-700 items-center"
+              onClick={() => setIsExpandBrand((prevValue) => !prevValue)}
+            >
+              <div className="flex sm:space-x-1 space-x-0.5">
+                <BrandingWatermarkRoundedIcon className="sm:!h-5 !h-4 my-auto" />
+                <h6 className="my-auto sm:text-lg text-base font-semibold">
+                  Thương hiệu
+                </h6>
+              </div>
+              <KeyboardArrowDownRoundedIcon
+                className={`${isExpandBand ? "rotate-180" : ""} duration-300`}
+              />
             </div>
+            <Collapse in={isExpandBand}>
+              <div className="flex-col space-y-3 content-end flex pl-3 pb-4">
+                {listbrand?.length && !isLoading
+                  ? listbrand.map((brand) => {
+                      return (
+                        <Link
+                          href={`/brand_${brand.slug}`}
+                          key={brand.documentId}
+                          className="flex text-gray-500 hover:text-gray-700 duration-300 cursor-pointer"
+                        >
+                          <div className="flex space-x-2">
+                            <span className="sm:text-sm text-xs font-semibold">
+                              {brand.name}
+                            </span>
+                          </div>
+                        </Link>
+                      )
+                    })
+                  : ""}
+              </div>
+            </Collapse>
           </div>
           <div className="flex flex-col space-y-4 w-full min-w-[250px] cursor-pointer">
             <div className="mr-4 flex sm:space-x-1 space-x-0.5 text-gray-700 items-center">
@@ -133,7 +190,7 @@ const SideMenu = ({ regions }: { regions: HttpTypes.StoreRegion[] | null }) => {
               </h6>
             </div>
           </div>
-          <div className="flex flex-col space-y-4 w-full min-w-[250px] cursor-pointer">
+          <div className="flex mt-4 flex-col space-y-4 w-full min-w-[250px] cursor-pointer">
             <div className="mr-4 flex sm:space-x-1 space-x-0.5 text-gray-700 items-center">
               <DateRangeRoundedIcon className="sm:!h-5 !h-4" />
               <h6 className="my-auto sm:text-lg text-base font-semibold">
