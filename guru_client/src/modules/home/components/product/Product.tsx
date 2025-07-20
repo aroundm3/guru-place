@@ -13,9 +13,9 @@ export default function Product({ data }: ProductProps) {
   return (
     <Link
       href={`/product/${data.slug}`}
-      className="bg-white border border-stone-300 rounded-lg flex flex-col justify-between shadow-sm cursor-pointer hover:shadow-lg duration-300 w-full"
+      className="bg-white border border-stone-300 rounded-lg flex flex-col justify-between shadow-sm cursor-pointer hover:shadow-lg duration-300 w-full h-full"
     >
-      <div className="flex flex-col">
+      <div className="flex flex-col h-full">
         <div className="relative">
           <Image
             src={data.images[0].default}
@@ -42,7 +42,7 @@ export default function Product({ data }: ProductProps) {
             </div>
           )}
         </div>
-        <div className="p-4 flex flex-col">
+        <div className="p-4 flex flex-col flex-1">
           <span className="sm:text-base text-sm font-semibold text-gray-600 line-clamp-2 whitespace-pre-wrap truncate">
             {data.name}
           </span>
@@ -51,7 +51,7 @@ export default function Product({ data }: ProductProps) {
           </span>
         </div>
       </div>
-      <div className="flex justify-between space-x-2 px-4 pb-4">
+      <div className="flex justify-between space-x-2 px-4 pb-4 h-14">
         <div className="flex flex-col my-auto">
           <span className="text-base font-bold text-pink-600">
             {formatBigNumber(data.sale_price, true)}

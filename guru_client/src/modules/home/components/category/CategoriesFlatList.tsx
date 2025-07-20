@@ -1,10 +1,30 @@
 "use client"
 
-import { Divider } from "@mui/material"
 import Image from "next/image"
 import Link from "next/link"
-import { useRef } from "react"
+import { useRef, useEffect, useState } from "react"
 import { Category } from "types/global"
+
+// Hàm chia mảng thành các chunk
+function chunkArray<T>(array: T[], size: number): T[][] {
+  const result: T[][] = []
+  for (let i = 0; i < array.length; i += size) {
+    result.push(array.slice(i, i + size))
+  }
+  return result
+}
+
+// Hook detect mobile
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(false)
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth <= 640)
+    checkMobile()
+    window.addEventListener("resize", checkMobile)
+    return () => window.removeEventListener("resize", checkMobile)
+  }, [])
+  return isMobile
+}
 
 export default function CategoriesFlatList({
   categories,
@@ -12,6 +32,7 @@ export default function CategoriesFlatList({
   categories: Category[]
 }) {
   const scrollRef = useRef<HTMLDivElement>(null)
+  const isMobile = useIsMobile()
 
   const scrollLeft = () => {
     if (scrollRef.current) {
@@ -25,12 +46,23 @@ export default function CategoriesFlatList({
     }
   }
 
+  // Chia categories thành 2 chunk nếu là mobile, còn không thì 1 chunk chứa tất cả
+  let categoryChunks: Category[][]
+  if (isMobile) {
+    const half = Math.ceil(categories.length / 2)
+    categoryChunks = [categories.slice(0, half), categories.slice(half)]
+  } else {
+    categoryChunks = [categories]
+  }
+
   return (
-    <div className="relative flex flex-col bg-[#fffdf8] border pt-3 pb-4 border-stone-300 rounded-lg">
+    <div className="relative flex flex-col pt-3 pb-4 border-stone-300 shadow-lg rounded-lg border">
       <div className="mr-4 flex sm:space-x-1 space-x-0.5 px-4 text-gray-700 items-center">
-        <h6 className="my-auto sm:text-xl text-lg font-semibold">Danh mục</h6>
+        <h6 className="my-auto sm:text-xl text-lg font-semibold text-pink-700">
+          Danh mục
+        </h6>
       </div>
-      <Divider className="text-[#fffdf8] !mt-3 !mb-4" />
+      <div className="!mb-4" />
 
       <div className="relative">
         <button
@@ -76,31 +108,35 @@ export default function CategoriesFlatList({
           className="w-full overflow-x-scroll no-scrollbar px-4"
           ref={scrollRef}
         >
-          <div className="flex sm:gap-4 gap-3 w-max flex-nowrap">
-            {categories.map((category) => {
-              return (
-                <Link
-                  href={`category_${category.slug}`}
-                  key={category.documentId}
-                  className="flex flex-col h-fit bg-white rounded-lg border border-stone-300 cursor-pointer duration-300 text-pink-700"
-                >
-                  <Image
-                    src={category.image}
-                    alt={category.name}
-                    height={0}
-                    width={0}
-                    className="sm:h-32 h-28 sm:w-32 w-28 object-cover my-auto rounded-t-lg"
-                    loading="eager"
-                    sizes="80vw"
-                  />
-                  <div className="text-center w-full py-2">
-                    <span className="text-xs font-semibold">
-                      {category.name}
-                    </span>
-                  </div>
-                </Link>
-              )
-            })}
+          <div className="flex w-max flex-nowrap sm:gap-x-4 gap-y-3 flex-col sm:flex-row">
+            {categoryChunks.map((chunk, chunkIdx) => (
+              <div key={chunkIdx} className="flex flex-row sm:gap-x-4 gap-x-3">
+                {chunk.map((category) => (
+                  <Link
+                    href={`category_${category.slug}`}
+                    key={category.documentId}
+                    className="flex flex-col h-auto px-2 border border-stone-300 bg-white rounded-lg cursor-pointer duration-300 text-pink-700"
+                  >
+                    <div className="py-2 w-fit mx-auto">
+                      <Image
+                        src={category.image}
+                        alt={category.name}
+                        height={0}
+                        width={0}
+                        className="sm:w-24 w-20 sm:h-24 h-20 object-scale-down my-auto rounded-t-lg aspect-square"
+                        loading="eager"
+                        sizes="80vw"
+                      />
+                    </div>
+                    <div className="text-center sm:w-32 w-28 py-2 mx-auto my-auto">
+                      <span className="text-xs font-semibold">
+                        {category.name}
+                      </span>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            ))}
           </div>
         </div>
       </div>

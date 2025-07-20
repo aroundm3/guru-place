@@ -1,6 +1,7 @@
 import { getListProducts, getListProductsBlock } from "@lib/data/product"
 import Product from "./Product"
 import Link from "next/link"
+import ProductBlockClient from "./ProductBlockClient"
 
 export default async function BlockProduct() {
   const listProducBlock = await getListProductsBlock()
@@ -9,33 +10,10 @@ export default async function BlockProduct() {
   })
 
   return (
-    <div className="lg:max-w-5xl mt-10 max-w-4xl lg:px-0 px-4 mx-auto flex flex-col sm:gap-10 gap-8">
+    <div className="lg:max-w-5xl sm:mt-10 mt-6 max-w-4xl lg:px-0 px-4 mx-auto flex flex-col sm:gap-10 gap-8">
       {listProducBlock.map((block) => {
         return block.products.length ? (
-          <div key={block.documentId} className="flex flex-col space-y-4">
-            <Link
-              href={`/collection_${block.documentId}`}
-              className="font-semibold text-gray-700 sm:text-xl text-lg"
-            >
-              {block.title}
-            </Link>
-            <div className="grid lg:grid-cols-4 sm:grid-cols-3 grid-cols-2 gap-x-4 gap-y-6">
-              {block.products.slice(0, 6).map((product) => {
-                return <Product data={product} key={product.documentId} />
-              })}
-            </div>
-            {block.products.length > 6 ? (
-              <div className="w-full flex justify-center">
-                <Link href={`/products`}>
-                  <span className="text-sm font-semibold cursor-pointer hover:text-pink-600 duration-300">
-                    Xem thêm
-                  </span>
-                </Link>
-              </div>
-            ) : (
-              ""
-            )}
-          </div>
+          <ProductBlockClient key={block.documentId} block={block} />
         ) : (
           ""
         )

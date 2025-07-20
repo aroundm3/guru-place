@@ -13,15 +13,19 @@ import KeyboardArrowDownRoundedIcon from "@mui/icons-material/KeyboardArrowDownR
 import BrandingWatermarkRoundedIcon from "@mui/icons-material/BrandingWatermarkRounded"
 import Link from "next/link"
 import useGetListBrand from "./_hooks/useGetListBrands"
+import AccountTreeRoundedIcon from "@mui/icons-material/AccountTreeRounded"
+import useGetProductCollection from "./_hooks/useGetProductCollection"
+import CardGiftcardRoundedIcon from "@mui/icons-material/CardGiftcardRounded"
 
 const SideMenu = ({ regions }: { regions: HttpTypes.StoreRegion[] | null }) => {
   const [isOpenSideBar, setIsOpenSideBar] = useState(false)
   const { listCategory, isLoading } = useGetListCategory()
   const { listbrand } = useGetListBrand()
+  const { productCollection } = useGetProductCollection()
 
-  const [currentCategory, setCurrentCategory] = useState("")
   const [isExpandCate, setIsExpandCate] = useState(false)
   const [isExpandBand, setIsExpandBrand] = useState(false)
+  const [isProductCollection, setIsProductCollection] = useState(false)
 
   const closeSideBar = () => {
     setIsOpenSideBar(false)
@@ -69,7 +73,7 @@ const SideMenu = ({ regions }: { regions: HttpTypes.StoreRegion[] | null }) => {
         open={isOpenSideBar}
         onClose={() => setIsOpenSideBar(false)}
       >
-        <header className="relative h-16 mx-auto border-b duration-200 bg-stone-100 flex justify-end px-4 w-full">
+        <header className="sticky top-0 py-5 mx-auto border-b duration-200 bg-stone-100 flex justify-end px-4 w-full">
           <div className="h-full">
             <div className="flex items-center h-full">
               <Popover className="h-full flex">
@@ -183,10 +187,49 @@ const SideMenu = ({ regions }: { regions: HttpTypes.StoreRegion[] | null }) => {
             </Collapse>
           </div>
           <div className="flex flex-col space-y-4 w-full min-w-[250px] cursor-pointer">
+            <div
+              className="mr-4 flex justify-between text-gray-700 items-center"
+              onClick={() => setIsProductCollection((prevValue) => !prevValue)}
+            >
+              <div className="flex sm:space-x-1 space-x-0.5">
+                <AccountTreeRoundedIcon className="sm:!h-5 !h-4 my-auto" />
+                <h6 className="my-auto sm:text-lg text-base font-semibold">
+                  Bộ sản phẩm
+                </h6>
+              </div>
+              <KeyboardArrowDownRoundedIcon
+                className={`${
+                  isProductCollection ? "rotate-180" : ""
+                } duration-300`}
+              />
+            </div>
+            <Collapse in={isProductCollection}>
+              <div className="flex-col space-y-3 content-end flex pl-3 pb-4">
+                {productCollection?.length && !isLoading
+                  ? productCollection.map((collection) => {
+                      return (
+                        <Link
+                          href={`/collection_${collection.documentId}`}
+                          key={collection.documentId}
+                          className="flex text-gray-500 hover:text-gray-700 duration-300 cursor-pointer"
+                        >
+                          <div className="flex space-x-2">
+                            <span className="sm:text-sm text-xs font-semibold">
+                              {collection.title}
+                            </span>
+                          </div>
+                        </Link>
+                      )
+                    })
+                  : ""}
+              </div>
+            </Collapse>
+          </div>
+          <div className="flex flex-col space-y-4 w-full min-w-[250px] cursor-pointer">
             <div className="mr-4 flex sm:space-x-1 space-x-0.5 text-gray-700 items-center">
               <LocalMallRoundedIcon className="sm:!h-5 !h-4" />
               <h6 className="my-auto sm:text-lg text-base font-semibold">
-                Xem đơn hàng
+                Giỏ hàng
               </h6>
             </div>
           </div>
@@ -194,7 +237,23 @@ const SideMenu = ({ regions }: { regions: HttpTypes.StoreRegion[] | null }) => {
             <div className="mr-4 flex sm:space-x-1 space-x-0.5 text-gray-700 items-center">
               <DateRangeRoundedIcon className="sm:!h-5 !h-4" />
               <h6 className="my-auto sm:text-lg text-base font-semibold">
-                Đặt lịch online
+                Dịch vụ gội đầu Divi
+              </h6>
+            </div>
+          </div>
+          <div className="flex mt-4 flex-col space-y-4 w-full min-w-[250px] cursor-pointer">
+            <div className="mr-4 flex sm:space-x-1 space-x-0.5 text-gray-700 items-center">
+              <CardGiftcardRoundedIcon className="sm:!h-5 !h-4" />
+              <h6 className="my-auto sm:text-lg text-base font-semibold">
+                Tra cứu tích điểm
+              </h6>
+            </div>
+          </div>
+          <div className="flex mt-4 flex-col space-y-4 w-full min-w-[250px] cursor-pointer">
+            <div className="mr-4 flex sm:space-x-1 space-x-0.5 text-gray-700 items-center">
+              <DateRangeRoundedIcon className="sm:!h-5 !h-4" />
+              <h6 className="my-auto sm:text-lg text-base font-semibold">
+                Liên hệ hỗ trợ
               </h6>
             </div>
           </div>
