@@ -73,7 +73,7 @@ const SideMenu = ({ regions }: { regions: HttpTypes.StoreRegion[] | null }) => {
         open={isOpenSideBar}
         onClose={() => setIsOpenSideBar(false)}
       >
-        <header className="sticky top-0 py-5 mx-auto border-b duration-200 bg-stone-100 flex justify-end px-4 w-full">
+        <header className="sticky top-0 py-5 mx-auto border-b duration-200 bg-stone-100 flex justify-end px-4 w-full z-10">
           <div className="h-full">
             <div className="flex items-center h-full">
               <Popover className="h-full flex">

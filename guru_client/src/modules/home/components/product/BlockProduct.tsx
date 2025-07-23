@@ -10,7 +10,7 @@ export default async function BlockProduct() {
   })
 
   return (
-    <div className="lg:max-w-5xl sm:mt-10 mt-6 max-w-4xl lg:px-0 px-4 mx-auto flex flex-col sm:gap-10 gap-8">
+    <div className="lg:max-w-5xl sm:mt-10 mt-6 max-w-4xl lg:px-0 px-4 mx-auto flex flex-col sm:gap-10 gap-6">
       {listProducBlock.map((block) => {
         return block.products.length ? (
           <ProductBlockClient key={block.documentId} block={block} />

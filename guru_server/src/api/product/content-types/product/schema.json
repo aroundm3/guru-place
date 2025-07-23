@@ -13,7 +13,7 @@
   "pluginOptions": {},
   "attributes": {
     "name": {
-      "type": "text",
+      "type": "string",
       "required": true,
       "unique": true
     },
@@ -61,9 +61,9 @@
     "detail_description": {
       "type": "blocks"
     },
-    "product_list_block": {
+    "product_list_blocks": {
       "type": "relation",
-      "relation": "manyToOne",
+      "relation": "manyToMany",
       "target": "api::product-list-block.product-list-block",
       "inversedBy": "products"
     },
@@ -89,6 +89,12 @@
       "type": "boolean",
       "required": false,
       "default": false
+    },
+    "customer_cards": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::customer-card.customer-card",
+      "mappedBy": "products"
     }
   }
 }

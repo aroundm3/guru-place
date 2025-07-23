@@ -56,7 +56,7 @@ export default function CategoriesFlatList({
   }
 
   return (
-    <div className="relative flex flex-col pt-3 pb-4 border-stone-300 shadow-lg rounded-lg border">
+    <div className="relative flex flex-col pt-3 pb-4 border-stone-200 shadow-lg rounded-lg border">
       <div className="mr-4 flex sm:space-x-1 space-x-0.5 px-4 text-gray-700 items-center">
         <h6 className="my-auto sm:text-xl text-lg font-semibold text-pink-700">
           Danh mục

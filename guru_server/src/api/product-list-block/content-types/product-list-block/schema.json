@@ -10,6 +10,7 @@
   "options": {
     "draftAndPublish": true
   },
+  "pluginOptions": {},
   "attributes": {
     "index": {
       "type": "integer",
@@ -18,9 +19,9 @@
     },
     "products": {
       "type": "relation",
-      "relation": "oneToMany",
+      "relation": "manyToMany",
       "target": "api::product.product",
-      "mappedBy": "product_list_block"
+      "mappedBy": "product_list_blocks"
     },
     "title": {
       "type": "string",
