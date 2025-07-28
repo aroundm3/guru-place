@@ -1,8 +1,6 @@
 export const dynamic = "force-dynamic"
 import { Metadata, ResolvingMetadata } from "next"
-
 import { getProductBySlug } from "@lib/data/product"
-
 import { Breadcrumbs, Typography } from "@mui/material"
 import Link from "next/link"
 import { Product } from "types/global"
@@ -14,6 +12,7 @@ import BlockProduct from "@modules/home/components/product/BlockProduct"
 import { Divider } from "@medusajs/ui"
 import LocalShippingIcon from "@mui/icons-material/LocalShipping"
 import { Fragment } from "react"
+import DiscountCardClient from "@modules/product/components/client/discount-card-client"
 
 export async function generateMetadata(
   {
@@ -30,29 +29,73 @@ export async function generateMetadata(
   try {
     const productDetail: Product = await getProductBySlug(slug)
 
+    // Tạo description phong phú hơn cho SEO
+    const enhancedDescription = productDetail.short_description
+      ? `${productDetail.short_description} | Mua ngay tại Divi - Cửa hàng mỹ phẩm uy tín. Giao hàng nhanh, đảm bảo chất lượng.`
+      : `${productDetail.name} - Sản phẩm mỹ phẩm chất lượng cao tại Divi. Giao hàng nhanh chóng toàn quốc.`
+
+    // Tạo keywords từ tên sản phẩm và category
+    const productKeywords = `${productDetail.name}, mỹ phẩm, ${
+      productDetail.category?.name || "làm đẹp"
+    }, Divi, mỹ phẩm chính hãng, chăm sóc da`
+
     return {
-      title: `Divi | ${productDetail.name}`,
-      description: productDetail.short_description,
+      title: `${productDetail.name} | Divi - Mỹ phẩm chính hãng`,
+      description: enhancedDescription,
+      keywords: productKeywords,
       icons: {
         icon: "/logo.png",
         shortcut: "/logo.png",
         apple: "/logo.png",
       },
       openGraph: {
-        title: `Divi | ${productDetail.name}`,
-        description: productDetail.short_description,
+        title: `${productDetail.name} | Divi`,
+        description: enhancedDescription,
         url: `https://www.myphamdivi.com/product/${productDetail.slug}`,
         siteName: "Divi",
         images: [
           {
             url: productDetail.images[0]?.default || "/logo.png",
-            width: 800,
-            height: 600,
-            alt: productDetail.name,
+            width: 1200, // Facebook khuyến nghị 1200x630
+            height: 630,
+            alt: `${productDetail.name} - Mỹ phẩm Divi`,
+            type: "image/jpeg",
           },
+          // Thêm nhiều ảnh nếu có
+          ...(productDetail.images?.slice(1, 4).map((img) => ({
+            url: img.default,
+            width: 1200,
+            height: 630,
+            alt: `${productDetail.name} - Hình ảnh sản phẩm`,
+            type: "image/jpeg",
+          })) || []),
         ],
         locale: "vi_VN",
-        type: "website",
+        type: "website", // Sử dụng website type cho tương thích
+        // Thêm các trường Facebook SEO quan trọng
+        countryName: "Vietnam",
+        determiner: "the",
+        ttl: 604800, // Cache 7 ngày
+      },
+      // Thêm Twitter Card cho social sharing tốt hơn
+      twitter: {
+        card: "summary_large_image",
+        title: `${productDetail.name} | Divi`,
+        description: enhancedDescription,
+        images: [productDetail.images[0]?.default || "/logo.png"],
+        site: "@divi_cosmetics", // Thay bằng Twitter handle thực tế
+      },
+      // Thêm structured data cho SEO
+      other: {
+        "fb:app_id": "YOUR_FACEBOOK_APP_ID", // Thay bằng Facebook App ID thực tế
+        "og:see_also": "https://www.myphamdivi.com",
+        "product:brand": "Divi",
+        "product:availability": "in stock",
+        "product:condition": "new",
+        "product:price:amount":
+          productDetail.sale_price?.toString() ||
+          productDetail.base_price?.toString(),
+        "product:price:currency": "VND",
       },
     }
   } catch (err) {
@@ -150,6 +193,10 @@ export default async function Home(props: { params: { slug: string } }) {
                   </div>
                 )}
               </div>
+            </div>
+            {/* Discount Card Display */}
+            <div className="mt-6">
+              <DiscountCardClient productId={productDetail.documentId} />
             </div>
             <div className="!mt-10">
               <Options productData={productDetail} />

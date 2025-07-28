@@ -7,7 +7,7 @@ import { Product, ProductListBlock } from "types/global"
 export const getProductBySlug = async (slug: string) => {
   try {
     const data = await fetcher(
-      `/api/products?filters[slug][$eq]=${slug}&populate[brand]=true&populate[category]=true&populate[media]=true&populate[variants][populate][variant_image]=true`,
+      `/api/products?filters[slug][$eq]=${slug}&populate[brand]=true&populate[category]=true&populate[media]=true&populate[variants][populate][variant_image]=true&populate[customer_cards]=true`,
       {
         next: { revalidate: 10 },
       }
@@ -48,22 +48,21 @@ export const getProductBySlug = async (slug: string) => {
         //     total + Number(v.quantity),
         //   0
         // ),
-        variants: productRs.variants.map((variant: any) => {
-          return {
-            ...variant,
-            variant_image: {
-              small: getFullLinkResource(
-                variant.variant_image?.formats?.small?.url ??
-                  variant.variant_image?.url
-              ),
-              thumbnail: getFullLinkResource(
-                variant.variant_image?.formats?.thumbnail?.url ??
-                  variant.variant_image?.url
-              ),
-              default: getFullLinkResource(variant.variant_image?.url),
-            },
-          }
-        }),
+        variants: productRs.variants.map((variant: any) => ({
+          ...variant,
+          variant_image: {
+            small: getFullLinkResource(
+              variant.variant_image?.formats?.small?.url ??
+                variant.variant_image?.url
+            ),
+            thumbnail: getFullLinkResource(
+              variant.variant_image?.formats?.thumbnail?.url ??
+                variant.variant_image?.url
+            ),
+            default: getFullLinkResource(variant.variant_image?.url),
+          },
+        })),
+        customerCartId: productRs.customer_card?.data?.id || null,
       }
     }
   } catch (ex) {
@@ -101,7 +100,7 @@ export async function getListProducts(filter: {
         filter.blockProductId
           ? `&filters[product_list_block][documentId]=${filter.blockProductId}`
           : ""
-      }&[populate]=variants`,
+      }&[populate]=variants&[populate]=customer_cards`,
       {
         next: { revalidate: 10 },
       }

@@ -47,7 +47,7 @@ export interface Category {
   image: string
 }
 
-export type ImageMedia = {
+export interface ImageMedia {
   small: string
   thumbnail: string
   default: string
@@ -99,6 +99,7 @@ export interface Product {
   brand: Brand
   isTopSelling: boolean
   isFreeShip: boolean
+  customer_cards: CustomerCard[]
 }
 
 export interface ProductListBlock {
@@ -106,6 +107,20 @@ export interface ProductListBlock {
   index: number
   title: string
   products: Product[]
+}
+
+export interface CustomerCard {
+  documentId: string
+  id: number
+  title: string
+  description: string
+  image: ImageMedia
+  index: number
+  discount: number
+  products: Product[]
+  createdAt: string
+  updatedAt: string
+  publishedAt: string
 }
 
 export interface StoreMetadata {

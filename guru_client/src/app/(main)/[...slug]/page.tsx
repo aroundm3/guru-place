@@ -150,8 +150,15 @@ export async function generateMetadata(
       }
     }
 
+    // Tạo description động dựa trên nội dung
+    const description = subRouteTitle 
+      ? `Khám phá ${subRouteTitle} tại Divi - Cửa hàng mỹ phẩm uy tín với đa dạng sản phẩm chất lượng cao. Giao hàng nhanh chóng toàn quốc.`
+      : "Divi - Cửa hàng mỹ phẩm uy tín với đa dạng sản phẩm chăm sóc da, làm đẹp chất lượng cao. Giao hàng nhanh chóng toàn quốc."
+
     return {
       title: `Divi | ${subRouteTitle ? subRouteTitle : "Tất cả sản phẩm"}`,
+      description,
+      keywords: `mỹ phẩm, ${subRouteTitle || 'sản phẩm làm đẹp'}, chăm sóc da, Divi, mỹ phẩm chính hãng`,
       icons: {
         icon: "/logo.png", // icon mặc định
         shortcut: "/logo.png", // shortcut icon (nhỏ hơn)
@@ -159,18 +166,37 @@ export async function generateMetadata(
       },
       openGraph: {
         title: `Divi | ${subRouteTitle ? subRouteTitle : "Tất cả sản phẩm"}`,
+        description,
         url: `https://www.myphamdivi.com/${slug[0]}`,
         siteName: "Divi",
         images: [
           {
             url: thumbImage || "/logo.png", // Đường dẫn ảnh đại diện sản phẩm
-            width: 800,
-            height: 600,
-            alt: subRouteTitle,
+            width: 1200, // Facebook khuyến nghị 1200x630
+            height: 630,
+            alt: subRouteTitle || "Divi - Cửa hàng mỹ phẩm",
+            type: "image/png",
           },
         ],
         locale: "vi_VN",
         type: "website",
+        // Thêm các trường Facebook SEO quan trọng
+        countryName: "Vietnam",
+        determiner: "the",
+        ttl: 604800, // Cache 7 ngày
+      },
+      // Thêm Twitter Card cho social sharing tốt hơn
+      twitter: {
+        card: "summary_large_image",
+        title: `Divi | ${subRouteTitle ? subRouteTitle : "Tất cả sản phẩm"}`,
+        description,
+        images: [thumbImage || "/logo.png"],
+        site: "@divi_cosmetics", // Thay bằng Twitter handle thực tế
+      },
+      // Thêm structured data cho SEO
+      other: {
+        "fb:app_id": "YOUR_FACEBOOK_APP_ID", // Thay bằng Facebook App ID thực tế
+        "og:see_also": "https://www.myphamdivi.com",
       },
     }
   } catch (ex) {

@@ -4,12 +4,15 @@ import { Product as ProductData } from "types/global"
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart"
 import Link from "next/link"
 import LocalShippingIcon from "@mui/icons-material/LocalShipping"
+import CardGiftcardRoundedIcon from "@mui/icons-material/CardGiftcardRounded"
 
 interface ProductProps {
   data: ProductData
 }
 
 export default function Product({ data }: ProductProps) {
+  console.log({ data })
+
   return (
     <Link
       href={`/product/${data.slug}`}
@@ -27,12 +30,13 @@ export default function Product({ data }: ProductProps) {
             priority={true}
           />
           {data.isTopSelling && (
-            <div className="px-1 bg-orange-100 rounded absolute top-1 right-1 opacity-80">
+            <div className="px-1 bg-orange-100 rounded absolute top-1 right-1 opacity-80 border border-orange-500">
               <span className="text-orange-700 text-xs font-semibold">
                 Bán chạy
               </span>
             </div>
           )}
+
           {data.isFreeShip && (
             <div className="p-1 bg-teal-50 absolute bottom-0 left-0 w-full flex space-x-1 items-center">
               <LocalShippingIcon className="text-teal-700 !h-4" />
@@ -42,7 +46,14 @@ export default function Product({ data }: ProductProps) {
             </div>
           )}
         </div>
-        <div className="p-4 flex flex-col flex-1">
+        <div className="p-2 flex flex-col flex-1">
+          {data.customer_cards?.length > 0 && (
+            <div className="px-1 bg-rose-100 rounded opacity-80 border w-fit border-rose-500 mb-2">
+              <span className="text-rose-700 text-xs font-semibold">
+                Quà tặng
+              </span>
+            </div>
+          )}
           <span className="sm:text-base text-sm font-semibold text-gray-600 line-clamp-2 whitespace-pre-wrap truncate">
             {data.name}
           </span>

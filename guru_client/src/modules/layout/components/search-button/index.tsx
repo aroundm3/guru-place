@@ -21,7 +21,7 @@ export default function SearchButton() {
   const { listProduct, isLoading } = useGetListProducts({
     searchQuery: query,
     page: 1,
-    pageSizeCustom: 3,
+    pageSizeCustom: 4,
   })
 
   const debounceSearch = debounce((inputValue) => setQuery(inputValue), 500)
@@ -204,6 +204,18 @@ export default function SearchButton() {
             </p>
           )}
         </div>
+
+        {!isLoading && listProduct?.length ? (
+          <Link
+            href={`/search_${query}`}
+            className="text-white text-lg font-bold mx-auto col-span-3 flex flex-col space-y-1"
+            onClick={() => setIsShowSearchList(false)}
+          >
+            Xem thêm
+          </Link>
+        ) : (
+          ""
+        )}
       </Dialog>
     </Fragment>
   )

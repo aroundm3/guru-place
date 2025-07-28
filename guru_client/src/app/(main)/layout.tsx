@@ -1,10 +1,12 @@
 import { Metadata } from "next"
 
 import { getBaseURL } from "@lib/util/env"
+import { getFullLinkResource } from "@lib/config"
 import Footer from "@modules/layout/templates/footer"
 import Nav from "@modules/layout/templates/nav"
 import { fetcher } from "@lib/config"
-import { StoreMetadata } from "types/global"
+import { StoreMetadata, CustomerCard } from "types/global"
+import { CustomerCardProvider } from "@lib/context/customer-card-context"
 
 export const metadata: Metadata = {
   metadataBase: new URL(getBaseURL()),
@@ -12,11 +14,44 @@ export const metadata: Metadata = {
 
 export default async function PageLayout(props: { children: React.ReactNode }) {
   const storeMetadataRs = await fetcher("/api/store-metadata")
-
   const metada: StoreMetadata = storeMetadataRs.data
 
+  // Fetch customer cards (discount cards) from guru-server
+  let customerCards: CustomerCard[] = []
+  try {
+    const customerCardsRs = await fetcher(
+      "/api/customer-cards?" +
+        "fields[0]=title&" +
+        "fields[1]=description&" +
+        "fields[2]=discount&" +
+        "fields[3]=index&" +
+        "fields[4]=publishedAt&" +
+        "populate[image][populate]=*"
+    )
+
+    // Process the customer cards to include proper image URLs
+    customerCards = (customerCardsRs.data || []).map((card: any) => ({
+      ...card,
+      image: card.image.formats
+        ? {
+            small: getFullLinkResource(
+              card.image.formats.small?.url ?? card.image.url
+            ),
+            thumbnail: getFullLinkResource(
+              card.image.formats.thumbnail?.url ?? card.image.url
+            ),
+            default: getFullLinkResource(card.image.url),
+          }
+        : null,
+    }))
+
+    console.log({ customerCardsRs, customerCards })
+  } catch (error) {
+    console.error("Failed to fetch customer cards:", error)
+  }
+
   return (
-    <>
+    <CustomerCardProvider initialCards={customerCards}>
       <Nav />
       {/* {customer && cart && (
         <CartMismatchBanner customer={customer} cart={cart} />
@@ -42,6 +77,6 @@ export default async function PageLayout(props: { children: React.ReactNode }) {
       </div>
 
       <Footer metada={metada} />
-    </>
+    </CustomerCardProvider>
   )
 }
