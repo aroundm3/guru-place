@@ -162,7 +162,7 @@ const CartDropdown = () => {
         <div className="small:hidden fixed inset-x-3 bottom-4 z-[60]">
           <button
             onClick={openAndCancel}
-            className="w-full flex items-center justify-between bg-slate-900 text-white rounded-md px-4 py-3 shadow-lg"
+            className="w-full flex items-center justify-between bg-slate-900 text-white rounded-md px-4 py-4 shadow-lg"
             aria-label="Mở giỏ hàng"
           >
             <span className="text-sm font-medium">
@@ -222,7 +222,7 @@ const CartDropdown = () => {
               </div>
               {cart && cart.length > 0 ? (
                 <>
-                  <div className="overflow-y-auto overflow-x-hidden max-h-[32vh] p-4 grid grid-cols-1 gap-y-3 no-scrollbar">
+                  <div className="overflow-y-auto overflow-x-hidden max-h-[28vh] p-4 grid grid-cols-1 gap-y-3 no-scrollbar">
                     {cart.map((item, index) => {
                       const productData = item.product?.productData
                       if (!productData) return null
@@ -321,15 +321,19 @@ const CartDropdown = () => {
                     })}
                   </div>
                   <Divider className="mt-1" />
-                  <div className="p-3 flex items-center justify-between">
+                  <div className="p-4 flex items-center justify-between">
                     <span className="text-sm font-semibold">Tổng cộng</span>
                     <span className="text-base font-semibold">
                       {formatBigNumber(subtotal, true)}
                     </span>
                   </div>
                   <div className="px-3 pb-3">
-                    <Button className="w-full" size="small" asChild>
-                      <LocalizedClientLink href="/cart" onClick={close}>
+                    <Button className="w-full" asChild>
+                      <LocalizedClientLink
+                        href="/cart"
+                        onClick={close}
+                        className="text-sm"
+                      >
                         Đi đến giỏ hàng
                       </LocalizedClientLink>
                     </Button>

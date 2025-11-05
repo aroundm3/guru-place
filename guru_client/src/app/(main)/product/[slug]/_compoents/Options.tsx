@@ -90,6 +90,9 @@ export default function Options({ productData }: OptionsProps) {
       // Dispatch event để CartDropdown cập nhật ngay lập tức
       window.dispatchEvent(new Event("cartUpdated"))
     }
+
+    setQuantityPicked(1)
+    setCurrentPicked(undefined)
   }
 
   return (
@@ -127,10 +130,11 @@ export default function Options({ productData }: OptionsProps) {
                     <Image
                       src={variant.variant_image?.thumbnail || "/logo.png"}
                       alt={variant.variant_value}
-                      width={36}
-                      height={36}
-                      sizes="100vh"
-                      className="object-cover rounded-tl rounded-bl"
+                      width={0}
+                      height={0}
+                      sizes="50vh"
+                      style={{ height: "36px", width: "36px" }}
+                      className="!object-contain aspect-square rounded-tl rounded-bl"
                     />
                     <span className="text-xs font-medium">
                       {variant.variant_value}
