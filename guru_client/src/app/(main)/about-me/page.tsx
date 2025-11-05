@@ -1,7 +1,6 @@
 "use client"
 
 import { motion } from "framer-motion"
-import Head from "next/head"
 import Image from "next/image"
 
 export default function AboutMe() {
@@ -30,11 +29,6 @@ export default function AboutMe() {
 
   return (
     <>
-      <Head>
-        <title>About Me | Guru Place</title>
-        <meta name="description" content="Learn more about me and my journey" />
-      </Head>
-
       <div className="min-h-screen py-12 px-4 sm:px-6 lg:px-8">
         <motion.div
           className="max-w-4xl mx-auto"
