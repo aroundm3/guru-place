@@ -208,7 +208,7 @@ export default function SearchButton() {
         {!isLoading && listProduct?.length ? (
           <Link
             href={`/search_${query}`}
-            className="text-white text-lg font-bold mx-auto col-span-3 flex flex-col space-y-1"
+            className="text-white text-md mt-4 font-bold mx-auto col-span-3 flex flex-col space-y-1"
             onClick={() => setIsShowSearchList(false)}
           >
             Xem thêm

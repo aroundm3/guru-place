@@ -9,6 +9,7 @@
   "options": {
     "draftAndPublish": true
   },
+  "pluginOptions": {},
   "attributes": {
     "background_color": {
       "type": "string"
@@ -24,6 +25,18 @@
     },
     "facebook_link": {
       "type": "string"
+    },
+    "about_me": {
+      "type": "blocks"
+    },
+    "zalo_link": {
+      "type": "string"
+    },
+    "description": {
+      "type": "text"
+    },
+    "google_map_link": {
+      "type": "text"
     }
   }
 }

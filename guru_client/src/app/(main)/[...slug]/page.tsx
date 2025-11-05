@@ -151,14 +151,16 @@ export async function generateMetadata(
     }
 
     // Tạo description động dựa trên nội dung
-    const description = subRouteTitle 
+    const description = subRouteTitle
       ? `Khám phá ${subRouteTitle} tại Divi - Cửa hàng mỹ phẩm uy tín với đa dạng sản phẩm chất lượng cao. Giao hàng nhanh chóng toàn quốc.`
       : "Divi - Cửa hàng mỹ phẩm uy tín với đa dạng sản phẩm chăm sóc da, làm đẹp chất lượng cao. Giao hàng nhanh chóng toàn quốc."
 
     return {
       title: `Divi | ${subRouteTitle ? subRouteTitle : "Tất cả sản phẩm"}`,
       description,
-      keywords: `mỹ phẩm, ${subRouteTitle || 'sản phẩm làm đẹp'}, chăm sóc da, Divi, mỹ phẩm chính hãng`,
+      keywords: `mỹ phẩm, ${
+        subRouteTitle || "sản phẩm làm đẹp"
+      }, chăm sóc da, Divi, mỹ phẩm chính hãng`,
       icons: {
         icon: "/logo.png", // icon mặc định
         shortcut: "/logo.png", // shortcut icon (nhỏ hơn)
@@ -296,6 +298,7 @@ export default async function Home(props: { params: { slug: string[] } }) {
         currentBlockProduct = listProducBlock.find(
           (block) => block.documentId === listParamsToFilter[1]
         )
+
         if (currentBlockProduct) {
           subRouteTitle = `${currentBlockProduct.title}`
           const productsRs = await getListProducts({
@@ -304,6 +307,11 @@ export default async function Home(props: { params: { slug: string[] } }) {
 
           products = productsRs.data
           pageCount = productsRs.pageCount
+
+          console.log({
+            blockProductId: currentBlockProduct.documentId,
+            aaaaaproducts: products,
+          })
         }
 
         break

@@ -62,7 +62,7 @@ export default function Product({ data }: ProductProps) {
           </span>
         </div>
       </div>
-      <div className="flex justify-between space-x-2 px-4 pb-4 h-14">
+      <div className="flex justify-between space-x-2 px-2 pb-2 h-14">
         <div className="flex flex-col my-auto">
           <span className="text-base font-bold text-pink-600">
             {formatBigNumber(data.sale_price, true)}

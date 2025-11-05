@@ -1,12 +1,12 @@
 import { getListBrand } from "@lib/data/brand"
 import { getListCategories } from "@lib/data/category"
 import { Text, clx } from "@medusajs/ui"
-import LocalizedClientLink from "@modules/common/components/localized-client-link"
 import Link from "next/link"
 import { StoreMetadata } from "types/global"
 import LocalPhoneIcon from "@mui/icons-material/LocalPhone"
 import EmailIcon from "@mui/icons-material/Email"
 import FacebookIcon from "@mui/icons-material/Facebook"
+import ZaloIcon from "@modules/layout/components/icons/ZaloIcon"
 
 interface FooterProps {
   metada: StoreMetadata
@@ -20,13 +20,13 @@ export default async function Footer({ metada }: FooterProps) {
     <footer className="border-t border-ui-border-base w-full bg-stone-100">
       <div className="content-container flex flex-col w-full">
         <div className="flex flex-col gap-y-6 xsmall:flex-row items-start justify-between py-20">
-          <div>
-            <LocalizedClientLink
-              href="/"
+          <div className="flex flex-col space-y-4">
+            <Link
+              href="/about-me"
               className="txt-compact-xlarge-plus text-ui-fg-subtle hover:text-ui-fg-base uppercase"
             >
               DIVI Cosmetics
-            </LocalizedClientLink>
+            </Link>
           </div>
           <div className="text-small-regular gap-10 md:gap-x-16 grid grid-cols-2 sm:grid-cols-3">
             {categories && categories?.length > 0 && (
@@ -127,14 +127,36 @@ export default async function Footer({ metada }: FooterProps) {
                     </a>
                   </li>
                 )}
+                {metada.zalo_link && (
+                  <li>
+                    <a
+                      href={metada.zalo_link}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="hover:text-ui-fg-base flex items-center"
+                    >
+                      <ZaloIcon className="!h-4 !w-4" />
+                      Zalo
+                    </a>
+                  </li>
+                )}
               </ul>
             </div>
           </div>
         </div>
-        <div className="flex w-full mb-16 justify-between text-ui-fg-muted">
+        <div className="flex flex-col space-y-2 w-full mb-16 justify-between text-ui-fg-muted">
           <Text className="txt-compact-small">
             © {new Date().getFullYear()} Divi Cosmetics Store.
           </Text>
+          {metada.address && (
+            <Link
+              href={metada.google_map_link ?? ""}
+              target="_blank"
+              rel="noreferrer"
+            >
+              <Text className="txt-compact-small">{metada.address}</Text>
+            </Link>
+          )}
         </div>
       </div>
     </footer>

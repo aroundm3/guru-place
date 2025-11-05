@@ -16,6 +16,8 @@ import useGetListBrand from "./_hooks/useGetListBrands"
 import AccountTreeRoundedIcon from "@mui/icons-material/AccountTreeRounded"
 import useGetProductCollection from "./_hooks/useGetProductCollection"
 import CardGiftcardRoundedIcon from "@mui/icons-material/CardGiftcardRounded"
+import AdjustIcon from "@mui/icons-material/Adjust"
+import PhoneIcon from "@mui/icons-material/Phone"
 
 const SideMenu = ({ regions }: { regions: HttpTypes.StoreRegion[] | null }) => {
   const [isOpenSideBar, setIsOpenSideBar] = useState(false)
@@ -136,6 +138,7 @@ const SideMenu = ({ regions }: { regions: HttpTypes.StoreRegion[] | null }) => {
                           href={`/category_${category.slug}`}
                           key={category.documentId}
                           className="flex text-gray-500 hover:text-gray-700 duration-300 cursor-pointer"
+                          onClick={closeSideBar}
                         >
                           <div className="flex space-x-2">
                             <span className="sm:text-sm text-xs font-semibold">
@@ -173,6 +176,7 @@ const SideMenu = ({ regions }: { regions: HttpTypes.StoreRegion[] | null }) => {
                           href={`/brand_${brand.slug}`}
                           key={brand.documentId}
                           className="flex text-gray-500 hover:text-gray-700 duration-300 cursor-pointer"
+                          onClick={closeSideBar}
                         >
                           <div className="flex space-x-2">
                             <span className="sm:text-sm text-xs font-semibold">
@@ -212,6 +216,7 @@ const SideMenu = ({ regions }: { regions: HttpTypes.StoreRegion[] | null }) => {
                           href={`/collection_${collection.documentId}`}
                           key={collection.documentId}
                           className="flex text-gray-500 hover:text-gray-700 duration-300 cursor-pointer"
+                          onClick={closeSideBar}
                         >
                           <div className="flex space-x-2">
                             <span className="sm:text-sm text-xs font-semibold">
@@ -251,12 +256,24 @@ const SideMenu = ({ regions }: { regions: HttpTypes.StoreRegion[] | null }) => {
           </div>
           <div className="flex mt-4 flex-col space-y-4 w-full min-w-[250px] cursor-pointer">
             <div className="mr-4 flex sm:space-x-1 space-x-0.5 text-gray-700 items-center">
-              <DateRangeRoundedIcon className="sm:!h-5 !h-4" />
+              <PhoneIcon className="sm:!h-5 !h-4" />
               <h6 className="my-auto sm:text-lg text-base font-semibold">
                 Liên hệ hỗ trợ
               </h6>
             </div>
           </div>
+          <Link
+            href={`/about-me`}
+            className="flex mt-4 flex-col space-y-4 w-full min-w-[250px] cursor-pointer"
+            onClick={closeSideBar}
+          >
+            <div className="mr-4 flex sm:space-x-1 space-x-0.5 text-gray-700 items-center">
+              <AdjustIcon className="sm:!h-5 !h-4" />
+              <h6 className="my-auto sm:text-lg text-base font-semibold">
+                Về chúng tôi
+              </h6>
+            </div>
+          </Link>
         </div>
       </Drawer>
     </Fragment>

@@ -128,6 +128,10 @@ export interface StoreMetadata {
   background_color: string
   phone_number: string
   address: string
+  google_map_link: string
   email_contact: string
   facebook_link: string
+  zalo_link: string
+  description: string
+  about_me: RichTextBlock[]
 }
