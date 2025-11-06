@@ -65,33 +65,36 @@ export default function ProductBlockClient({ block }: ProductBlockClientProps) {
   }
 
   return (
-    <div className="flex items-center bg-rose-300 rounded-xl shadow-lg border p-4 sm:space-x-10 space-x-6">
+    <div className="flex items-center bg-rose-300 rounded-xl shadow-lg border py-2 px-4 sm:space-x-10 space-x-6">
       {!isMobile && (
-        <div className="sm:w-1/4 w-1/2 flex-shrink-0 flex flex-col space-y-4">
-          <span className="font-bold text-2xl sm:text-3xl text-rose-50">
-            {block.title}
-          </span>
-          <Link
-            href={`/collection_${block.documentId}`}
-            className="mt-2 inline-flex items-center text-white sm:text-base text-sm font-semibold group"
-          >
-            Xem thêm
-            <span className="ml-1 inline-block transition-transform duration-300 group-hover:translate-x-1 group-hover:scale-110">
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M9 5l7 7-7 7"
-                />
-              </svg>
+        <div className="sm:w-1/3 w-1/2 flex-shrink-0 relative">
+          <div className="w-full h-full bg-blue-500"></div>
+          <div className="flex flex-col space-y-4 absolute">
+            <span className="font-bold text-2xl sm:text-3xl text-rose-50">
+              {block.title}
             </span>
-          </Link>
+            <Link
+              href={`/collection_${block.documentId}`}
+              className="mt-2 inline-flex items-center text-white sm:text-base text-sm font-semibold group"
+            >
+              Xem thêm
+              <span className="ml-1 inline-block transition-transform duration-300 group-hover:translate-x-1 group-hover:scale-110">
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M9 5l7 7-7 7"
+                  />
+                </svg>
+              </span>
+            </Link>
+          </div>
         </div>
       )}
       <div className={`flex-1 relative overflow-hidden`}>
