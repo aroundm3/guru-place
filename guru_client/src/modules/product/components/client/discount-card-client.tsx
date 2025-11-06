@@ -9,7 +9,7 @@ interface DiscountCardClientProps {
 }
 
 // Loading component for the discount card
-const LoadingSkeleton = () => <div className="h-24 w-full mt-6"></div>
+const LoadingSkeleton = () => null
 
 // Dynamically import the DiscountCardDisplay component with no SSR
 const DiscountCardDisplay = dynamic(

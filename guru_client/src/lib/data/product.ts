@@ -185,15 +185,30 @@ export async function getListProductsBlock(
 ): Promise<ProductListBlock[]> {
   try {
     const data = await fetcher(
-      `/api/product-list-blocks?populate[products][populate]=media&pagination[pageSize]=100&sort=index:asc&populate[products][populate]=variants`,
+      `/api/product-list-blocks?populate[products][populate]=media&pagination[pageSize]=100&sort=index:asc&populate[products][populate]=variants&populate[banner]=true`,
       {
         next: { revalidate: 10 },
       }
     )
 
+    console.log("jbdjahbsdas: ", data.data[0].banner)
+
     return data.data.map((item: any) => {
       return {
         ...item,
+        banner: {
+          small: item.banner
+            ? getFullLinkResource(
+                item.banner?.formats?.small?.url ?? item.banner.url ?? ""
+              )
+            : "",
+          thumbnail: item.banner
+            ? getFullLinkResource(
+                item.banner?.formats?.thumbnail?.url ?? item.banner.url ?? ""
+              )
+            : "",
+          default: item.banner ? getFullLinkResource(item.banner?.url) : "",
+        },
         products: item.products.map((productItem: any) => {
           return {
             ...productItem,

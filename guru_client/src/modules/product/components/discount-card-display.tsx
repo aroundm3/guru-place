@@ -1,12 +1,12 @@
 "use client"
 
 import { useCardById } from "@lib/context/customer-card-context"
-import { Card, CardContent, Typography, Tooltip, Box } from "@mui/material"
+import { Tooltip } from "@mui/material"
 import { useState } from "react"
 import { CustomerCardModal } from "./customer-card-modal"
-import { getFullLinkResource } from "@lib/config"
 import { CustomerCard } from "types/global"
 import { formatBigNumber } from "@lib/util/format-big-number"
+import CardGiftcardRoundedIcon from "@mui/icons-material/CardGiftcardRounded"
 
 interface DiscountCardDisplayProps {
   productId: string
@@ -27,47 +27,18 @@ export default function DiscountCardDisplay({
   console.log({ discountCard, customerCards })
 
   return (
-    <Box className="mt-4">
+    <>
       {discountCard.map((card) => (
-        <Tooltip title="Nhấn để xem chi tiết ưu đãi">
-          <Card
-            className="cursor-pointer hover:shadow-md transition-shadow duration-300 max-w-xs !border !border-stone-300 !rounded-lg"
+        <Tooltip key={card.documentId} title="Nhấn để xem chi tiết ưu đãi">
+          <div
+            className="px-3 py-1 border-2 border-rose-600 rounded-lg cursor-pointer bg-gradient-to-r from-rose-100 to-pink-100 flex space-x-1.5 items-center hover:from-rose-200 hover:to-pink-200 hover:shadow-lg hover:scale-105 transition-all duration-200 shadow-md"
             onClick={() => setOpenModal(card.documentId)}
           >
-            <CardContent className="flex items-center !p-0 !h-24">
-              {card.image && (
-                <img
-                  src={card.image.default}
-                  alt={`Thẻ ưu đãi ${card.title}`}
-                  className="h-24 w-24 object-cover"
-                  loading="lazy"
-                />
-              )}
-              <Box className="ml-3 !py-2">
-                <Typography
-                  variant="subtitle2"
-                  className="font-semibold line-clamp-1"
-                >
-                  {card.title}
-                </Typography>
-                <Typography
-                  variant="body2"
-                  color="primary"
-                  className="font-bold"
-                >
-                  Giảm {formatBigNumber(card.discount, true)} cho lần mua tiếp
-                  theo
-                </Typography>
-                <Typography
-                  variant="caption"
-                  color="text.secondary"
-                  className="block mt-1"
-                >
-                  Nhấn để xem chi tiết
-                </Typography>
-              </Box>
-            </CardContent>
-          </Card>
+            <CardGiftcardRoundedIcon className="text-rose-700 !h-5 !w-5 animate-pulse" />
+            <span className="text-rose-800 text-xs font-bold">
+              {card.title}
+            </span>
+          </div>
         </Tooltip>
       ))}
 
@@ -76,6 +47,6 @@ export default function DiscountCardDisplay({
         onClose={() => setOpenModal("")}
         card={discountCard.find((card) => card.documentId === openModal)}
       />
-    </Box>
+    </>
   )
 }

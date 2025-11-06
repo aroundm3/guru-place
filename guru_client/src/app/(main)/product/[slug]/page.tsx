@@ -173,7 +173,7 @@ export default async function Home(props: { params: { slug: string } }) {
               <h6 className="sm:text-2xl text-xl font-bold">
                 {productDetail.name}
               </h6>
-              <p className="sm:text-base text-sm">
+              <p className="sm:text-sm text-xs !leading-6">
                 {productDetail.short_description}
               </p>
               <div className="flex flex-wrap gap-2">
@@ -192,13 +192,10 @@ export default async function Home(props: { params: { slug: string } }) {
                     </span>
                   </div>
                 )}
+                <DiscountCardClient productId={productDetail.documentId} />
               </div>
             </div>
-            {/* Discount Card Display */}
-            <div className="mt-6">
-              <DiscountCardClient productId={productDetail.documentId} />
-            </div>
-            <div className="!mt-10">
+            <div className="!mt-6">
               <Options productData={productDetail} />
             </div>
           </div>

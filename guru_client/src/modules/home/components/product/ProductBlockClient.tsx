@@ -4,6 +4,7 @@ import { useRef, useEffect, useState } from "react"
 import Link from "next/link"
 import Product from "./Product"
 import { motion } from "framer-motion"
+import Image from "next/image"
 
 // Hook detect mobile
 function useIsMobile() {
@@ -23,14 +24,46 @@ interface ProductBlockClientProps {
 
 export default function ProductBlockClient({ block }: ProductBlockClientProps) {
   const scrollRef = useRef<HTMLDivElement>(null)
+  const bannerTextRef = useRef<HTMLDivElement>(null)
   const isMobile = useIsMobile()
   const [currentIndex, setCurrentIndex] = useState(0)
   const [maxHeight, setMaxHeight] = useState<number | undefined>(undefined)
+  const [bannerHeight, setBannerHeight] = useState<number | undefined>(
+    undefined
+  )
   const products = block.products.slice(0, 6)
   const total = products.length + (block.products.length > 6 ? 1 : 0)
 
   // Ref cho từng item để đo chiều cao
   const itemRefs = useRef<(HTMLDivElement | null)[]>([])
+
+  // Auto-fit chiều cao banner với products container
+  useEffect(() => {
+    if (!isMobile && scrollRef.current) {
+      const updateBannerHeight = () => {
+        if (scrollRef.current) {
+          // Đo chiều cao của inner container chứa products
+          const innerContainer = scrollRef.current.querySelector(".flex.w-max")
+          if (innerContainer) {
+            const height = (innerContainer as HTMLElement).offsetHeight
+            setBannerHeight(height)
+          } else {
+            // Fallback: đo chiều cao của container chính
+            const height = scrollRef.current.offsetHeight
+            setBannerHeight(height)
+          }
+        }
+      }
+
+      // Đo ngay khi mount và sau khi images load
+      setTimeout(updateBannerHeight, 100)
+      setTimeout(updateBannerHeight, 500)
+
+      // Đo lại khi resize
+      window.addEventListener("resize", updateBannerHeight)
+      return () => window.removeEventListener("resize", updateBannerHeight)
+    }
+  }, [isMobile, block.products])
 
   // Auto-fit chiều cao lớn nhất
   useEffect(() => {
@@ -65,17 +98,42 @@ export default function ProductBlockClient({ block }: ProductBlockClientProps) {
   }
 
   return (
-    <div className="flex items-center bg-rose-300 rounded-xl shadow-lg border py-2 px-4 sm:space-x-10 space-x-6">
+    <div className="flex items-center bg-rose-300 rounded-xl shadow-lg border space-x-4">
       {!isMobile && (
-        <div className="sm:w-1/3 w-1/2 flex-shrink-0 relative">
-          <div className="w-full h-full bg-blue-500"></div>
-          <div className="flex flex-col space-y-4 absolute">
-            <span className="font-bold text-2xl sm:text-3xl text-rose-50">
+        <div className="sm:w-2/5 w-1/2 flex-shrink-0 relative">
+          {/* <div className="w-full h-full bg-blue-500"></div> */}
+          {block.banner.default ? (
+            <img
+              src={block.banner.default}
+              alt={block.title}
+              className={`!inline-block w-auto !rounded-l-lg !object-cover`}
+              width={0}
+              height={0}
+              loading="eager"
+              style={bannerHeight ? { height: `${bannerHeight}px` } : undefined}
+            />
+          ) : (
+            ""
+          )}
+
+          {/* Overlay mờ mờ */}
+          <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-black/30 to-transparent rounded-l-lg"></div>
+
+          {/* Text content với animation */}
+          <motion.div
+            ref={bannerTextRef}
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
+            className="flex flex-col space-y-4 absolute inset-0 justify-center text-left px-6"
+          >
+            <span className="font-bold text-2xl sm:text-3xl text-rose-50 drop-shadow-lg">
               {block.title}
             </span>
             <Link
               href={`/collection_${block.documentId}`}
-              className="mt-2 inline-flex items-center text-white sm:text-base text-sm font-semibold group"
+              className="inline-flex items-center text-white sm:text-base text-sm font-semibold group drop-shadow-lg"
             >
               Xem thêm
               <span className="ml-1 inline-block transition-transform duration-300 group-hover:translate-x-1 group-hover:scale-110">
@@ -94,7 +152,7 @@ export default function ProductBlockClient({ block }: ProductBlockClientProps) {
                 </svg>
               </span>
             </Link>
-          </div>
+          </motion.div>
         </div>
       )}
       <div className={`flex-1 relative overflow-hidden`}>
@@ -147,58 +205,126 @@ export default function ProductBlockClient({ block }: ProductBlockClientProps) {
             </button>
           </>
         )}
-        {/* Mobile: Carousel */}
+        {/* Mobile: Banner + Products */}
         {isMobile ? (
           <div className="flex flex-col w-full gap-4">
-            <div className="flex w-full gap-4">
-              <div className="flex-shrink-0 flex flex-col space-y-4 w-1/2">
-                <span className="font-bold text-2xl sm:text-3xl text-rose-50">
-                  {block.title}
-                </span>
-                <Link
-                  href={`/collection_${block.documentId}`}
-                  className="inline-flex items-center text-white sm:text-base text-sm font-semibold group"
-                >
-                  Xem thêm
-                  <span className="ml-1 inline-block transition-transform duration-300 group-hover:translate-x-1 group-hover:scale-110">
-                    <svg
-                      className="w-4 h-4"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      viewBox="0 0 24 24"
+            {block.banner.default ? (
+              <>
+                {/* Hàng 1: Banner với text */}
+                <div className="relative w-full rounded-t-lg overflow-hidden">
+                  <img
+                    src={block.banner.default}
+                    alt={block.title}
+                    className="w-full h-48 object-cover"
+                    loading="eager"
+                  />
+                  {/* Overlay mờ mờ */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-black/30 to-transparent"></div>
+                  {/* Text content với animation */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 30 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, margin: "-100px" }}
+                    transition={{ duration: 0.6, ease: "easeOut" }}
+                    className="flex flex-col space-y-4 absolute inset-0 justify-center text-left px-6"
+                  >
+                    <span className="font-bold text-2xl sm:text-3xl text-rose-50 drop-shadow-lg">
+                      {block.title}
+                    </span>
+                    <Link
+                      href={`/collection_${block.documentId}`}
+                      className="inline-flex items-center text-white sm:text-base text-sm font-semibold group drop-shadow-lg"
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M9 5l7 7-7 7"
-                      />
-                    </svg>
-                  </span>
-                </Link>
-              </div>
-              <div className="flex-1 flex flex-col justify-center">
-                {products[0] && <Product data={products[0]} />}
-              </div>
-            </div>
-            {/* Hàng dưới: 2 sản phẩm */}
-            <div className="grid grid-cols-2 gap-4 w-full">
-              {products[1] && (
-                <div className="flex flex-col h-full">
-                  <Product data={products[1]} />
+                      Xem thêm
+                      <span className="ml-1 inline-block transition-transform duration-300 group-hover:translate-x-1 group-hover:scale-110">
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M9 5l7 7-7 7"
+                          />
+                        </svg>
+                      </span>
+                    </Link>
+                  </motion.div>
                 </div>
-              )}
-              {products[2] && (
-                <div className="flex flex-col h-full">
-                  <Product data={products[2]} />
+                {/* Hàng dưới: 2 sản phẩm */}
+                <div className="grid grid-cols-2 gap-4 w-full px-4 pb-4">
+                  {products[0] && (
+                    <div className="flex flex-col h-full">
+                      <Product data={products[0]} />
+                    </div>
+                  )}
+                  {products[1] && (
+                    <div className="flex flex-col h-full">
+                      <Product data={products[1]} />
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
+              </>
+            ) : (
+              <>
+                {/* Giao diện cũ: Text + 1 sản phẩm ở hàng 1 */}
+                <div className="flex w-full gap-4 px-4 pt-4">
+                  <div className="flex-shrink-0 flex flex-col space-y-4 w-1/2">
+                    <span className="font-bold text-2xl sm:text-3xl text-rose-50">
+                      {block.title}
+                    </span>
+                    <Link
+                      href={`/collection_${block.documentId}`}
+                      className="inline-flex items-center text-white sm:text-base text-sm font-semibold group"
+                    >
+                      Xem thêm
+                      <span className="ml-1 inline-block transition-transform duration-300 group-hover:translate-x-1 group-hover:scale-110">
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M9 5l7 7-7 7"
+                          />
+                        </svg>
+                      </span>
+                    </Link>
+                  </div>
+                  <div className="flex-1 flex flex-col justify-center">
+                    {products[0] && <Product data={products[0]} />}
+                  </div>
+                </div>
+                {/* Hàng dưới: 2 sản phẩm */}
+                <div className="grid grid-cols-2 gap-4 w-full px-4 pb-4">
+                  {products[1] && (
+                    <div className="flex flex-col h-full">
+                      <Product data={products[1]} />
+                    </div>
+                  )}
+                  {products[2] && (
+                    <div className="flex flex-col h-full">
+                      <Product data={products[2]} />
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
           </div>
         ) : (
           // Desktop: scroll ngang như cũ
-          <div className="w-full overflow-x-scroll no-scrollbar">
-            <div className="flex w-max flex-nowrap gap-4 py-2 items-stretch">
+          <div
+            ref={scrollRef}
+            className="w-full overflow-x-scroll no-scrollbar"
+          >
+            <div className="flex w-max flex-nowrap gap-4 py-4 pr-4 items-stretch">
               {products.map((product: any) => (
                 <div
                   key={product.documentId}
