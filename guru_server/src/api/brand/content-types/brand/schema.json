@@ -10,6 +10,7 @@
   "options": {
     "draftAndPublish": true
   },
+  "pluginOptions": {},
   "attributes": {
     "name": {
       "type": "string",
@@ -29,8 +30,8 @@
     },
     "isHighlight": {
       "type": "boolean",
-      "default": true,
-      "required": true
+      "required": true,
+      "default": true
     },
     "categories": {
       "type": "relation",
@@ -45,13 +46,23 @@
     },
     "hidden_name": {
       "type": "boolean",
-      "default": false,
-      "required": true
+      "required": true,
+      "default": false
     },
     "index": {
       "type": "integer",
-      "default": 1,
-      "required": true
+      "required": true,
+      "default": 1
+    },
+    "background": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos",
+        "audios"
+      ]
     }
   }
 }
