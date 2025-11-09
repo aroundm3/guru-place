@@ -4,7 +4,7 @@ import React from "react"
 export const dynamic = "force-dynamic"
 
 export const metadata: Metadata = {
-  title: "About Me | Guru Place",
+  title: "About Me | Divi",
   description: "Learn more about me and my journey",
 }
 

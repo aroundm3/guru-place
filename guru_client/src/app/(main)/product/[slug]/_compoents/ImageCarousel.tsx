@@ -22,7 +22,6 @@ export default function ImageCarousel({
   const [currentIndex, setCurrentIndex] = useState<number>(0)
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false)
   const [modalIndex, setModalIndex] = useState<number>(0)
-  const [slideDirection, setSlideDirection] = useState<number>(1) // 1 for next, -1 for prev
   const [zoom, setZoom] = useState<number>(1)
   const [position, setPosition] = useState<{ x: number; y: number }>({
     x: 0,
@@ -65,7 +64,6 @@ export default function ImageCarousel({
     setIsModalOpen(true)
     setZoom(1)
     setPosition({ x: 0, y: 0 })
-    setSlideDirection(1)
   }
 
   const closeModal = () => {
@@ -76,7 +74,6 @@ export default function ImageCarousel({
 
   const handleModalPrev = () => {
     if (modalIndex > 0) {
-      setSlideDirection(-1)
       setModalIndex(modalIndex - 1)
       setZoom(1)
       setPosition({ x: 0, y: 0 })
@@ -85,7 +82,6 @@ export default function ImageCarousel({
 
   const handleModalNext = () => {
     if (modalIndex < images.length - 1) {
-      setSlideDirection(1)
       setModalIndex(modalIndex + 1)
       setZoom(1)
       setPosition({ x: 0, y: 0 })
@@ -130,6 +126,21 @@ export default function ImageCarousel({
     }
   }
 
+  const handleSwipeDrag = (
+    _: MouseEvent | TouchEvent | PointerEvent,
+    info: { offset: { x: number } }
+  ) => {
+    // Chỉ cho phép swipe khi zoom = 1
+    if (zoom === 1) {
+      const threshold = 50
+      if (info.offset.x > threshold && modalIndex > 0) {
+        handleModalPrev()
+      } else if (info.offset.x < -threshold && modalIndex < images.length - 1) {
+        handleModalNext()
+      }
+    }
+  }
+
   // Keyboard navigation
   useEffect(() => {
     if (!isModalOpen) return
@@ -138,12 +149,10 @@ export default function ImageCarousel({
       if (e.key === "Escape") {
         closeModal()
       } else if (e.key === "ArrowLeft" && modalIndex > 0) {
-        setSlideDirection(-1)
         setModalIndex(modalIndex - 1)
         setZoom(1)
         setPosition({ x: 0, y: 0 })
       } else if (e.key === "ArrowRight" && modalIndex < images.length - 1) {
-        setSlideDirection(1)
         setModalIndex(modalIndex + 1)
         setZoom(1)
         setPosition({ x: 0, y: 0 })
@@ -301,7 +310,7 @@ export default function ImageCarousel({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-black/95 flex flex-col"
+            className="fixed inset-0 z-50 bg-black/40 backdrop-blur-md flex flex-col"
             onClick={closeModal}
           >
             {/* Close Button */}
@@ -340,54 +349,59 @@ export default function ImageCarousel({
               onWheel={handleWheel}
               onClick={(e) => e.stopPropagation()}
             >
-              <AnimatePresence mode="wait" initial={false}>
-                <motion.div
-                  key={modalIndex}
-                  className="relative max-w-full max-h-full"
-                  initial={{ opacity: 0, x: slideDirection * 100 }}
-                  animate={{
-                    opacity: 1,
-                    x: zoom > 1 ? position.x : 0,
-                    y: zoom > 1 ? position.y : 0,
-                    scale: zoom,
-                  }}
-                  exit={{ opacity: 0, x: slideDirection * -100 }}
-                  transition={{
-                    opacity: { duration: 0.2 },
-                    x: {
-                      type: "spring",
-                      stiffness: 300,
-                      damping: 30,
-                    },
-                    y: {
-                      type: "spring",
-                      stiffness: 300,
-                      damping: 30,
-                    },
-                    scale: {
-                      type: "spring",
-                      stiffness: 300,
-                      damping: 30,
-                    },
-                  }}
-                  drag={zoom > 1}
-                  dragConstraints={{
-                    left: -200,
-                    right: 200,
-                    top: -200,
-                    bottom: 200,
-                  }}
-                  onDragEnd={handleImageDrag}
-                >
-                  <img
-                    ref={imageRef}
-                    src={images[modalIndex]}
-                    alt={`${productTitle} - Image ${modalIndex + 1}`}
-                    className="max-w-full max-h-[80vh] object-contain"
-                    draggable={false}
-                  />
-                </motion.div>
-              </AnimatePresence>
+              <motion.div
+                className="flex relative w-full h-full"
+                animate={{ x: `-${modalIndex * 100}%` }}
+                transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                drag={zoom === 1 ? "x" : false}
+                dragConstraints={{ left: 0, right: 0 }}
+                dragElastic={0.2}
+                onDragEnd={handleSwipeDrag}
+              >
+                {images.map((image, idx) => (
+                  <motion.div
+                    key={idx}
+                    className="min-w-full h-full flex items-center justify-center relative"
+                    animate={{
+                      scale: idx === modalIndex ? zoom : 1,
+                      x: idx === modalIndex && zoom > 1 ? position.x : 0,
+                      y: idx === modalIndex && zoom > 1 ? position.y : 0,
+                    }}
+                    transition={{
+                      scale: {
+                        type: "spring",
+                        stiffness: 400,
+                        damping: 25,
+                      },
+                      x: {
+                        type: "spring",
+                        stiffness: 400,
+                        damping: 25,
+                      },
+                      y: {
+                        type: "spring",
+                        stiffness: 400,
+                        damping: 25,
+                      },
+                    }}
+                    drag={idx === modalIndex && zoom > 1}
+                    dragConstraints={{
+                      left: -200,
+                      right: 200,
+                      top: -200,
+                      bottom: 200,
+                    }}
+                    onDragEnd={handleImageDrag}
+                  >
+                    <img
+                      src={image}
+                      alt={`${productTitle} - Image ${idx + 1}`}
+                      className="max-w-full max-h-[80vh] object-contain"
+                      draggable={false}
+                    />
+                  </motion.div>
+                ))}
+              </motion.div>
 
               {/* Navigation Buttons */}
               {modalIndex > 0 && (
@@ -396,7 +410,7 @@ export default function ImageCarousel({
                     e.stopPropagation()
                     handleModalPrev()
                   }}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/10 hover:bg-white/20 text-white p-3 rounded-full transition-colors"
+                  className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/10 hover:bg-white/20 text-white p-3 rounded-full transition-colors z-50"
                 >
                   <KeyboardArrowLeftRoundedIcon />
                 </button>
@@ -407,7 +421,7 @@ export default function ImageCarousel({
                     e.stopPropagation()
                     handleModalNext()
                   }}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/10 hover:bg-white/20 text-white p-3 rounded-full transition-colors"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/10 hover:bg-white/20 text-white p-3 rounded-full transition-colors z-50"
                 >
                   <ChevronRightRoundedIcon />
                 </button>
@@ -421,7 +435,6 @@ export default function ImageCarousel({
                   key={idx}
                   onClick={(e) => {
                     e.stopPropagation()
-                    setSlideDirection(idx > modalIndex ? 1 : -1)
                     setModalIndex(idx)
                     setZoom(1)
                     setPosition({ x: 0, y: 0 })

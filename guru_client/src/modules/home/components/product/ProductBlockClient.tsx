@@ -4,7 +4,6 @@ import { useRef, useEffect, useState } from "react"
 import Link from "next/link"
 import Product from "./Product"
 import { motion } from "framer-motion"
-import Image from "next/image"
 
 // Hook detect mobile
 function useIsMobile() {
@@ -24,6 +23,7 @@ interface ProductBlockClientProps {
 
 export default function ProductBlockClient({ block }: ProductBlockClientProps) {
   const scrollRef = useRef<HTMLDivElement>(null)
+  const mobileScrollRef = useRef<HTMLDivElement>(null)
   const bannerTextRef = useRef<HTMLDivElement>(null)
   const isMobile = useIsMobile()
   const [currentIndex, setCurrentIndex] = useState(0)
@@ -98,7 +98,7 @@ export default function ProductBlockClient({ block }: ProductBlockClientProps) {
   }
 
   return (
-    <div className="flex items-center bg-rose-300 rounded-xl shadow-lg border space-x-4">
+    <div className="flex items-center border-stone-200 shadow-lg border rounded-lg space-x-4">
       {!isMobile && (
         <div className="sm:w-2/5 w-1/2 flex-shrink-0 relative">
           {/* <div className="w-full h-full bg-blue-500"></div> */}
@@ -128,12 +128,18 @@ export default function ProductBlockClient({ block }: ProductBlockClientProps) {
             transition={{ duration: 0.6, ease: "easeOut" }}
             className="flex flex-col space-y-4 absolute inset-0 justify-center text-left px-6"
           >
-            <span className="font-bold text-2xl sm:text-3xl text-rose-50 drop-shadow-lg">
+            <span
+              className={`font-bold text-2xl sm:text-3xl drop-shadow-lg ${
+                block.banner.default ? "text-rose-50" : "text-pink-600"
+              }`}
+            >
               {block.title}
             </span>
             <Link
               href={`/collection_${block.documentId}`}
-              className="inline-flex items-center text-white sm:text-base text-sm font-semibold group drop-shadow-lg"
+              className={`inline-flex items-center ${
+                block.banner.default ? "text-rose-50" : "text-pink-600"
+              } sm:text-base text-sm font-semibold group drop-shadow-lg`}
             >
               Xem thêm
               <span className="ml-1 inline-block transition-transform duration-300 group-hover:translate-x-1 group-hover:scale-110">
@@ -228,7 +234,11 @@ export default function ProductBlockClient({ block }: ProductBlockClientProps) {
                     transition={{ duration: 0.6, ease: "easeOut" }}
                     className="flex flex-col space-y-4 absolute inset-0 justify-center text-left px-6"
                   >
-                    <span className="font-bold text-2xl sm:text-3xl text-rose-50 drop-shadow-lg">
+                    <span
+                      className={`font-bold text-2xl sm:text-3xl ${
+                        block.banner.default ? "text-rose-50" : "text-pink-600"
+                      } drop-shadow-lg`}
+                    >
                       {block.title}
                     </span>
                     <Link
@@ -254,69 +264,185 @@ export default function ProductBlockClient({ block }: ProductBlockClientProps) {
                     </Link>
                   </motion.div>
                 </div>
-                {/* Hàng dưới: 2 sản phẩm */}
-                <div className="grid grid-cols-2 gap-4 w-full px-4 pb-4">
-                  {products[0] && (
-                    <div className="flex flex-col h-full">
-                      <Product data={products[0]} />
+                {/* Hàng dưới: Danh sách scroll ngang với nút prev/next */}
+                <div className="relative w-full pb-4">
+                  <button
+                    onClick={() => {
+                      if (mobileScrollRef.current)
+                        mobileScrollRef.current.scrollBy({
+                          left: -200,
+                          behavior: "smooth",
+                        })
+                    }}
+                    className="absolute left-2 top-1/2 -translate-y-1/2 z-10 p-2.5 rounded-full shadow-lg bg-white text-pink-700 opacity-80 hover:opacity-100 hover:bg-pink-50 hover:shadow-xl transition-all duration-200 border border-pink-200"
+                    aria-label="Prev"
+                  >
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2.5}
+                        d="M15 19l-7-7 7-7"
+                      />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (mobileScrollRef.current)
+                        mobileScrollRef.current.scrollBy({
+                          left: 200,
+                          behavior: "smooth",
+                        })
+                    }}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 z-10 p-2.5 rounded-full shadow-lg bg-white text-pink-700 opacity-80 hover:opacity-100 hover:bg-pink-50 hover:shadow-xl transition-all duration-200 border border-pink-200"
+                    aria-label="Next"
+                  >
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2.5}
+                        d="M9 5l7 7-7 7"
+                      />
+                    </svg>
+                  </button>
+                  <div
+                    ref={mobileScrollRef}
+                    className="w-full overflow-x-scroll no-scrollbar px-4"
+                  >
+                    <div className="flex w-max flex-nowrap gap-4 items-stretch">
+                      {products.map((product: any) => (
+                        <div
+                          key={product.documentId}
+                          className="min-w-[140px] max-w-[160px]"
+                        >
+                          <Product data={product} />
+                        </div>
+                      ))}
                     </div>
-                  )}
-                  {products[1] && (
-                    <div className="flex flex-col h-full">
-                      <Product data={products[1]} />
-                    </div>
-                  )}
+                  </div>
                 </div>
               </>
             ) : (
               <>
                 {/* Giao diện cũ: Text + 1 sản phẩm ở hàng 1 */}
                 <div className="flex w-full gap-4 px-4 pt-4">
-                  <div className="flex-shrink-0 flex flex-col space-y-4 w-1/2">
-                    <span className="font-bold text-2xl sm:text-3xl text-rose-50">
-                      {block.title}
-                    </span>
-                    <Link
-                      href={`/collection_${block.documentId}`}
-                      className="inline-flex items-center text-white sm:text-base text-sm font-semibold group"
+              <div className="flex-shrink-0 flex flex-col space-y-4 w-1/2">
+                    <span
+                      className={`font-bold text-2xl sm:text-3xl ${
+                        block.banner.default ? "text-rose-50" : "text-pink-600"
+                      }`}
                     >
-                      Xem thêm
-                      <span className="ml-1 inline-block transition-transform duration-300 group-hover:translate-x-1 group-hover:scale-110">
-                        <svg
-                          className="w-4 h-4"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          viewBox="0 0 24 24"
+                  {block.title}
+                </span>
+                <Link
+                  href={`/collection_${block.documentId}`}
+                      className={`inline-flex items-center sm:text-base text-sm font-semibold group ${
+                        block.banner.default ? "text-rose-50" : "text-pink-600"
+                      }`}
+                >
+                  Xem thêm
+                  <span className="ml-1 inline-block transition-transform duration-300 group-hover:translate-x-1 group-hover:scale-110">
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M9 5l7 7-7 7"
+                      />
+                    </svg>
+                  </span>
+                </Link>
+              </div>
+              <div className="flex-1 flex flex-col justify-center">
+                {products[0] && <Product data={products[0]} />}
+              </div>
+            </div>
+                {/* Hàng dưới: Danh sách scroll ngang với nút prev/next */}
+                <div className="relative w-full pb-4">
+                  <button
+                    onClick={() => {
+                      if (mobileScrollRef.current)
+                        mobileScrollRef.current.scrollBy({
+                          left: -200,
+                          behavior: "smooth",
+                        })
+                    }}
+                    className="absolute left-2 top-1/2 -translate-y-1/2 z-10 p-2.5 rounded-full shadow-lg bg-white text-pink-700 opacity-80 hover:opacity-100 hover:bg-pink-50 hover:shadow-xl transition-all duration-200 border border-pink-200"
+                    aria-label="Prev"
+                  >
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2.5}
+                        d="M15 19l-7-7 7-7"
+                      />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (mobileScrollRef.current)
+                        mobileScrollRef.current.scrollBy({
+                          left: 200,
+                          behavior: "smooth",
+                        })
+                    }}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 z-10 p-2.5 rounded-full shadow-lg bg-white text-pink-700 opacity-80 hover:opacity-100 hover:bg-pink-50 hover:shadow-xl transition-all duration-200 border border-pink-200"
+                    aria-label="Next"
+                  >
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2.5}
+                        d="M9 5l7 7-7 7"
+                      />
+                    </svg>
+                  </button>
+                  <div
+                    ref={mobileScrollRef}
+                    className="w-full overflow-x-scroll no-scrollbar px-4"
+                  >
+                    <div className="flex w-max flex-nowrap gap-4 items-stretch">
+                      {products.slice(1).map((product: any) => (
+                        <div
+                          key={product.documentId}
+                          className="min-w-[140px] max-w-[160px]"
                         >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M9 5l7 7-7 7"
-                          />
-                        </svg>
-                      </span>
-                    </Link>
-                  </div>
-                  <div className="flex-1 flex flex-col justify-center">
-                    {products[0] && <Product data={products[0]} />}
-                  </div>
+                          <Product data={product} />
+                        </div>
+                      ))}
+                    </div>
                 </div>
-                {/* Hàng dưới: 2 sản phẩm */}
-                <div className="grid grid-cols-2 gap-4 w-full px-4 pb-4">
-                  {products[1] && (
-                    <div className="flex flex-col h-full">
-                      <Product data={products[1]} />
-                    </div>
-                  )}
-                  {products[2] && (
-                    <div className="flex flex-col h-full">
-                      <Product data={products[2]} />
-                    </div>
-                  )}
                 </div>
               </>
-            )}
+              )}
           </div>
         ) : (
           // Desktop: scroll ngang như cũ

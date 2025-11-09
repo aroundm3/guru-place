@@ -3,7 +3,6 @@
 import { Table, Text, clx } from "@medusajs/ui"
 import { updateLineItem } from "@lib/data/cart"
 import { HttpTypes } from "@medusajs/types"
-import CartItemSelect from "@modules/cart/components/cart-item-select"
 import ErrorMessage from "@modules/checkout/components/error-message"
 import DeleteButton from "@modules/common/components/delete-button"
 import LineItemOptions from "@modules/common/components/line-item-options"
@@ -13,6 +12,8 @@ import LocalizedClientLink from "@modules/common/components/localized-client-lin
 import Spinner from "@modules/common/icons/spinner"
 import Thumbnail from "@modules/products/components/thumbnail"
 import { useState } from "react"
+import AddRoundedIcon from "@mui/icons-material/AddRounded"
+import RemoveRoundedIcon from "@mui/icons-material/RemoveRounded"
 
 type ItemProps = {
   item: HttpTypes.StoreCartLineItem
@@ -25,6 +26,8 @@ const Item = ({ item, type = "full", currencyCode }: ItemProps) => {
   const [error, setError] = useState<string | null>(null)
 
   const changeQuantity = async (quantity: number) => {
+    if (quantity < 1) return
+
     setError(null)
     setUpdating(true)
 
@@ -76,28 +79,27 @@ const Item = ({ item, type = "full", currencyCode }: ItemProps) => {
         <Table.Cell>
           <div className="flex gap-2 items-center w-28">
             <DeleteButton id={item.id} data-testid="product-delete-button" />
-            <CartItemSelect
-              value={item.quantity}
-              onChange={(value) => changeQuantity(parseInt(value.target.value))}
-              className="w-14 h-10 p-4"
-              data-testid="product-select-button"
-            >
-              {/* TODO: Update this with the v2 way of managing inventory */}
-              {Array.from(
-                {
-                  length: Math.min(maxQuantity, 10),
-                },
-                (_, i) => (
-                  <option value={i + 1} key={i}>
-                    {i + 1}
-                  </option>
-                )
-              )}
-
-              <option value={1} key={1}>
-                1
-              </option>
-            </CartItemSelect>
+            <div className="flex items-center space-x-1">
+              <button
+                onClick={() => changeQuantity(item.quantity - 1)}
+                disabled={updating || item.quantity <= 1}
+                className="px-2 py-1 bg-neutral-100 hover:bg-neutral-50 duration-300 border border-stone-300 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                data-testid="product-decrease-button"
+              >
+                <RemoveRoundedIcon className="!w-4 !h-4" />
+              </button>
+              <span className="text-sm font-semibold px-4 min-w-20 flex items-center justify-center">
+                {item.quantity}
+              </span>
+              <button
+                onClick={() => changeQuantity(item.quantity + 1)}
+                disabled={updating || item.quantity >= maxQuantity}
+                className="px-2 py-1 bg-neutral-100 hover:bg-neutral-50 duration-300 border border-stone-300 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                data-testid="product-increase-button"
+              >
+                <AddRoundedIcon className="!w-4 !h-4" />
+              </button>
+            </div>
             {updating && <Spinner />}
           </div>
           <ErrorMessage error={error} data-testid="product-error-message" />

@@ -2,10 +2,11 @@
 
 import { Suspense } from "react"
 import dynamic from "next/dynamic"
-import { useCustomerCards } from "@lib/context/customer-card-context"
+import { CustomerCard } from "types/global"
 
 interface DiscountCardClientProps {
   productId: string
+  customerCards?: CustomerCard[]
 }
 
 // Loading component for the discount card
@@ -20,9 +21,13 @@ const DiscountCardDisplay = dynamic(
   }
 )
 
-function DiscountCardContent({ productId }: { productId: string }) {
-  const { customerCards } = useCustomerCards()
-
+function DiscountCardContent({
+  productId,
+  customerCards,
+}: {
+  productId: string
+  customerCards?: CustomerCard[]
+}) {
   if (!customerCards || customerCards.length === 0) {
     return null
   }
@@ -34,10 +39,14 @@ function DiscountCardContent({ productId }: { productId: string }) {
 
 export default function DiscountCardClient({
   productId,
+  customerCards,
 }: DiscountCardClientProps) {
   return (
     <Suspense fallback={<LoadingSkeleton />}>
-      <DiscountCardContent productId={productId} />
+      <DiscountCardContent
+        productId={productId}
+        customerCards={customerCards}
+      />
     </Suspense>
   )
 }

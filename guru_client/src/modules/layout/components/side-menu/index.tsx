@@ -44,25 +44,28 @@ const SideMenu = ({ regions }: { regions: HttpTypes.StoreRegion[] | null }) => {
                 className="cursor-pointer relative h-full flex items-center transition-all ease-out duration-200 focus:outline-none hover:text-ui-fg-base text-lg font-semibold uppercase"
               >
                 {/* Custom Hamburger to X Icon */}
-                <div className="w-6 h-6 flex flex-col justify-center items-center gap-1.5">
+                <div className="w-6 h-6 flex flex-col justify-center items-center gap-1">
                   <span
-                    className={`bg-current h-0.5 w-5 transition-all duration-300 ease-in-out ${
+                    className={`bg-current transition-all rounded duration-300 ease-in-out ${
                       isOpenSideBar
                         ? "rotate-45 translate-y-2"
                         : "rotate-0 translate-y-0"
                     }`}
+                    style={{ height: "3px", width: "20px" }}
                   ></span>
                   <span
-                    className={`bg-current h-0.5 w-5 transition-all duration-300 ease-in-out ${
+                    className={`bg-current transition-all rounded duration-300 ease-in-out ${
                       isOpenSideBar ? "opacity-0" : "opacity-100"
                     }`}
+                    style={{ height: "3px", width: "20px" }}
                   ></span>
                   <span
-                    className={`bg-current h-0.5 w-5 transition-all duration-300 ease-in-out ${
+                    className={`bg-current transition-all rounded duration-300 ease-in-out ${
                       isOpenSideBar
                         ? "-rotate-45 -translate-y-2"
                         : "rotate-0 translate-y-0"
                     }`}
+                    style={{ height: "3px", width: "20px" }}
                   ></span>
                 </div>
               </div>
@@ -231,12 +234,16 @@ const SideMenu = ({ regions }: { regions: HttpTypes.StoreRegion[] | null }) => {
             </Collapse>
           </div>
           <div className="flex flex-col space-y-4 w-full min-w-[250px] cursor-pointer">
-            <div className="mr-4 flex sm:space-x-1 space-x-0.5 text-gray-700 items-center">
+            <Link
+              href={"/carts"}
+              onClick={closeSideBar}
+              className="mr-4 flex sm:space-x-1 space-x-0.5 text-gray-700 items-center"
+            >
               <LocalMallRoundedIcon className="sm:!h-5 !h-4" />
               <h6 className="my-auto sm:text-lg text-base font-semibold">
                 Giỏ hàng
               </h6>
-            </div>
+            </Link>
           </div>
           <div className="flex mt-4 flex-col space-y-4 w-full min-w-[250px] cursor-pointer">
             <div className="mr-4 flex sm:space-x-1 space-x-0.5 text-gray-700 items-center">
@@ -247,12 +254,16 @@ const SideMenu = ({ regions }: { regions: HttpTypes.StoreRegion[] | null }) => {
             </div>
           </div>
           <div className="flex mt-4 flex-col space-y-4 w-full min-w-[250px] cursor-pointer">
-            <div className="mr-4 flex sm:space-x-1 space-x-0.5 text-gray-700 items-center">
+            <Link
+              href={"/discount-cards"}
+              onClick={closeSideBar}
+              className="mr-4 flex sm:space-x-1 space-x-0.5 text-gray-700 items-center"
+            >
               <CardGiftcardRoundedIcon className="sm:!h-5 !h-4" />
               <h6 className="my-auto sm:text-lg text-base font-semibold">
                 Tra cứu tích điểm
               </h6>
-            </div>
+            </Link>
           </div>
           <div className="flex mt-4 flex-col space-y-4 w-full min-w-[250px] cursor-pointer">
             <div className="mr-4 flex sm:space-x-1 space-x-0.5 text-gray-700 items-center">

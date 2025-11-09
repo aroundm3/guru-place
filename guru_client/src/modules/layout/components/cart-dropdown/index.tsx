@@ -7,12 +7,17 @@ import {
   Transition,
 } from "@headlessui/react"
 import { formatBigNumber } from "@lib/util/format-big-number"
-import { Button, Divider } from "@medusajs/ui"
 import LocalizedClientLink from "@modules/common/components/localized-client-link"
 import { Fragment, useEffect, useRef, useState } from "react"
+import { usePathname } from "next/navigation"
 import LocalMallRoundedIcon from "@mui/icons-material/LocalMallRounded"
 import Image from "next/image"
 import { Product } from "types/global"
+import Link from "next/link"
+import CloseRoundedIcon from "@mui/icons-material/CloseRounded"
+import AddRoundedIcon from "@mui/icons-material/AddRounded"
+import RemoveRoundedIcon from "@mui/icons-material/RemoveRounded"
+import { Button, Divider } from "@medusajs/ui"
 
 interface CartItem {
   variantId: string | null
@@ -23,6 +28,7 @@ interface CartItem {
 }
 
 const CartDropdown = () => {
+  const pathname = usePathname()
   const [activeTimer, setActiveTimer] = useState<NodeJS.Timer | undefined>(
     undefined
   )
@@ -117,6 +123,18 @@ const CartDropdown = () => {
     }
   }
 
+  const handleUpdateQuantity = (index: number, newQuantity: number) => {
+    if (typeof window !== "undefined" && newQuantity > 0) {
+      const newCart = [...cart]
+      newCart[index].quantity = newQuantity
+      localStorage.setItem("cart", JSON.stringify(newCart))
+      setCart(newCart)
+
+      // Dispatch event để các component khác cập nhật
+      window.dispatchEvent(new Event("cartUpdated"))
+    }
+  }
+
   const timedOpen = () => {
     open()
 
@@ -144,12 +162,18 @@ const CartDropdown = () => {
 
   // open cart dropdown when modifying the cart items, but only if we're not on the cart page
   useEffect(() => {
+    // Không tự mở dropdown nếu đang ở trang cart
+    if (pathname?.includes("/carts")) {
+      itemRef.current = totalItems
+      return
+    }
+
     if (cartUpdated > 0 && itemRef.current !== totalItems) {
       timedOpen()
       itemRef.current = totalItems
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [totalItems, cartUpdated])
+  }, [totalItems, cartUpdated, pathname])
 
   return (
     <div
@@ -158,7 +182,7 @@ const CartDropdown = () => {
       onMouseLeave={close}
     >
       {/* Mobile sticky cart bar */}
-      {cart && cart.length > 0 ? (
+      {cart && cart.length > 0 && !pathname?.includes("/carts") ? (
         <div className="small:hidden fixed inset-x-3 bottom-4 z-[60]">
           <button
             onClick={openAndCancel}
@@ -213,12 +237,7 @@ const CartDropdown = () => {
               </div>
               <div className="p-3 flex items-center justify-between border-b border-gray-200">
                 <h3 className="text-sm font-semibold">Giỏ hàng</h3>
-                <button
-                  onClick={close}
-                  className="text-xs text-ui-fg-interactive"
-                >
-                  Đóng
-                </button>
+                <CloseRoundedIcon onClick={close} />
               </div>
               {cart && cart.length > 0 ? (
                 <>
@@ -291,8 +310,39 @@ const CartDropdown = () => {
                                     Phân loại: {variantName}
                                   </div>
                                 )}
-                                <div className="text-xs text-ui-fg-subtle truncate">
-                                  Số lượng: {item.quantity}
+                                <div className="flex items-center gap-2 mt-1">
+                                  <span className="text-xs text-ui-fg-subtle">
+                                    Số lượng:
+                                  </span>
+                                  <div className="flex items-center space-x-1">
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation()
+                                        handleUpdateQuantity(
+                                          index,
+                                          item.quantity - 1
+                                        )
+                                      }}
+                                      className="px-1.5 py-0.5 bg-neutral-100 hover:bg-neutral-200 rounded border border-stone-300 transition-colors"
+                                    >
+                                      <RemoveRoundedIcon className="!w-3 !h-3" />
+                                    </button>
+                                    <span className="text-xs font-semibold px-2 min-w-[24px] text-center">
+                                      {item.quantity}
+                                    </span>
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation()
+                                        handleUpdateQuantity(
+                                          index,
+                                          item.quantity + 1
+                                        )
+                                      }}
+                                      className="px-1.5 py-0.5 bg-neutral-100 hover:bg-neutral-200 rounded border border-stone-300 transition-colors"
+                                    >
+                                      <AddRoundedIcon className="!w-3 !h-3" />
+                                    </button>
+                                  </div>
                                 </div>
                               </div>
                               <div className="text-right">
@@ -328,14 +378,15 @@ const CartDropdown = () => {
                     </span>
                   </div>
                   <div className="px-3 pb-3">
-                    <Button className="w-full" asChild>
-                      <LocalizedClientLink
-                        href="/cart"
-                        onClick={close}
-                        className="text-sm"
-                      >
+                    <Button
+                      className="w-full"
+                      size="large"
+                      data-testid="go-to-cart-button"
+                      asChild
+                    >
+                      <Link href="/carts" onClick={close}>
                         Đi đến giỏ hàng
-                      </LocalizedClientLink>
+                      </Link>
                     </Button>
                   </div>
                 </>
@@ -387,7 +438,7 @@ const CartDropdown = () => {
             data-testid="nav-cart-dropdown"
           >
             <div className="p-4 flex items-center justify-center">
-              <h3 className="text-large-semi">Cart</h3>
+              <h3 className="text-large-semi">Giỏ hàng</h3>
             </div>
             {cart && cart.length > 0 ? (
               <>
@@ -469,13 +520,44 @@ const CartDropdown = () => {
                                     Phân loại: {variantName}
                                   </div>
                                 )}
-                                <span
-                                  data-testid="cart-item-quantity"
-                                  data-value={item.quantity}
-                                  className="text-sm text-ui-fg-subtle"
-                                >
-                                  Số lượng: {item.quantity}
-                                </span>
+                                <div className="flex items-center gap-2 mt-1">
+                                  <span
+                                    data-testid="cart-item-quantity"
+                                    data-value={item.quantity}
+                                    className="text-sm font-semibold text-ui-fg-subtle"
+                                  >
+                                    Số lượng:
+                                  </span>
+                                  <div className="flex items-center space-x-1">
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation()
+                                        handleUpdateQuantity(
+                                          index,
+                                          item.quantity - 1
+                                        )
+                                      }}
+                                      className="px-2 py-1 bg-neutral-100 hover:bg-neutral-50 duration-300 border border-stone-300 rounded"
+                                    >
+                                      <RemoveRoundedIcon className="!w-3 !h-3" />
+                                    </button>
+                                    <span className="text-sm font-semibold px-4 min-w-10 flex items-center justify-center">
+                                      {item.quantity}
+                                    </span>
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation()
+                                        handleUpdateQuantity(
+                                          index,
+                                          item.quantity + 1
+                                        )
+                                      }}
+                                      className="px-2 py-1 bg-neutral-100 hover:bg-neutral-50 duration-300 border border-stone-300 rounded"
+                                    >
+                                      <AddRoundedIcon className="!w-3 !h-3" />
+                                    </button>
+                                  </div>
+                                </div>
                               </div>
                               <div className="flex justify-end">
                                 <div className="flex flex-col items-end">
@@ -530,9 +612,9 @@ const CartDropdown = () => {
                     data-testid="go-to-cart-button"
                     asChild
                   >
-                    <LocalizedClientLink href="/cart" onClick={close}>
+                    <Link href="/carts" onClick={close}>
                       Đi đến giỏ hàng
-                    </LocalizedClientLink>
+                    </Link>
                   </Button>
                 </div>
               </>
@@ -544,12 +626,12 @@ const CartDropdown = () => {
                   </div>
                   <span>Giỏ hàng của bạn đang trống.</span>
                   <div>
-                    <LocalizedClientLink href="/store">
+                    <Link href="/products">
                       <>
                         <span className="sr-only">Go to all products page</span>
                         <Button onClick={close}>Khám phá sản phẩm</Button>
                       </>
-                    </LocalizedClientLink>
+                    </Link>
                   </div>
                 </div>
               </div>

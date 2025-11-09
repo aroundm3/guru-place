@@ -2,6 +2,34 @@
 @import "tailwindcss/components";
 @import "tailwindcss/utilities";
 
+/* Hide scrollbar globally but keep scrolling functionality */
+html,
+body {
+  /* Chrome, Safari and Opera */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  display: none;
+}
+
+/* Prevent auto zoom on input focus (iOS Safari) */
+input,
+select,
+textarea {
+  font-size: 16px !important;
+}
+
+@media screen and (min-width: 640px) {
+  input,
+  select,
+  textarea {
+    font-size: inherit;
+  }
+}
+
 @layer utilities {
   /* Chrome, Safari and Opera */
   .no-scrollbar::-webkit-scrollbar {

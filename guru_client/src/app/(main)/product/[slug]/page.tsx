@@ -192,7 +192,10 @@ export default async function Home(props: { params: { slug: string } }) {
                     </span>
                   </div>
                 )}
-                <DiscountCardClient productId={productDetail.documentId} />
+                <DiscountCardClient
+                  productId={productDetail.documentId}
+                  customerCards={productDetail.customer_cards}
+                />
               </div>
             </div>
             <div className="!mt-6">

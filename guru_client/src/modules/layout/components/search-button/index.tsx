@@ -21,7 +21,7 @@ export default function SearchButton() {
   const { listProduct, isLoading } = useGetListProducts({
     searchQuery: query,
     page: 1,
-    pageSizeCustom: 4,
+    pageSizeCustom: 6,
   })
 
   const debounceSearch = debounce((inputValue) => setQuery(inputValue), 500)
