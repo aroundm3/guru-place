@@ -62,6 +62,12 @@
       "type": "biginteger",
       "required": true,
       "default": "399"
+    },
+    "customer_cards": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::customer-card.customer-card",
+      "mappedBy": "variants"
     }
   }
 }
