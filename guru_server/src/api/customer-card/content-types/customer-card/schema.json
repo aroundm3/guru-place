@@ -41,10 +41,10 @@
       "required": true,
       "default": "20000"
     },
-    "products": {
+    "variants": {
       "type": "relation",
       "relation": "manyToMany",
-      "target": "api::product.product",
+      "target": "api::variant.variant",
       "inversedBy": "customer_cards"
     }
   }

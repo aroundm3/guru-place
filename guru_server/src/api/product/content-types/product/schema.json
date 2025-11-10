@@ -90,12 +90,6 @@
       "required": false,
       "default": false
     },
-    "customer_cards": {
-      "type": "relation",
-      "relation": "manyToMany",
-      "target": "api::customer-card.customer-card",
-      "mappedBy": "products"
-    },
     "belongToBlog": {
       "type": "relation",
       "relation": "manyToMany",
