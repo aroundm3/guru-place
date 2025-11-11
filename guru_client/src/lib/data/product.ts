@@ -7,7 +7,7 @@ import { Product, ProductListBlock } from "types/global"
 export const getProductBySlug = async (slug: string) => {
   try {
     const data = await fetcher(
-      `/api/products?filters[slug][$eq]=${slug}&populate[brand]=true&populate[category]=true&populate[media]=true&populate[variants][populate][variant_image]=true&populate[customer_cards]=true`,
+      `/api/products?filters[slug][$eq]=${slug}&populate[brand]=true&populate[category]=true&populate[media]=true&populate[variants][populate][variant_image]=true`,
       {
         next: { revalidate: 10 },
       }
