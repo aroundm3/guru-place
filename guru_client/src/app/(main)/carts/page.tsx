@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { formatBigNumber } from "@lib/util/format-big-number"
 import Image from "next/image"
 import { Product, Variant } from "types/global"
-import { Button, Checkbox, CircularProgress } from "@mui/material"
+import { Button, Checkbox, CircularProgress, IconButton } from "@mui/material"
 import { Divider } from "@medusajs/ui"
 import AddRoundedIcon from "@mui/icons-material/AddRounded"
 import RemoveRoundedIcon from "@mui/icons-material/RemoveRounded"
@@ -357,7 +357,7 @@ export default function CheckoutPage() {
                       Số lượng:
                     </span>
                     <div className="flex items-center space-x-1">
-                      <button
+                      <IconButton
                         onClick={(e) => {
                           e.stopPropagation()
                           updateQuantity(index, item.quantity - 1)
@@ -365,12 +365,12 @@ export default function CheckoutPage() {
                         disabled={item.quantity <= 1}
                         className="px-2 py-1 bg-neutral-100 hover:bg-neutral-50 duration-300 border border-stone-300 rounded disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        <RemoveRoundedIcon className="!w-3 !h-3" />
-                      </button>
+                        <RemoveRoundedIcon className="!w-4 !h-4" />
+                      </IconButton>
                       <span className="text-sm font-semibold px-4 min-w-10 flex items-center justify-center">
                         {item.quantity}
                       </span>
-                      <button
+                      <IconButton
                         onClick={(e) => {
                           e.stopPropagation()
                           const maxQty = variant
@@ -389,8 +389,8 @@ export default function CheckoutPage() {
                         }
                         className="px-2 py-1 bg-neutral-100 hover:bg-neutral-50 duration-300 border border-stone-300 rounded disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        <AddRoundedIcon className="!w-3 !h-3" />
-                      </button>
+                        <AddRoundedIcon className="!w-4 !h-4" />
+                      </IconButton>
                     </div>
                   </div>
                 </div>
