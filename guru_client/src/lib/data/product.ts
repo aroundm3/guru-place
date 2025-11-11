@@ -7,7 +7,7 @@ import { Product, ProductListBlock } from "types/global"
 export const getProductBySlug = async (slug: string) => {
   try {
     const data = await fetcher(
-      `/api/products?filters[slug][$eq]=${slug}&populate[brand]=true&populate[category]=true&populate[media]=true&populate[variants][populate][variant_image]=true`,
+      `/api/products?filters[slug][$eq]=${slug}&populate[brand]=true&populate[category]=true&populate[media]=true&populate[variants][populate][variant_image]=true&populate[variants][populate][customer_cards]=true`,
       {
         next: { revalidate: 10 },
       }
@@ -101,7 +101,7 @@ export async function getListProducts(filter: {
         filter.blockProductId
           ? `&filters[product_list_blocks][documentId]=${filter.blockProductId}`
           : ""
-      }&[populate]=variants&[populate]=customer_cards`
+      }&[populate]=variants`
     )
 
     const data = await fetcher(
@@ -125,7 +125,7 @@ export async function getListProducts(filter: {
         filter.blockProductId
           ? `&filters[product_list_blocks][documentId]=${filter.blockProductId}`
           : ""
-      }&[populate]=variants&[populate]=customer_cards`,
+      }&[populate]=variants`,
       {
         next: { revalidate: 10 },
       }

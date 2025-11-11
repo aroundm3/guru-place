@@ -78,6 +78,7 @@ export interface Variant {
   sale_price: number
   SKU: string
   variant_image: ImageMedia
+  customer_cards?: CustomerCard[]
 }
 
 export interface Product {
@@ -99,7 +100,6 @@ export interface Product {
   brand: Brand
   isTopSelling: boolean
   isFreeShip: boolean
-  customer_cards: CustomerCard[]
 }
 
 export interface ProductListBlock {

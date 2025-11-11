@@ -4,15 +4,12 @@ import { Product as ProductData } from "types/global"
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart"
 import Link from "next/link"
 import LocalShippingIcon from "@mui/icons-material/LocalShipping"
-import CardGiftcardRoundedIcon from "@mui/icons-material/CardGiftcardRounded"
 
 interface ProductProps {
   data: ProductData
 }
 
 export default function Product({ data }: ProductProps) {
-  console.log({ data })
-
   return (
     <Link
       href={`/product/${data.slug}`}

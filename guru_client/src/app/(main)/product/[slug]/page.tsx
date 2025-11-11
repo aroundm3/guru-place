@@ -194,7 +194,9 @@ export default async function Home(props: { params: { slug: string } }) {
                 )}
                 <DiscountCardClient
                   productId={productDetail.documentId}
-                  customerCards={productDetail.customer_cards}
+                  customerCards={productDetail.variants.flatMap(
+                    (variant) => variant.customer_cards || []
+                  )}
                 />
               </div>
             </div>

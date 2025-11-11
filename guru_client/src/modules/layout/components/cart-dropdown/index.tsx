@@ -18,6 +18,7 @@ import CloseRoundedIcon from "@mui/icons-material/CloseRounded"
 import AddRoundedIcon from "@mui/icons-material/AddRounded"
 import RemoveRoundedIcon from "@mui/icons-material/RemoveRounded"
 import { Button, Divider } from "@medusajs/ui"
+import { IconButton } from "@mui/material"
 
 interface CartItem {
   variantId: string | null
@@ -88,9 +89,7 @@ const CartDropdown = () => {
     }
   }, [])
 
-  const totalItems = cart.reduce((acc, item) => {
-    return acc + item.quantity
-  }, 0)
+  const totalItems = cart.length // Số lượng item (không phải tổng số lượng)
 
   const subtotal = cart.reduce((acc, item) => {
     const productData = item.product?.productData
@@ -295,14 +294,7 @@ const CartDropdown = () => {
                           <div className="flex flex-col justify-between flex-1 min-w-0">
                             <div className="flex items-start justify-between">
                               <div className="flex flex-col mr-2 min-w-0">
-                                <h4
-                                  className="text-sm font-semibold overflow-hidden"
-                                  style={{
-                                    display: "-webkit-box",
-                                    WebkitLineClamp: 2,
-                                    WebkitBoxOrient: "vertical",
-                                  }}
-                                >
+                                <h4 className="text-sm font-semibold line-clamp-2">
                                   {productData.name}
                                 </h4>
                                 {variantName && (
@@ -311,11 +303,11 @@ const CartDropdown = () => {
                                   </div>
                                 )}
                                 <div className="flex items-center gap-2 mt-1">
-                                  <span className="text-xs text-ui-fg-subtle">
+                                  <span className="text-xs text-ui-fg-subtle !my-auto">
                                     Số lượng:
                                   </span>
-                                  <div className="flex items-center space-x-1">
-                                    <button
+                                  <div className="flex items-center space-x-1 !my-auto">
+                                    <IconButton
                                       onClick={(e) => {
                                         e.stopPropagation()
                                         handleUpdateQuantity(
@@ -323,14 +315,14 @@ const CartDropdown = () => {
                                           item.quantity - 1
                                         )
                                       }}
-                                      className="px-1.5 py-0.5 bg-neutral-100 hover:bg-neutral-200 rounded border border-stone-300 transition-colors"
+                                      className="!my-auto px-1.5 py-0.5 bg-neutral-100 hover:bg-neutral-200 rounded border border-stone-300 transition-colors"
                                     >
-                                      <RemoveRoundedIcon className="!w-3 !h-3" />
-                                    </button>
-                                    <span className="text-xs font-semibold px-2 min-w-[24px] text-center">
+                                      <RemoveRoundedIcon className="!w-4 !h-4" />
+                                    </IconButton>
+                                    <span className="!my-auto text-xs font-semibold px-2 min-w-[24px] text-center">
                                       {item.quantity}
                                     </span>
-                                    <button
+                                    <IconButton
                                       onClick={(e) => {
                                         e.stopPropagation()
                                         handleUpdateQuantity(
@@ -338,10 +330,10 @@ const CartDropdown = () => {
                                           item.quantity + 1
                                         )
                                       }}
-                                      className="px-1.5 py-0.5 bg-neutral-100 hover:bg-neutral-200 rounded border border-stone-300 transition-colors"
+                                      className="!my-auto px-1.5 py-0.5 bg-neutral-100 hover:bg-neutral-200 rounded border border-stone-300 transition-colors"
                                     >
-                                      <AddRoundedIcon className="!w-3 !h-3" />
-                                    </button>
+                                      <AddRoundedIcon className="!w-4 !h-4" />
+                                    </IconButton>
                                   </div>
                                 </div>
                               </div>
@@ -495,15 +487,8 @@ const CartDropdown = () => {
                         <div className="flex flex-col justify-between flex-1">
                           <div className="flex flex-col flex-1">
                             <div className="flex items-start justify-between">
-                              <div className="flex flex-col overflow-ellipsis whitespace-nowrap mr-4 w-[180px]">
-                                <h3
-                                  className="text-base-regular overflow-hidden"
-                                  style={{
-                                    display: "-webkit-box",
-                                    WebkitLineClamp: 2,
-                                    WebkitBoxOrient: "vertical",
-                                  }}
-                                >
+                              <div className="flex flex-col mr-4 w-[180px] min-w-0">
+                                <h3 className="text-base-regular line-clamp-2">
                                   <LocalizedClientLink
                                     href={`/product/${productData.slug}`}
                                     data-testid="product-link"
@@ -520,44 +505,6 @@ const CartDropdown = () => {
                                     Phân loại: {variantName}
                                   </div>
                                 )}
-                                <div className="flex items-center gap-2 mt-1">
-                                  <span
-                                    data-testid="cart-item-quantity"
-                                    data-value={item.quantity}
-                                    className="text-sm font-semibold text-ui-fg-subtle"
-                                  >
-                                    Số lượng:
-                                  </span>
-                                  <div className="flex items-center space-x-1">
-                                    <button
-                                      onClick={(e) => {
-                                        e.stopPropagation()
-                                        handleUpdateQuantity(
-                                          index,
-                                          item.quantity - 1
-                                        )
-                                      }}
-                                      className="px-2 py-1 bg-neutral-100 hover:bg-neutral-50 duration-300 border border-stone-300 rounded"
-                                    >
-                                      <RemoveRoundedIcon className="!w-3 !h-3" />
-                                    </button>
-                                    <span className="text-sm font-semibold px-4 min-w-10 flex items-center justify-center">
-                                      {item.quantity}
-                                    </span>
-                                    <button
-                                      onClick={(e) => {
-                                        e.stopPropagation()
-                                        handleUpdateQuantity(
-                                          index,
-                                          item.quantity + 1
-                                        )
-                                      }}
-                                      className="px-2 py-1 bg-neutral-100 hover:bg-neutral-50 duration-300 border border-stone-300 rounded"
-                                    >
-                                      <AddRoundedIcon className="!w-3 !h-3" />
-                                    </button>
-                                  </div>
-                                </div>
                               </div>
                               <div className="flex justify-end">
                                 <div className="flex flex-col items-end">
@@ -577,6 +524,38 @@ const CartDropdown = () => {
                                   )}
                                 </div>
                               </div>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span
+                              data-testid="cart-item-quantity"
+                              data-value={item.quantity}
+                              className="text-sm font-semibold text-ui-fg-subtle"
+                            >
+                              Số lượng:
+                            </span>
+                            <div className="flex items-center space-x-1">
+                              <IconButton
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  handleUpdateQuantity(index, item.quantity - 1)
+                                }}
+                                className="!my-auto px-2 py-1 bg-neutral-100 hover:bg-neutral-50 duration-300 border border-stone-300 rounded"
+                              >
+                                <RemoveRoundedIcon className="!w-4 !h-4" />
+                              </IconButton>
+                              <span className="!my-auto text-sm font-semibold px-4 min-w-10 flex items-center justify-center">
+                                {item.quantity}
+                              </span>
+                              <IconButton
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  handleUpdateQuantity(index, item.quantity + 1)
+                                }}
+                                className="!my-autopx-2 py-1 bg-neutral-100 hover:bg-neutral-50 duration-300 border border-stone-300 rounded"
+                              >
+                                <AddRoundedIcon className="!w-4 !h-4" />
+                              </IconButton>
                             </div>
                           </div>
                           <button
