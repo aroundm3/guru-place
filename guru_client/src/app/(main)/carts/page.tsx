@@ -1,15 +1,26 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { formatBigNumber } from "@lib/util/format-big-number"
 import Image from "next/image"
+import Link from "next/link"
 import { Product, Variant } from "types/global"
 import { Button, Checkbox, CircularProgress, IconButton } from "@mui/material"
 import { Divider } from "@medusajs/ui"
 import AddRoundedIcon from "@mui/icons-material/AddRounded"
 import RemoveRoundedIcon from "@mui/icons-material/RemoveRounded"
+import DeleteRoundedIcon from "@mui/icons-material/DeleteRounded"
 import { useCustomerCards } from "@lib/context/customer-card-context"
-import CardGiftcardRoundedIcon from "@mui/icons-material/CardGiftcardRounded"
+import { CustomerCardModal } from "@modules/product/components/customer-card-modal"
+import { useCustomer } from "@lib/context/customer-context"
+import CustomerModalForCheckout from "@modules/layout/components/customer-modal/checkout-modal"
+import {
+  getCardColor,
+  getCardBgClasses,
+  getCardBorderClasses,
+  getCardBadgeClasses,
+  getCardTextClasses,
+} from "@lib/util/card-colors"
 
 interface CartItem {
   variantId: string | null
@@ -23,20 +34,66 @@ export default function CheckoutPage() {
   const [cart, setCart] = useState<CartItem[]>([])
   const [selectedItems, setSelectedItems] = useState<Set<number>>(new Set())
   const [isCheckoutLoading, setIsCheckoutLoading] = useState(false)
-  const { getActiveCards } = useCustomerCards()
-  const activeCards = getActiveCards()
-  // Lấy card có discount nhỏ nhất
-  const minDiscountCard =
-    activeCards.length > 0
-      ? activeCards.reduce((min, card) =>
-          card.discount < min.discount ? card : min
+  const [isLoadingCart, setIsLoadingCart] = useState(true)
+  const [openCardModal, setOpenCardModal] = useState<string>("")
+  const [openCustomerModal, setOpenCustomerModal] = useState(false)
+  const { getCardById } = useCustomerCards()
+  const { customer } = useCustomer()
+
+  // Lấy tất cả customer_cards từ các variant của các sản phẩm đã chọn, kèm số lượng
+  const selectedCustomerCards = useMemo(() => {
+    const cardMap = new Map<string, { card: any; quantity: number }>()
+
+    cart.forEach((item, index) => {
+      if (!selectedItems.has(index)) return
+
+      const productData = item.product?.productData
+      if (!productData) return
+
+      // Lấy customer_cards từ variant nếu có variantId
+      if (item.variantId && productData.variants?.length) {
+        const variant = productData.variants.find(
+          (v) => v.documentId === item.variantId
         )
-      : null
+        if (variant?.customer_cards) {
+          variant.customer_cards.forEach((card: any) => {
+            // Lấy full card data từ context nếu có
+            const fullCard = getCardById(card.documentId || card.id) || card
+            const cardId = fullCard.documentId || fullCard.id
+
+            if (cardId) {
+              const existing = cardMap.get(cardId)
+              if (existing) {
+                // Cộng dồn số lượng nếu card đã tồn tại
+                existing.quantity += item.quantity
+              } else {
+                // Tạo mới với số lượng từ item
+                cardMap.set(cardId, {
+                  card: fullCard,
+                  quantity: item.quantity,
+                })
+              }
+            }
+          })
+        }
+      }
+    })
+
+    return Array.from(cardMap.values()).map(({ card, quantity }) => ({
+      ...card,
+      quantity,
+    }))
+  }, [cart, selectedItems, getCardById])
 
   // Đọc cart từ localStorage
   useEffect(() => {
-    const loadCart = () => {
+    let isFirstLoad = true
+
+    const loadCart = (showLoading = false) => {
       if (typeof window !== "undefined") {
+        if (showLoading) {
+          setIsLoadingCart(true)
+        }
         const cartStr = localStorage.getItem("cart")
         if (cartStr) {
           try {
@@ -53,21 +110,27 @@ export default function CheckoutPage() {
         } else {
           setCart([])
         }
+        // Simulate loading delay để skeleton hiển thị (chỉ lần đầu)
+        if (showLoading) {
+          setTimeout(() => {
+            setIsLoadingCart(false)
+          }, 300)
+        }
       }
     }
 
-    loadCart()
+    loadCart(true) // Lần đầu load với skeleton
 
     // Lắng nghe sự kiện storage để cập nhật khi cart thay đổi
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === "cart") {
-        loadCart()
+        loadCart(false) // Không hiển thị skeleton khi update
       }
     }
 
     // Lắng nghe custom event để cập nhật ngay lập tức
     const handleCartUpdate = () => {
-      loadCart()
+      loadCart(false) // Không hiển thị skeleton khi update
     }
 
     window.addEventListener("storage", handleStorageChange)
@@ -135,10 +198,46 @@ export default function CheckoutPage() {
     }
   }
 
+  // Xóa một item khỏi cart
+  const handleRemoveItem = (index: number) => {
+    const newCart = cart.filter((_, i) => i !== index)
+
+    // Cập nhật selectedItems - loại bỏ index đã xóa và điều chỉnh các index sau đó
+    const newSelectedItems = new Set<number>()
+    selectedItems.forEach((selectedIndex) => {
+      if (selectedIndex < index) {
+        newSelectedItems.add(selectedIndex)
+      } else if (selectedIndex > index) {
+        newSelectedItems.add(selectedIndex - 1)
+      }
+    })
+
+    // Cập nhật localStorage
+    if (typeof window !== "undefined") {
+      localStorage.setItem("cart", JSON.stringify(newCart))
+      setCart(newCart)
+      setSelectedItems(newSelectedItems)
+      // Dispatch event để các component khác cập nhật
+      window.dispatchEvent(new Event("cartUpdated"))
+    }
+  }
+
   // Hàm checkout
   const handleCheckout = async () => {
     if (selectedItems.size === 0) return
 
+    // Nếu chưa có customer, mở modal để điền thông tin
+    if (!customer) {
+      setOpenCustomerModal(true)
+      return
+    }
+
+    // Nếu có customer, tiến hành checkout
+    await processCheckout()
+  }
+
+  // Hàm xử lý checkout khi đã có customer
+  const processCheckout = async () => {
     setIsCheckoutLoading(true)
 
     try {
@@ -161,6 +260,23 @@ export default function CheckoutPage() {
 
         return acc + price * item.quantity
       }, 0)
+
+      // TODO: Call API checkout khi API đã sẵn sàng
+      // const response = await fetch("/api/checkout", {
+      //   method: "POST",
+      //   headers: {
+      //     "Content-Type": "application/json",
+      //   },
+      //   body: JSON.stringify({
+      //     customerId: customer.documentId,
+      //     items: Array.from(selectedItems).map((index) => ({
+      //       variantId: cart[index].variantId,
+      //       quantity: cart[index].quantity,
+      //       productId: cart[index].product.productData.documentId,
+      //     })),
+      //     subtotal: checkoutSubtotal,
+      //   }),
+      // })
 
       // Giả lập call API
       await new Promise((resolve) => setTimeout(resolve, 2000))
@@ -194,6 +310,14 @@ export default function CheckoutPage() {
     }
   }
 
+  // Khi customer đăng nhập/đăng ký thành công, tự động tiếp tục checkout
+  useEffect(() => {
+    if (customer && openCustomerModal) {
+      setOpenCustomerModal(false)
+      processCheckout()
+    }
+  }, [customer])
+
   // Tính tổng tiền cho các item được chọn
   const calculateSubtotal = () => {
     return cart.reduce((acc, item, index) => {
@@ -220,22 +344,65 @@ export default function CheckoutPage() {
   const subtotal = calculateSubtotal()
   const selectedCount = selectedItems.size
 
-  // Tính số tiền tích được dựa vào customer cards
+  // Tính tổng số tiền tích được từ tất cả các card
   // discount là số tiền cố định (VND) sẽ được tích vào tài khoản
-  const calculateEarnedAmount = () => {
-    if (!minDiscountCard || !minDiscountCard.discount || subtotal <= 0) {
+  const totalEarnedAmount = useMemo(() => {
+    if (selectedCustomerCards.length === 0 || subtotal <= 0) {
       return 0
     }
 
-    // Discount là số tiền cố định (VND) sẽ được tích vào tài khoản
-    return minDiscountCard.discount
+    // Tổng discount từ tất cả các card
+    return selectedCustomerCards.reduce((sum, card) => {
+      return sum + (card.discount || 0)
+    }, 0)
+  }, [selectedCustomerCards, subtotal])
+
+  // Skeleton component cho cart items
+  const CartItemSkeleton = () => (
+    <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 p-3 sm:p-4 border border-gray-200 rounded-lg bg-white animate-pulse">
+      <div className="flex gap-3 sm:gap-4 flex-1 min-w-0">
+        <div className="w-5 h-5 bg-gray-200 rounded mt-1 flex-shrink-0" />
+        <div className="w-20 h-20 sm:w-24 sm:h-24 bg-gray-200 rounded flex-shrink-0" />
+        <div className="flex-1 min-w-0 space-y-2">
+          <div className="h-5 bg-gray-200 rounded w-3/4" />
+          <div className="h-4 bg-gray-200 rounded w-1/2" />
+          <div className="flex items-center gap-2 mt-2">
+            <div className="h-8 bg-gray-200 rounded w-24" />
+          </div>
+        </div>
+      </div>
+      <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-start gap-2 sm:gap-3">
+        <div className="flex flex-col items-end gap-1">
+          <div className="h-5 bg-gray-200 rounded w-20" />
+          <div className="h-4 bg-gray-200 rounded w-16" />
+        </div>
+        <div className="h-8 w-8 bg-gray-200 rounded" />
+      </div>
+    </div>
+  )
+
+  // Hiển thị skeleton khi đang load
+  if (isLoadingCart) {
+    return (
+      <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-8 max-w-6xl">
+        <h1 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6">Giỏ hàng</h1>
+        <div className="mb-3 sm:mb-4">
+          <div className="h-6 bg-gray-200 rounded w-32 animate-pulse" />
+        </div>
+        <div className="h-px bg-gray-200 mb-4 sm:mb-6" />
+        <div className="space-y-3 sm:space-y-4">
+          {[1, 2, 3].map((i) => (
+            <CartItemSkeleton key={i} />
+          ))}
+        </div>
+      </div>
+    )
   }
 
-  const earnedAmount = calculateEarnedAmount()
-
+  // Hiển thị empty state khi cart trống
   if (cart.length === 0) {
     return (
-      <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-8">
+      <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-8 max-w-6xl">
         <h1 className="text-xl sm:text-2xl font-bold mb-4">Giỏ hàng</h1>
         <div className="text-center py-12 sm:py-16">
           <p className="text-sm sm:text-base text-gray-600">
@@ -328,7 +495,10 @@ export default function CheckoutPage() {
                     },
                   }}
                 />
-                <div className="relative w-20 h-20 sm:w-24 sm:h-24 flex-shrink-0">
+                <Link
+                  href={`/product/${productData.slug}`}
+                  className="relative w-20 h-20 sm:w-24 sm:h-24 flex-shrink-0"
+                >
                   <Image
                     src={image}
                     alt={productData.name}
@@ -336,14 +506,16 @@ export default function CheckoutPage() {
                     className="object-cover rounded"
                     sizes="96px"
                   />
-                </div>
+                </Link>
                 <div className="flex-1 min-w-0">
-                  <h3
-                    className="font-semibold text-base sm:text-lg mb-1 truncate"
-                    title={productData.name}
-                  >
-                    {productData.name}
-                  </h3>
+                  <Link href={`/product/${productData.slug}`}>
+                    <h3
+                      className="font-semibold text-base sm:text-lg mb-1 truncate hover:text-pink-700 transition-colors cursor-pointer"
+                      title={productData.name}
+                    >
+                      {productData.name}
+                    </h3>
+                  </Link>
                   {variantName && (
                     <p
                       className="text-xs sm:text-sm text-gray-600 mb-1 truncate"
@@ -395,11 +567,11 @@ export default function CheckoutPage() {
                   </div>
                 </div>
               </div>
-              <div className="flex items-center justify-between sm:justify-end sm:flex-col sm:text-right flex-shrink-0 sm:min-w-[100px]">
-                <div className="text-base sm:text-lg font-semibold text-pink-700">
-                  {formatBigNumber(itemTotal, true)}
-                </div>
+              <div className="flex items-center justify-between sm:justify-end sm:flex-col sm:text-right flex-shrink-0 sm:min-w-[100px] gap-2">
                 <div className="flex flex-col items-end sm:items-end">
+                  <div className="text-base sm:text-lg font-semibold text-pink-700">
+                    {formatBigNumber(itemTotal, true)}
+                  </div>
                   {basePrice > price && (
                     <div className="text-xs sm:text-sm text-gray-400 line-through">
                       {formatBigNumber(basePrice * item.quantity, true)}
@@ -409,6 +581,17 @@ export default function CheckoutPage() {
                     {formatBigNumber(price, true)} × {item.quantity}
                   </div>
                 </div>
+                {/* Nút xóa */}
+                <IconButton
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleRemoveItem(index)
+                  }}
+                  className="!p-2 hover:bg-pink-50 transition-colors"
+                  aria-label="Xóa sản phẩm"
+                >
+                  <DeleteRoundedIcon className="!w-5 !h-5 !text-pink-600" />
+                </IconButton>
               </div>
             </div>
           )
@@ -417,32 +600,146 @@ export default function CheckoutPage() {
 
       {/* Summary */}
       <div className="border-t pt-4 sm:pt-6">
-        <div className="max-w-md sm:ml-auto space-y-3 sm:space-y-4">
-          {earnedAmount > 0 && minDiscountCard && (
-            <div className="bg-pink-50 border border-pink-200 rounded-lg p-3 sm:p-4 mb-2">
-              <div className="flex items-center gap-2 mb-2">
-                <CardGiftcardRoundedIcon className="!w-5 !h-5 text-pink-600" />
-                <span className="text-sm sm:text-base font-semibold text-pink-700">
-                  Số tiền tích được
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-xs sm:text-sm text-gray-600">
-                  {minDiscountCard.title}
-                </span>
-                <span className="text-base sm:text-lg font-bold text-pink-700">
-                  {formatBigNumber(earnedAmount, true)}
-                </span>
-              </div>
+        {/* Customer Cards - Desktop: dàn ngang, Mobile: tối giản */}
+        {selectedCustomerCards.length > 0 && (
+          <div className="mb-4 sm:mb-6">
+            <h3 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4">
+              Thẻ quà tặng nhận được
+            </h3>
+            {/* Desktop: Grid layout dàn ngang */}
+            <div className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+              {selectedCustomerCards.map((card) => {
+                const cardColor = getCardColor(card)
+                return (
+                  <div
+                    key={card.documentId}
+                    className={`${getCardBgClasses(
+                      cardColor
+                    )} border rounded-lg relative`}
+                  >
+                    {/* Badge số lượng lòi ra ngoài ở góc trên bên phải */}
+                    {card.quantity > 0 && (
+                      <div
+                        className={`absolute -top-2 -right-2 ${getCardBadgeClasses(
+                          cardColor
+                        )} text-white rounded-full w-8 h-8 flex items-center justify-center text-xs font-bold shadow-lg z-20 border-2 border-white`}
+                      >
+                        {card.quantity}
+                      </div>
+                    )}
+                    {/* Ảnh card */}
+                    <div className="relative w-full overflow-hidden rounded-t-lg">
+                      <Image
+                        src={card.image?.default || "/logo.png"}
+                        alt={card.title}
+                        width={800}
+                        height={600}
+                        className="w-full h-auto object-contain"
+                        sizes="(max-width: 1024px) 50vw, 33vw"
+                      />
+                    </div>
+                    {/* Title dưới ảnh */}
+                    <div
+                      className={`p-3 border-b ${getCardBorderClasses(
+                        cardColor
+                      )}`}
+                    >
+                      <h4
+                        className={`${getCardTextClasses(
+                          cardColor
+                        )} text-base font-bold line-clamp-2`}
+                      >
+                        {card.title}
+                      </h4>
+                    </div>
+                    {/* Nội dung */}
+                    <div className="p-3 sm:p-4">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs sm:text-sm text-gray-600">
+                          Số tiền tích được
+                        </span>
+                        <span
+                          className={`text-sm sm:text-base font-bold ${getCardTextClasses(
+                            cardColor
+                          )}`}
+                        >
+                          {formatBigNumber(card.discount || 0, true)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
             </div>
-          )}
+            {/* Mobile: Horizontal scroll, click để mở modal */}
+            <div className="sm:hidden flex gap-3 overflow-x-auto pb-2 -mx-3 px-3 pt-2">
+              {selectedCustomerCards.map((card) => {
+                const cardColor = getCardColor(card)
+                return (
+                  <div
+                    key={card.documentId}
+                    onClick={() => setOpenCardModal(card.documentId)}
+                    className={`${getCardBgClasses(
+                      cardColor
+                    )} border rounded-lg relative cursor-pointer active:opacity-80 transition-opacity flex-shrink-0 w-[200px] overflow-visible`}
+                  >
+                    {/* Badge số lượng lòi ra ngoài ở góc trên bên phải */}
+                    {card.quantity > 0 && (
+                      <div
+                        className={`absolute -top-2 -right-2 ${getCardBadgeClasses(
+                          cardColor
+                        )} text-white rounded-full w-7 h-7 flex items-center justify-center text-xs font-bold shadow-lg z-20 border-2 border-white`}
+                      >
+                        {card.quantity}
+                      </div>
+                    )}
+                    <div className="relative w-full overflow-hidden rounded-t-lg">
+                      <Image
+                        src={card.image?.default || "/logo.png"}
+                        alt={card.title}
+                        width={800}
+                        height={600}
+                        className="w-full h-auto object-contain"
+                        sizes="200px"
+                      />
+                    </div>
+                    {/* Title và discount dưới ảnh */}
+                    <div className="p-2 border-t border-gray-200">
+                      <h4
+                        className={`${getCardTextClasses(
+                          cardColor
+                        )} text-xs font-bold line-clamp-2 mb-1`}
+                      >
+                        {card.title}
+                      </h4>
+                      <div className="flex items-center justify-between mt-1">
+                        <span className="text-[10px] text-gray-600">
+                          Tích được
+                        </span>
+                        <span
+                          className={`text-xs font-bold ${getCardTextClasses(
+                            cardColor
+                          )}`}
+                        >
+                          {formatBigNumber(card.discount || 0, true)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
+        <Divider className="my-6" />
+        <div className="max-w-md sm:ml-auto space-y-3 sm:space-y-4">
           <div className="flex justify-between text-base sm:text-lg">
             <span className="font-semibold">Tổng cộng:</span>
             <span className="font-bold text-pink-700 text-lg sm:text-xl">
               {formatBigNumber(subtotal, true)}
             </span>
           </div>
-          <div className="text-xs sm:text-sm text-gray-600">
+          <div className="text-sm sm:text-base font-semibold text-gray-600">
             {selectedCount} sản phẩm được chọn
           </div>
           <Button
@@ -462,6 +759,29 @@ export default function CheckoutPage() {
           </Button>
         </div>
       </div>
+
+      {/* Modal cho mobile - hiển thị chi tiết card */}
+      {openCardModal && (
+        <CustomerCardModal
+          open={!!openCardModal}
+          onClose={() => setOpenCardModal("")}
+          card={
+            selectedCustomerCards.find(
+              (card) => card.documentId === openCardModal
+            ) || undefined
+          }
+        />
+      )}
+
+      {/* Customer Modal cho checkout - chỉ hiển thị khi chưa có customer */}
+      <CustomerModalForCheckout
+        open={openCustomerModal && !customer}
+        onClose={() => setOpenCustomerModal(false)}
+        onSuccess={() => {
+          setOpenCustomerModal(false)
+          // processCheckout sẽ được gọi tự động qua useEffect khi customer được set
+        }}
+      />
     </div>
   )
 }

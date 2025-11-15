@@ -18,6 +18,7 @@ import useGetProductCollection from "./_hooks/useGetProductCollection"
 import CardGiftcardRoundedIcon from "@mui/icons-material/CardGiftcardRounded"
 import AdjustIcon from "@mui/icons-material/Adjust"
 import PhoneIcon from "@mui/icons-material/Phone"
+import ShoppingBagRoundedIcon from "@mui/icons-material/ShoppingBagRounded"
 
 const SideMenu = ({ regions }: { regions: HttpTypes.StoreRegion[] | null }) => {
   const [isOpenSideBar, setIsOpenSideBar] = useState(false)
@@ -246,6 +247,18 @@ const SideMenu = ({ regions }: { regions: HttpTypes.StoreRegion[] | null }) => {
             </Link>
           </div>
           <div className="flex mt-4 flex-col space-y-4 w-full min-w-[250px] cursor-pointer">
+            <Link
+              href={"/orders"}
+              onClick={closeSideBar}
+              className="mr-4 flex sm:space-x-1 space-x-0.5 text-gray-700 items-center"
+            >
+              <ShoppingBagRoundedIcon className="sm:!h-5 !h-4" />
+              <h6 className="my-auto sm:text-lg text-base font-semibold">
+                Đơn hàng của tôi
+              </h6>
+            </Link>
+          </div>
+          <div className="flex mt-4 flex-col space-y-4 w-full min-w-[250px] cursor-pointer">
             <div className="mr-4 flex sm:space-x-1 space-x-0.5 text-gray-700 items-center">
               <DateRangeRoundedIcon className="sm:!h-5 !h-4" />
               <h6 className="my-auto sm:text-lg text-base font-semibold">
@@ -261,7 +274,7 @@ const SideMenu = ({ regions }: { regions: HttpTypes.StoreRegion[] | null }) => {
             >
               <CardGiftcardRoundedIcon className="sm:!h-5 !h-4" />
               <h6 className="my-auto sm:text-lg text-base font-semibold">
-                Tra cứu tích điểm
+                Tra cứu thẻ quà tặng
               </h6>
             </Link>
           </div>

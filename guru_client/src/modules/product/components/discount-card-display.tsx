@@ -6,6 +6,14 @@ import { CustomerCardModal } from "./customer-card-modal"
 import { CustomerCard } from "types/global"
 import CardGiftcardRoundedIcon from "@mui/icons-material/CardGiftcardRounded"
 import { useCustomerCards } from "@lib/context/customer-card-context"
+import {
+  getCardColor,
+  getCardBgClasses,
+  getCardBorderClasses,
+  getCardIconClasses,
+  getCardTextClasses,
+  getCardBadgeClasses,
+} from "@lib/util/card-colors"
 
 interface DiscountCardDisplayProps {
   productId: string
@@ -38,15 +46,27 @@ export default function DiscountCardDisplay({
     return null // Don't render anything if no discount card is available
   }
 
+  const cardColor = getCardColor(minDiscountCard)
+
   return (
     <>
       <Tooltip title="Nhấn để xem chi tiết ưu đãi">
         <div
-          className="px-3 py-1 border-2 border-rose-600 rounded-lg cursor-pointer bg-gradient-to-r from-rose-100 to-pink-100 flex space-x-1.5 items-center hover:from-rose-200 hover:to-pink-200 hover:shadow-lg hover:scale-105 transition-all duration-200 shadow-md"
+          className={`px-3 py-1 border-2 ${getCardBorderClasses(
+            cardColor
+          )} rounded-lg cursor-pointer ${getCardBgClasses(
+            cardColor
+          )} flex space-x-1.5 items-center hover:opacity-80 hover:shadow-lg hover:scale-105 transition-all duration-200 shadow-sm`}
           onClick={() => setOpenModal(minDiscountCard.documentId)}
         >
-          <CardGiftcardRoundedIcon className="text-rose-700 !h-5 !w-5 animate-pulse" />
-          <span className="text-rose-800 text-xs font-bold">
+          <CardGiftcardRoundedIcon
+            className={`${getCardIconClasses(
+              cardColor
+            )} !h-5 !w-5 flex-shrink-0`}
+          />
+          <span
+            className={`${getCardTextClasses(cardColor)} text-xs font-bold`}
+          >
             {minDiscountCard.title}
           </span>
         </div>

@@ -21,7 +21,6 @@ dayjs.locale("vi")
 import { motion, AnimatePresence } from "framer-motion"
 import { useCustomer } from "@lib/context/customer-context"
 import { getCustomerByPhone, createCustomer } from "@lib/data/customer"
-import { usePathname, useRouter } from "next/navigation"
 
 type Step = "phone" | "info"
 
@@ -47,11 +46,18 @@ const theme = createTheme({
   },
 })
 
-export default function CustomerModal() {
+interface CustomerModalForCheckoutProps {
+  open: boolean
+  onClose: () => void
+  onSuccess: () => void
+}
+
+export default function CustomerModalForCheckout({
+  open,
+  onClose,
+  onSuccess,
+}: CustomerModalForCheckoutProps) {
   const { customer, setCustomer, isLoading } = useCustomer()
-  const pathname = usePathname()
-  const router = useRouter()
-  const [open, setOpen] = useState(false)
   const [step, setStep] = useState<Step>("phone")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
@@ -62,18 +68,27 @@ export default function CustomerModal() {
   const [dob, setDob] = useState<Dayjs | null>(null)
   const [address, setAddress] = useState("")
 
-  // Chỉ hiển thị modal trên 2 route cụ thể: /orders và /discount-cards
-  const allowedRoutes = ["/orders", "/discount-cards"]
-  const shouldShowModal = allowedRoutes.includes(pathname)
-
-  // Check if customer exists in localStorage on mount và chỉ khi ở đúng route
+  // Reset form khi mở/đóng modal
   useEffect(() => {
-    if (!isLoading && !customer && shouldShowModal) {
-      setOpen(true)
-    } else if (customer || !shouldShowModal) {
-      setOpen(false)
+    if (open) {
+      setStep("phone")
+      setPhoneNumber(customer?.phone_number || "")
+      setError("")
+    } else {
+      setPhoneNumber("")
+      setFullName("")
+      setDob(null)
+      setAddress("")
+      setError("")
     }
-  }, [customer, isLoading, shouldShowModal, pathname])
+  }, [open, customer])
+
+  // Khi customer được set, gọi onSuccess
+  useEffect(() => {
+    if (customer && open) {
+      onSuccess()
+    }
+  }, [customer, open, onSuccess])
 
   const handlePhoneSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -89,9 +104,8 @@ export default function CustomerModal() {
       const existingCustomer = await getCustomerByPhone(phoneNumber)
 
       if (existingCustomer) {
-        // Customer exists - đóng modal luôn
+        // Customer exists - set customer và onSuccess sẽ được gọi tự động
         setCustomer(existingCustomer)
-        setOpen(false)
         // Reset form
         setPhoneNumber("")
         setDob(null)
@@ -128,13 +142,13 @@ export default function CustomerModal() {
 
       if (newCustomer) {
         setCustomer(newCustomer)
-        setOpen(false)
         // Reset form
         setPhoneNumber("")
         setFullName("")
         setDob(null)
         setAddress("")
         setStep("phone")
+        // onSuccess sẽ được gọi tự động qua useEffect
       } else {
         setError("Không thể tạo tài khoản. Vui lòng thử lại.")
       }
@@ -146,30 +160,11 @@ export default function CustomerModal() {
     }
   }
 
-  const handleClose = () => {
-    setOpen(false)
-  }
-
-  const handleSkip = () => {
-    setOpen(false)
-    router.push("/")
-  }
-
-  // Text dựa trên route
-  const getDescriptionText = () => {
-    if (pathname === "/orders") {
-      return "Vui lòng nhập thông tin để tra cứu đơn hàng"
-    } else if (pathname === "/discount-cards") {
-      return "Vui lòng nhập thông tin để tra cứu thẻ quà tặng"
-    }
-    return "Hãy cho chúng tôi số điện thoại của bạn để được hỗ trợ tốt nhất"
-  }
-
   return (
     <ThemeProvider theme={theme}>
       <Dialog
         open={open}
-        onClose={undefined}
+        onClose={onClose}
         maxWidth="sm"
         fullWidth
         PaperProps={{
@@ -200,7 +195,7 @@ export default function CustomerModal() {
                   variant="body1"
                   className="text-gray-600 !mb-3 sm:!mb-4 text-left !text-xs sm:!text-base"
                 >
-                  {getDescriptionText()}
+                  Vui lòng nhập thông tin để thanh toán
                 </Typography>
 
                 <form
@@ -230,13 +225,13 @@ export default function CustomerModal() {
 
                   <div className="flex space-x-3 sm:space-x-4">
                     <Button
-                      onClick={handleSkip}
+                      onClick={onClose}
                       variant="outlined"
                       fullWidth
                       disabled={loading}
                       className="!normal-case !font-semibold !py-2 sm:!py-2.5 !text-xs sm:!text-sm !text-neutral-900 !border-neutral-900"
                     >
-                      {"Để sau"}
+                      Hủy
                     </Button>
                     <Button
                       type="submit"

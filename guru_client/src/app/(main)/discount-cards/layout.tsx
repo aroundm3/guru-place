@@ -4,8 +4,8 @@ import React from "react"
 export const dynamic = "force-dynamic" // Prevent prerendering errors
 
 export const metadata: Metadata = {
-  title: "Divi | Thẻ giảm giá",
-  description: "Xem các thẻ giảm giá và ưu đãi đặc biệt tại Divi",
+  title: "Divi | Thẻ quà tặng",
+  description: "Xem các thẻ quà tặng và ưu đãi đặc biệt tại Divi",
 }
 
 export default function DiscountCardsLayout({

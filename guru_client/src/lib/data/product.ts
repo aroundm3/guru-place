@@ -77,8 +77,17 @@ export async function getListProducts(filter: {
   categoryId?: string
   blockProductId?: string
   pageSizeCustom?: number
+  hasCustomerCards?: boolean
 }): Promise<{ data: Product[]; pageCount: number }> {
   try {
+    // Build filter query for customer_cards
+    const customerCardsFilter =
+      filter.hasCustomerCards !== undefined
+        ? filter.hasCustomerCards
+          ? `&filters[variants][customer_cards][$notNull]=true`
+          : `&filters[variants][customer_cards][$null]=true`
+        : ""
+
     console.log(
       "urlrequest: ",
       `/api/products?pagination[page]=${
@@ -101,7 +110,7 @@ export async function getListProducts(filter: {
         filter.blockProductId
           ? `&filters[product_list_blocks][documentId]=${filter.blockProductId}`
           : ""
-      }&[populate]=variants`
+      }${customerCardsFilter}&[populate]=variants`
     )
 
     const data = await fetcher(
@@ -125,7 +134,7 @@ export async function getListProducts(filter: {
         filter.blockProductId
           ? `&filters[product_list_blocks][documentId]=${filter.blockProductId}`
           : ""
-      }&[populate]=variants`,
+      }${customerCardsFilter}&[populate]=variants`,
       {
         next: { revalidate: 10 },
       }

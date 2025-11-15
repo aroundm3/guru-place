@@ -13,6 +13,11 @@ import Image from "next/image"
 import Link from "next/link"
 import { CustomerCard } from "types/global"
 import { formatBigNumber } from "@lib/util/format-big-number"
+import {
+  getCardColor,
+  getCardBorderClasses,
+  getCardTextClasses,
+} from "@lib/util/card-colors"
 
 interface CustomerCardModalProps {
   open: boolean
@@ -26,6 +31,8 @@ export const CustomerCardModal = ({
   card,
 }: CustomerCardModalProps) => {
   if (!card) return null
+
+  const cardColor = getCardColor(card)
 
   return (
     <Dialog
@@ -42,24 +49,15 @@ export const CustomerCardModal = ({
     >
       <DialogContent sx={{ p: 0, position: "relative" }}>
         {/* Ảnh tràn viền modal */}
-        <div className="relative w-full h-64 sm:h-80">
+        <div className="relative w-full">
           <Image
             src={card.image?.default || "/placeholder-card.png"}
             alt={card.title}
-            fill
-            className="object-cover"
+            width={800}
+            height={600}
+            className="w-full h-auto object-contain"
             priority
           />
-
-          {/* Lớp mờ phía trên ảnh */}
-          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-transparent" />
-
-          {/* Title nằm trên ảnh */}
-          <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-6">
-            <h2 className="text-white text-2xl sm:text-4xl font-bold drop-shadow-lg">
-              {card.title}
-            </h2>
-          </div>
 
           {/* Close button */}
           <IconButton
@@ -69,15 +67,28 @@ export const CustomerCardModal = ({
               position: "absolute",
               right: 8,
               top: 8,
-              color: "white",
-              backgroundColor: "rgba(0, 0, 0, 0.5)",
+              color: "gray.900",
+              backgroundColor: "rgba(255, 255, 255, 0.9)",
               "&:hover": {
-                backgroundColor: "rgba(0, 0, 0, 0.7)",
+                backgroundColor: "rgba(255, 255, 255, 1)",
               },
             }}
           >
             <CloseIcon />
           </IconButton>
+        </div>
+
+        {/* Title dưới ảnh */}
+        <div
+          className={`p-4 sm:p-6 border-b ${getCardBorderClasses(cardColor)}`}
+        >
+          <h2
+            className={`${getCardTextClasses(
+              cardColor
+            )} text-2xl sm:text-4xl font-bold`}
+          >
+            {card.title}
+          </h2>
         </div>
 
         {/* Nội dung phía dưới */}
@@ -89,25 +100,9 @@ export const CustomerCardModal = ({
               color="text.secondary"
               className="text-sm sm:text-base font-semibold"
             >
-              {card.description}s
+              {card.description}
             </Typography>
           )}
-
-          {/* Discount info */}
-          <div className="bg-pink-50 border border-pink-200 rounded-lg p-2 sm:p-3">
-            <Typography className="text-pink-700 font-bold !text-sm text-center">
-              Giảm {formatBigNumber(card.discount, true)} cho lần mua tiếp theo
-            </Typography>
-          </div>
-
-          {/* Apply info */}
-          <Typography
-            variant="body2"
-            color="text.secondary"
-            className="text-xs sm:text-sm text-center"
-          >
-            Áp dụng khi mua sản phẩm này
-          </Typography>
 
           {/* Tìm hiểu thêm button */}
           <Link href="/discount-cards" onClick={onClose}>

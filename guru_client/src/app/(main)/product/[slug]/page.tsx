@@ -121,7 +121,7 @@ export default async function Home(props: { params: { slug: string } }) {
     <Fragment>
       <div className="lg:max-w-5xl max-w-4xl lg:px-0 px-4 mx-auto flex flex-col space-y-10">
         <div className="relative flex space-x-2 justify-between bg-[#fffdf8] border border-stone-300 rounded-lg mt-10 p-4">
-          <Breadcrumbs aria-label="breadcrumb" separator="›">
+          <Breadcrumbs aria-label="breadcrumb" separator="•">
             <Link href="/" className="text-sm font-semibold">
               Trang chủ
             </Link>
@@ -155,9 +155,9 @@ export default async function Home(props: { params: { slug: string } }) {
           </Breadcrumbs>
           <Link
             href={`/products`}
-            className="underline text-xs font-medium my-auto"
+            className="underline min-w-9 text-xs font-medium my-auto"
           >
-            Tất cả sản phẩm
+            {"Tất cả"}
           </Link>
         </div>
         <div className="flex sm:flex-row flex-col sm:gap-10 gap-6">

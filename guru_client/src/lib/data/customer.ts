@@ -60,3 +60,32 @@ export async function createCustomer(data: {
     return null
   }
 }
+
+export async function updateCustomer(data: {
+  documentId: string
+  full_name: string
+  phone_number: string
+  dob?: string
+  address: string
+}): Promise<Customer | null> {
+  try {
+    const response = await fetch("/api/customer/update", {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json()
+      throw new Error(errorData.error || "Failed to update customer")
+    }
+
+    const result = await response.json()
+    return result.customer || null
+  } catch (error) {
+    console.error("Error updating customer:", error)
+    return null
+  }
+}

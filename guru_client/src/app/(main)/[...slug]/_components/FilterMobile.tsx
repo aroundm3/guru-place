@@ -4,6 +4,8 @@ import { Brand, Category, ProductListBlock } from "types/global"
 import { Popover } from "@headlessui/react"
 import Image from "next/image"
 import PlayArrowRoundedIcon from "@mui/icons-material/PlayArrowRounded"
+import CardGiftcardRoundedIcon from "@mui/icons-material/CardGiftcardRounded"
+import { usePathname } from "next/navigation"
 
 interface FilterMobileProps {
   isOpenSideBar: boolean
@@ -29,6 +31,9 @@ export default function FilterMobile({
   brands,
   currentBlockProduct,
 }: FilterMobileProps) {
+  const pathname = usePathname()
+  const isHasGift = pathname?.includes("/has_gift")
+
   return (
     <Drawer
       anchor="right"
@@ -76,6 +81,33 @@ export default function FilterMobile({
 
       <div className="flex flex-col p-6 min-w-[250px]">
         <div className="flex flex-col space-y-2 mt-8">
+          <p className="flex space-x-2 text-xs font-sm uppercase font-semibold text-gray-400 cursor-pointer">
+            Ưu đãi
+          </p>
+          <div className="ml-1 flex flex-col space-y-2">
+            <div className="flex flex-col space-y-2 text-gray-600 hover:text-gray-700 duration-300 cursor-pointer">
+              <div className="flex space-x-2 items-center">
+                <Link
+                  href="/has_gift"
+                  onClick={onClose}
+                  className={`text-sm flex space-x-1 items-center ${
+                    isHasGift
+                      ? "font-semibold text-pink-700"
+                      : "font-normal pl-4"
+                  }`}
+                >
+                  {isHasGift ? (
+                    <PlayArrowRoundedIcon className="!w-4" />
+                  ) : (
+                    <CardGiftcardRoundedIcon className="!w-4 !h-4 text-gray-500" />
+                  )}
+                  <span>Sản phẩm có ưu đãi</span>
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="flex flex-col space-y-2 mt-4">
           <p className="flex space-x-2 text-xs font-sm uppercase font-semibold text-gray-400 cursor-pointer">
             Thương hiệu
           </p>

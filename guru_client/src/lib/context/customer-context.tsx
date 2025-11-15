@@ -2,7 +2,6 @@
 
 import React, { createContext, useContext, useState, useEffect } from "react"
 import { Customer } from "@lib/data/customer"
-import { getCookie, setCookie } from "@lib/util/cookies"
 
 interface CustomerContextType {
   customer: Customer | null
@@ -16,19 +15,23 @@ interface CustomerProviderProps {
   children: React.ReactNode
 }
 
+const CUSTOMER_STORAGE_KEY = "customer"
+
 export const CustomerProvider = ({ children }: CustomerProviderProps) => {
   const [customer, setCustomerState] = useState<Customer | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    // Load customer from cookie on mount
-    const customerStr = getCookie("customer")
-    if (customerStr) {
+    // Load customer from localStorage on mount
+    if (typeof window !== "undefined") {
       try {
-        const customerData = JSON.parse(customerStr)
-        setCustomerState(customerData)
+        const customerStr = localStorage.getItem(CUSTOMER_STORAGE_KEY)
+        if (customerStr) {
+          const customerData = JSON.parse(customerStr)
+          setCustomerState(customerData)
+        }
       } catch (error) {
-        console.error("Error parsing customer from cookie:", error)
+        console.error("Error parsing customer from localStorage:", error)
       }
     }
     setIsLoading(false)
@@ -36,13 +39,13 @@ export const CustomerProvider = ({ children }: CustomerProviderProps) => {
 
   const setCustomer = (customerData: Customer | null) => {
     setCustomerState(customerData)
-    if (customerData) {
-      setCookie("customer", JSON.stringify(customerData), 30) // 30 days
-    } else {
-      // Remove cookie if customer is null
-      if (typeof window !== "undefined") {
-        document.cookie =
-          "customer=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/;"
+    if (typeof window !== "undefined") {
+      if (customerData) {
+        // Save to localStorage
+        localStorage.setItem(CUSTOMER_STORAGE_KEY, JSON.stringify(customerData))
+      } else {
+        // Remove from localStorage if customer is null
+        localStorage.removeItem(CUSTOMER_STORAGE_KEY)
       }
     }
   }

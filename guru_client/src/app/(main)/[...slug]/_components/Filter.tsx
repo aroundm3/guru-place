@@ -9,6 +9,8 @@ import PlayArrowRoundedIcon from "@mui/icons-material/PlayArrowRounded"
 import Image from "next/image"
 import SortRoundedIcon from "@mui/icons-material/SortRounded"
 import FilterMobile from "./FilterMobile"
+import { usePathname } from "next/navigation"
+import CardGiftcardRoundedIcon from "@mui/icons-material/CardGiftcardRounded"
 
 interface FilterProps {
   brands: Brand[]
@@ -28,6 +30,8 @@ export default function Filter({
   currentBlockProduct,
 }: FilterProps) {
   console.log({ categories })
+  const pathname = usePathname()
+  const isHasGift = pathname?.includes("/has_gift")
 
   const [currentCategorySelect, setCurrentCategorySelect] = useState("")
   const [listBrandToDisplay, setListBrandToDisplay] = useState<Brand[]>([])
@@ -71,11 +75,33 @@ export default function Filter({
         </Button>
       </div>
       <div className="bg-[#fffdf8] border border-stone-300 sm:min-w-[200px] sm:flex hidden flex-col p-4 rounded h-fit pb-10 sticky top-24">
-        <span className="text-md font-semibold text-gray-600">
+        <span className="text-md font-semibold text-stone-600">
           Bộ lọc sản phẩm
         </span>
-        <div className="flex flex-col space-y-2 mt-8">
-          <p className="flex space-x-2 text-xs font-sm uppercase font-semibold text-gray-400 cursor-pointer">
+        <div className="sm:flex hidden flex-col space-y-3 mt-8">
+          <p className="flex space-x-2 text-sm font-semibold text-stone-500 cursor-pointer">
+            Ưu đãi
+          </p>
+          <div className="ml-1 flex flex-col space-y-2">
+            <div className="flex flex-col space-y-2 text-gray-600 hover:text-gray-700 duration-300 cursor-pointer">
+              <div className="flex space-x-2 items-center">
+                <Link
+                  href="/has_gift"
+                  className={`text-sm flex space-x-1 items-center ${
+                    isHasGift
+                      ? "font-semibold text-pink-700"
+                      : "font-normal pl-4"
+                  }`}
+                >
+                  {isHasGift ? <PlayArrowRoundedIcon className="!w-4" /> : ""}
+                  <span>Sản phẩm có ưu đãi</span>
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="flex flex-col space-y-3 mt-8">
+          <p className="flex space-x-2 text-sm font-semibold text-stone-500 cursor-pointer">
             Thương hiệu
           </p>
           <div className="ml-1 flex flex-col space-y-2">
@@ -118,8 +144,8 @@ export default function Filter({
             })}
           </div>
         </div>
-        <div className="sm:flex hidden flex-col space-y-2 mt-4">
-          <p className="flex space-x-2 text-xs font-sm uppercase font-semibold text-gray-400 cursor-pointer">
+        <div className="sm:flex hidden flex-col space-y-3 mt-8">
+          <p className="flex space-x-2 text-sm font-semibold text-stone-500 cursor-pointer">
             Danh mục
           </p>
           <div className="ml-1 flex flex-col space-y-2">
@@ -195,8 +221,8 @@ export default function Filter({
             })}
           </div>
         </div>
-        <div className="sm:flex hidden flex-col space-y-2 mt-4">
-          <p className="flex space-x-2 text-xs font-sm uppercase font-semibold text-gray-400 cursor-pointer">
+        <div className="sm:flex hidden flex-col space-y-3 mt-8">
+          <p className="flex space-x-2 text-sm font-semibold text-stone-500 cursor-pointer">
             Bộ sản phẩm
           </p>
           <div className="ml-1 flex flex-col space-y-2">

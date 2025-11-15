@@ -10,6 +10,16 @@ import AddRoundedIcon from "@mui/icons-material/AddRounded"
 import CloseIcon from "@mui/icons-material/Close"
 import CardGiftcardRoundedIcon from "@mui/icons-material/CardGiftcardRounded"
 import { Divider } from "@medusajs/ui"
+import { CustomerCardModal } from "@modules/product/components/customer-card-modal"
+import { useCustomerCards } from "@lib/context/customer-card-context"
+import {
+  getCardColor,
+  getCardBgClasses,
+  getCardBorderClasses,
+  getCardBadgeClasses,
+  getCardIconClasses,
+  getCardTextClasses,
+} from "@lib/util/card-colors"
 
 // Hook detect mobile
 function useIsMobile() {
@@ -30,6 +40,7 @@ interface OptionsProps {
 export default function Options({ productData }: OptionsProps) {
   const { variants } = productData
   const isMobile = useIsMobile()
+  const { getCardById } = useCustomerCards()
   const [currentPicked, setCurrentPicked] = useState<Variant | undefined>()
   const [quantityPicked, setQuantityPicked] = useState(1)
   const [isBottomSheetOpen, setIsBottomSheetOpen] = useState(false)
@@ -37,11 +48,10 @@ export default function Options({ productData }: OptionsProps) {
     isOpen: false,
     message: "",
   })
-
-  console.log({ variants })
+  const [openCardModal, setOpenCardModal] = useState(false)
 
   // Lấy card có discount nhỏ nhất từ variant được chọn
-  const minDiscountCard: CustomerCard | null = useMemo(() => {
+  const minDiscountCardFromVariant: CustomerCard | null = useMemo(() => {
     if (
       !currentPicked?.customer_cards ||
       currentPicked.customer_cards.length === 0
@@ -52,6 +62,16 @@ export default function Options({ productData }: OptionsProps) {
       card.discount < min.discount ? card : min
     )
   }, [currentPicked])
+
+  // Lấy full card data từ context
+  const minDiscountCard: CustomerCard | null = useMemo(() => {
+    if (!minDiscountCardFromVariant) return null
+    const fullCard =
+      getCardById(minDiscountCardFromVariant.documentId) ||
+      getCardById(minDiscountCardFromVariant.id) ||
+      minDiscountCardFromVariant
+    return fullCard
+  }, [minDiscountCardFromVariant, getCardById])
 
   const handleConfirmAddToCart = () => {
     if (!currentPicked && productData.variants.length > 1) {
@@ -254,25 +274,53 @@ export default function Options({ productData }: OptionsProps) {
           </div>
           {/* Message tích điểm khi chọn variant có customer_cards (Desktop) */}
           <Collapse in={!!minDiscountCard}>
-            <div className="relative bg-pink-50 border border-pink-200 rounded-lg p-3 flex items-center gap-2">
-              {/* Badge số lượng ở góc trên bên trái */}
-              <div className="absolute -top-2 -right-2 w-6 h-6 bg-pink-600 text-white rounded-full flex items-center justify-center text-xs font-bold shadow-md">
-                x{quantityPicked}
-              </div>
-              <CardGiftcardRoundedIcon className="!w-5 !h-5 text-pink-600 flex-shrink-0" />
-              <div className="flex-1">
-                <p className="text-xs sm:text-sm font-semibold text-pink-700">
-                  Tích điểm cho lần mua tiếp theo
-                </p>
-                <p className="text-xs text-pink-600 mt-0.5">
-                  Bạn sẽ tích được{" "}
-                  <span className="font-bold">
-                    {formatBigNumber(minDiscountCard?.discount ?? 0, true)}
-                  </span>{" "}
-                  cho lần mua tiếp theo
-                </p>
-              </div>
-            </div>
+            {minDiscountCard &&
+              (() => {
+                const cardColor = getCardColor(minDiscountCard)
+                return (
+                  <div
+                    className={`relative ${getCardBgClasses(
+                      cardColor
+                    )} border ${getCardBorderClasses(
+                      cardColor
+                    )} rounded-lg p-3`}
+                  >
+                    {/* Badge số lượng ở góc trên bên trái */}
+                    <div
+                      className={`absolute -top-2 -right-2 w-6 h-6 ${getCardBadgeClasses(
+                        cardColor
+                      )} text-white rounded-full flex items-center justify-center text-xs font-bold shadow-md`}
+                    >
+                      x{quantityPicked}
+                    </div>
+                    <div className="flex items-center gap-2 mb-2">
+                      <CardGiftcardRoundedIcon
+                        className={`!w-5 !h-5 ${getCardIconClasses(
+                          cardColor
+                        )} flex-shrink-0`}
+                      />
+                      <p className="text-xs sm:text-sm font-semibold text-neutral-900">
+                        Phần quà khi mua sản phẩm này
+                      </p>
+                    </div>
+                    <p
+                      className={`text-sm sm:text-base font-bold ${getCardTextClasses(
+                        cardColor
+                      )} mb-2`}
+                    >
+                      {minDiscountCard.title || "Thẻ quà tặng"}
+                    </p>
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      onClick={() => setOpenCardModal(true)}
+                      className="!normal-case !text-xs !font-semibold !border-neutral-300 !text-neutral-700 hover:!bg-neutral-100"
+                    >
+                      Xem chi tiết
+                    </Button>
+                  </div>
+                )
+              })()}
           </Collapse>
           <div className="flex flex-col space-y-1">
             <span className="text-xs font-semibold text-gray-400">
@@ -426,25 +474,53 @@ export default function Options({ productData }: OptionsProps) {
 
             {/* Message tích điểm khi chọn variant có customer_cards (Mobile) */}
             <Collapse in={!!minDiscountCard}>
-              <div className="relative mb-4 bg-pink-50 border border-pink-200 rounded-lg p-3 flex items-center gap-2">
-                {/* Badge số lượng ở góc trên bên trái */}
-                <div className="absolute -top-2 -right-2 w-6 h-6 bg-pink-600 text-white rounded-full flex items-center justify-center text-xs font-bold shadow-md">
-                  x{quantityPicked}
-                </div>
-                <CardGiftcardRoundedIcon className="!w-5 !h-5 text-pink-600 flex-shrink-0" />
-                <div className="flex-1">
-                  <p className="text-xs sm:text-sm font-semibold text-pink-700">
-                    Tích điểm cho lần mua tiếp theo
-                  </p>
-                  <p className="text-xs text-pink-600 mt-0.5">
-                    Bạn sẽ tích được{" "}
-                    <span className="font-bold">
-                      {formatBigNumber(minDiscountCard?.discount ?? 0, true)}
-                    </span>{" "}
-                    cho lần mua tiếp theo
-                  </p>
-                </div>
-              </div>
+              {minDiscountCard &&
+                (() => {
+                  const cardColor = getCardColor(minDiscountCard)
+                  return (
+                    <div
+                      className={`relative mb-4 ${getCardBgClasses(
+                        cardColor
+                      )} border ${getCardBorderClasses(
+                        cardColor
+                      )} rounded-lg p-3`}
+                    >
+                      {/* Badge số lượng ở góc trên bên trái */}
+                      <div
+                        className={`absolute -top-2 -right-2 w-6 h-6 ${getCardBadgeClasses(
+                          cardColor
+                        )} text-white rounded-full flex items-center justify-center text-xs font-bold shadow-md`}
+                      >
+                        x{quantityPicked}
+                      </div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <CardGiftcardRoundedIcon
+                          className={`!w-5 !h-5 ${getCardIconClasses(
+                            cardColor
+                          )} flex-shrink-0`}
+                        />
+                        <p className="text-xs sm:text-sm font-semibold text-neutral-900">
+                          Phần quà khi mua sản phẩm này
+                        </p>
+                      </div>
+                      <p
+                        className={`text-sm sm:text-base font-bold ${getCardTextClasses(
+                          cardColor
+                        )} mb-2`}
+                      >
+                        {minDiscountCard.title || "Thẻ quà tặng"}
+                      </p>
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        onClick={() => setOpenCardModal(true)}
+                        className="!normal-case !text-xs !font-semibold !border-neutral-300 !text-neutral-700 hover:!bg-neutral-100 !w-full"
+                      >
+                        Xem chi tiết
+                      </Button>
+                    </div>
+                  )
+                })()}
             </Collapse>
 
             {/* Quantity Selection */}
@@ -502,6 +578,13 @@ export default function Options({ productData }: OptionsProps) {
           </div>
         </Drawer>
       )}
+
+      {/* Modal hiển thị chi tiết card */}
+      <CustomerCardModal
+        open={openCardModal}
+        onClose={() => setOpenCardModal(false)}
+        card={minDiscountCard || undefined}
+      />
     </Fragment>
   )
 }

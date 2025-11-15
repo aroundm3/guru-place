@@ -7,7 +7,6 @@ import {
   Transition,
 } from "@headlessui/react"
 import { formatBigNumber } from "@lib/util/format-big-number"
-import LocalizedClientLink from "@modules/common/components/localized-client-link"
 import { Fragment, useEffect, useRef, useState } from "react"
 import { usePathname } from "next/navigation"
 import LocalMallRoundedIcon from "@mui/icons-material/LocalMallRounded"
@@ -276,7 +275,7 @@ const CartDropdown = () => {
                           }-${index}`}
                           data-testid="cart-item-mobile"
                         >
-                          <LocalizedClientLink
+                          <Link
                             href={`/product/${productData.slug}`}
                             className="w-16"
                             onClick={close}
@@ -290,7 +289,7 @@ const CartDropdown = () => {
                                 sizes="64px"
                               />
                             </div>
-                          </LocalizedClientLink>
+                          </Link>
                           <div className="flex flex-col justify-between flex-1 min-w-0">
                             <div className="flex items-start justify-between">
                               <div className="flex flex-col mr-2 min-w-0">
@@ -303,7 +302,7 @@ const CartDropdown = () => {
                                   </div>
                                 )}
                                 <div className="flex items-center gap-2 mt-1">
-                                  <span className="text-xs text-ui-fg-subtle !my-auto">
+                                  <span className="text-sm text-ui-fg-subtle !my-auto">
                                     Số lượng:
                                   </span>
                                   <div className="flex items-center space-x-1 !my-auto">
@@ -317,9 +316,9 @@ const CartDropdown = () => {
                                       }}
                                       className="!my-auto px-1.5 py-0.5 bg-neutral-100 hover:bg-neutral-200 rounded border border-stone-300 transition-colors"
                                     >
-                                      <RemoveRoundedIcon className="!w-4 !h-4" />
+                                      <RemoveRoundedIcon className="!w-5 !h-5" />
                                     </IconButton>
-                                    <span className="!my-auto text-xs font-semibold px-2 min-w-[24px] text-center">
+                                    <span className="!my-auto text-sm font-semibold px-2 min-w-[24px] text-center">
                                       {item.quantity}
                                     </span>
                                     <IconButton
@@ -332,7 +331,7 @@ const CartDropdown = () => {
                                       }}
                                       className="!my-auto px-1.5 py-0.5 bg-neutral-100 hover:bg-neutral-200 rounded border border-stone-300 transition-colors"
                                     >
-                                      <AddRoundedIcon className="!w-4 !h-4" />
+                                      <AddRoundedIcon className="!w-5 !h-5" />
                                     </IconButton>
                                   </div>
                                 </div>
@@ -469,7 +468,7 @@ const CartDropdown = () => {
                         }-${index}`}
                         data-testid="cart-item"
                       >
-                        <LocalizedClientLink
+                        <Link
                           href={`/product/${productData.slug}`}
                           className="w-24"
                           onClick={close}
@@ -483,19 +482,19 @@ const CartDropdown = () => {
                               sizes="96px"
                             />
                           </div>
-                        </LocalizedClientLink>
+                        </Link>
                         <div className="flex flex-col justify-between flex-1">
                           <div className="flex flex-col flex-1">
                             <div className="flex items-start justify-between">
                               <div className="flex flex-col mr-4 w-[180px] min-w-0">
                                 <h3 className="text-base-regular line-clamp-2">
-                                  <LocalizedClientLink
+                                  <Link
                                     href={`/product/${productData.slug}`}
                                     data-testid="product-link"
                                     onClick={close}
                                   >
                                     {productData.name}
-                                  </LocalizedClientLink>
+                                  </Link>
                                 </h3>
                                 {variantName && (
                                   <div
@@ -542,7 +541,7 @@ const CartDropdown = () => {
                                 }}
                                 className="!my-auto px-2 py-1 bg-neutral-100 hover:bg-neutral-50 duration-300 border border-stone-300 rounded"
                               >
-                                <RemoveRoundedIcon className="!w-4 !h-4" />
+                                <RemoveRoundedIcon className="!w-5 !h-5" />
                               </IconButton>
                               <span className="!my-auto text-sm font-semibold px-4 min-w-10 flex items-center justify-center">
                                 {item.quantity}
@@ -554,7 +553,7 @@ const CartDropdown = () => {
                                 }}
                                 className="!my-autopx-2 py-1 bg-neutral-100 hover:bg-neutral-50 duration-300 border border-stone-300 rounded"
                               >
-                                <AddRoundedIcon className="!w-4 !h-4" />
+                                <AddRoundedIcon className="!w-5 !h-5" />
                               </IconButton>
                             </div>
                           </div>

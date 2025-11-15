@@ -31,6 +31,12 @@
       "relation": "oneToMany",
       "target": "api::order-item.order-item",
       "mappedBy": "order"
+    },
+    "order_customer_cards": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::order-customer-card.order-customer-card",
+      "mappedBy": "order"
     }
   }
 }

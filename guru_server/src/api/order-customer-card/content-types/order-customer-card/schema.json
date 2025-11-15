@@ -1,0 +1,32 @@
+{
+  "kind": "collectionType",
+  "collectionName": "order_customer_cards",
+  "info": {
+    "singularName": "order-customer-card",
+    "pluralName": "order-customer-cards",
+    "displayName": "OrderCustomerCard"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "attributes": {
+    "order": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::order.order",
+      "inversedBy": "order_customer_cards"
+    },
+    "customer_card": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::customer-card.customer-card"
+    },
+    "quantity": {
+      "type": "integer",
+      "required": true,
+      "default": 1,
+      "min": 1
+    }
+  }
+}
+

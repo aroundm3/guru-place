@@ -30,7 +30,7 @@ export default async function Footer({ metada }: FooterProps) {
           </div>
           <div className="text-small-regular gap-10 md:gap-x-16 grid grid-cols-2 sm:grid-cols-3">
             {categories && categories?.length > 0 && (
-              <div className="flex flex-col gap-y-2">
+              <div className="flex flex-col gap-y-3">
                 <span className="txt-small-plus txt-ui-fg-base">Danh mục</span>
                 <ul
                   className="grid grid-cols-1 gap-2"
@@ -59,7 +59,7 @@ export default async function Footer({ metada }: FooterProps) {
               </div>
             )}
             {brands && brands.length > 0 && (
-              <div className="flex flex-col gap-y-2">
+              <div className="flex flex-col gap-y-3">
                 <span className="txt-small-plus txt-ui-fg-base">
                   Thương hiệu
                 </span>
@@ -84,7 +84,7 @@ export default async function Footer({ metada }: FooterProps) {
                 </ul>
               </div>
             )}
-            <div className="flex flex-col gap-y-2">
+            <div className="flex flex-col gap-y-3">
               <span className="txt-small-plus txt-ui-fg-base">Contact</span>
               <ul className="grid grid-cols-1 gap-y-2 text-ui-fg-subtle txt-small">
                 {metada.phone_number && (

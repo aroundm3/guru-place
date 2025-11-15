@@ -45,7 +45,7 @@ export const CustomerCardProvider = ({
       setCustomerCards(sortedCards)
     } catch (err) {
       console.error("Failed to fetch customer cards:", err)
-      setError("Không thể tải danh sách thẻ giảm giá")
+      setError("Không thể tải danh sách thẻ quà tặng")
     } finally {
       setLoading(false)
     }
@@ -56,8 +56,8 @@ export const CustomerCardProvider = ({
   }
 
   const getActiveCards = (): CustomerCard[] => {
-    // Return cards that are published and have discount > 0
-    return customerCards.filter((card) => card.publishedAt && card.discount > 0)
+    // Return cards that are published
+    return customerCards.filter((card) => card.publishedAt)
   }
 
   const getCardById = (id: string | number): CustomerCard | undefined => {
