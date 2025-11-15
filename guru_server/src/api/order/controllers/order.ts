@@ -148,10 +148,12 @@ export default factories.createCoreController(
               itemData.variantId,
               {
                 data: {
-                  quantity: itemData.variant.quantity - itemData.quantity,
+                  quantity:
+                    Number(itemData.variant.quantity) - itemData.quantity,
                   sold_quantity:
-                    (itemData.variant.sold_quantity || 0) + itemData.quantity,
-                },
+                    Number(itemData.variant.sold_quantity || 0) +
+                    itemData.quantity,
+                } as any,
               }
             );
 
@@ -161,10 +163,12 @@ export default factories.createCoreController(
               itemData.productId,
               {
                 data: {
-                  quantity: itemData.product.quantity - itemData.quantity,
+                  quantity:
+                    Number(itemData.product.quantity) - itemData.quantity,
                   sold_quantity:
-                    (itemData.product.sold_quantity || 0) + itemData.quantity,
-                },
+                    Number(itemData.product.sold_quantity || 0) +
+                    itemData.quantity,
+                } as any,
               }
             );
           } else {
@@ -174,10 +178,12 @@ export default factories.createCoreController(
               itemData.productId,
               {
                 data: {
-                  quantity: itemData.product.quantity - itemData.quantity,
+                  quantity:
+                    Number(itemData.product.quantity) - itemData.quantity,
                   sold_quantity:
-                    (itemData.product.sold_quantity || 0) + itemData.quantity,
-                },
+                    Number(itemData.product.sold_quantity || 0) +
+                    itemData.quantity,
+                } as any,
               }
             );
           }
