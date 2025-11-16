@@ -13,7 +13,7 @@ export default factories.createCoreController(
           customerId,
           items,
           customerCards,
-          shippingFee = 15000,
+          shippingFee,
           point = 0,
         } = ctx.request.body;
 
@@ -40,6 +40,7 @@ export default factories.createCoreController(
 
         // Validate và tính toán tổng tiền, đồng thời kiểm tra số lượng
         let totalAmount = 0;
+        let hasFreeShip = false;
         const orderItemsData = [];
 
         for (const item of items) {
@@ -63,8 +64,8 @@ export default factories.createCoreController(
           }
 
           let variant = null;
-          let itemPrice = product.sale_price;
-          let itemBasePrice = product.base_price;
+          let itemPrice = Number(product.sale_price);
+          let itemBasePrice = Number(product.base_price);
 
           // Nếu có variantId, lấy variant
           if (variantId) {
@@ -87,18 +88,18 @@ export default factories.createCoreController(
               );
             }
 
-            itemPrice = variant.sale_price;
-            itemBasePrice = variant.base_price;
+            itemPrice = Number(variant.sale_price);
+            itemBasePrice = Number(variant.base_price);
 
             // Kiểm tra số lượng variant
-            if (variant.quantity < quantity) {
+            if (Number(variant.quantity) < quantity) {
               return ctx.badRequest(
                 `Insufficient quantity for variant ${variantId}. Available: ${variant.quantity}, Requested: ${quantity}`
               );
             }
           } else {
             // Không có variant, kiểm tra số lượng product
-            if (product.quantity < quantity) {
+            if (Number(product.quantity) < quantity) {
               return ctx.badRequest(
                 `Insufficient quantity for product ${productId}. Available: ${product.quantity}, Requested: ${quantity}`
               );
@@ -106,6 +107,11 @@ export default factories.createCoreController(
           }
 
           totalAmount += itemPrice * quantity;
+
+          // Kiểm tra nếu product có isFreeShip = true
+          if (product.isFreeShip === true) {
+            hasFreeShip = true;
+          }
 
           orderItemsData.push({
             productId,
@@ -118,12 +124,15 @@ export default factories.createCoreController(
           });
         }
 
+        // Tính shipping fee: nếu có product isFreeShip thì = 0, mặc định = 15000
+        const finalShippingFee = hasFreeShip ? 0 : (shippingFee ?? 15000);
+
         // Tạo order
         const order = await strapi.entityService.create("api::order.order", {
           data: {
             customer: customerId,
-            shipping_fee: shippingFee,
-            point: point,
+            shipping_fee: Number(finalShippingFee),
+            point: Number(point),
             publishedAt: new Date(),
           },
         });
@@ -135,7 +144,7 @@ export default factories.createCoreController(
             data: {
               order: order.id,
               variant: itemData.variantId || null,
-              quantity: itemData.quantity,
+              quantity: Number(itemData.quantity),
               publishedAt: new Date(),
             },
           });
