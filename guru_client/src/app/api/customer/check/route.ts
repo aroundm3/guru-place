@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 
+export const dynamic = "force-dynamic"
+
 const BASE_URL = process.env.BASE_URL
 const FULL_ACCESS_API_KEY = process.env.FULL_ACCESS_API_KEY
 

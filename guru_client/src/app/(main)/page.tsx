@@ -1,4 +1,4 @@
-export const dynamic = "force-dynamic"
+export const revalidate = 60 // Revalidate every 60 seconds
 
 import { Metadata } from "next"
 import BannerCarousel from "@modules/home/components/banner-carousel"

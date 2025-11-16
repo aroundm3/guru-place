@@ -20,7 +20,11 @@ dayjs.locale("vi")
 
 import { motion, AnimatePresence } from "framer-motion"
 import { useCustomer } from "@lib/context/customer-context"
-import { getCustomerByPhone, createCustomer } from "@lib/data/customer"
+import {
+  getCustomerByPhone,
+  createCustomer,
+  updateCustomer,
+} from "@lib/data/customer"
 
 type Step = "phone" | "info"
 
@@ -49,7 +53,7 @@ const theme = createTheme({
 interface CustomerModalForCheckoutProps {
   open: boolean
   onClose: () => void
-  onSuccess: () => void
+  onSuccess: (customer: any) => void
 }
 
 export default function CustomerModalForCheckout({
@@ -71,6 +75,7 @@ export default function CustomerModalForCheckout({
   // Reset form khi mở/đóng modal
   useEffect(() => {
     if (open) {
+      // Luôn bắt đầu từ step phone, pre-fill phone number nếu có customer
       setStep("phone")
       setPhoneNumber(customer?.phone_number || "")
       setError("")
@@ -83,17 +88,19 @@ export default function CustomerModalForCheckout({
     }
   }, [open, customer])
 
-  // Khi customer được set, gọi onSuccess
-  useEffect(() => {
-    if (customer && open) {
-      onSuccess()
-    }
-  }, [customer, open, onSuccess])
-
   const handlePhoneSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!phoneNumber.trim()) {
       setError("Vui lòng nhập số điện thoại")
+      return
+    }
+
+    // Nếu đã có customer và phone number không thay đổi, chuyển thẳng sang step info
+    if (customer && customer.phone_number === phoneNumber.trim()) {
+      setFullName(customer.full_name || "")
+      setDob(customer.dob ? dayjs(customer.dob) : null)
+      setAddress(customer.address || "")
+      setStep("info")
       return
     }
 
@@ -104,14 +111,17 @@ export default function CustomerModalForCheckout({
       const existingCustomer = await getCustomerByPhone(phoneNumber)
 
       if (existingCustomer) {
-        // Customer exists - set customer và onSuccess sẽ được gọi tự động
+        // Customer exists - set customer và chuyển sang step info với data đã pre-fill
         setCustomer(existingCustomer)
-        // Reset form
-        setPhoneNumber("")
-        setDob(null)
-        setStep("phone")
+        setFullName(existingCustomer.full_name || "")
+        setDob(existingCustomer.dob ? dayjs(existingCustomer.dob) : null)
+        setAddress(existingCustomer.address || "")
+        setStep("info")
       } else {
         // New customer - chuyển sang form thông tin
+        setFullName("")
+        setDob(null)
+        setAddress("")
         setStep("info")
       }
     } catch (err) {
@@ -133,24 +143,49 @@ export default function CustomerModalForCheckout({
     setError("")
 
     try {
-      const newCustomer = await createCustomer({
-        full_name: fullName,
-        phone_number: phoneNumber,
-        dob: dob ? dob.format("YYYY-MM-DD") : undefined,
-        address: address,
-      })
+      let updatedCustomer: any = null
 
-      if (newCustomer) {
-        setCustomer(newCustomer)
-        // Reset form
-        setPhoneNumber("")
-        setFullName("")
-        setDob(null)
-        setAddress("")
-        setStep("phone")
-        // onSuccess sẽ được gọi tự động qua useEffect
+      if (customer) {
+        // Nếu đã có customer, kiểm tra xem có thay đổi không
+        const hasChanges =
+          fullName !== customer.full_name ||
+          phoneNumber !== customer.phone_number ||
+          (dob ? dob.format("YYYY-MM-DD") : null) !== (customer.dob || null) ||
+          address !== customer.address
+
+        if (hasChanges) {
+          // Có thay đổi, update customer
+          updatedCustomer = await updateCustomer({
+            documentId: customer.documentId,
+            full_name: fullName,
+            phone_number: phoneNumber,
+            dob: dob ? dob.format("YYYY-MM-DD") : undefined,
+            address: address,
+          })
+        } else {
+          // Không có thay đổi, dùng customer hiện tại
+          updatedCustomer = customer
+        }
       } else {
-        setError("Không thể tạo tài khoản. Vui lòng thử lại.")
+        // Chưa có customer, tạo mới
+        updatedCustomer = await createCustomer({
+          full_name: fullName,
+          phone_number: phoneNumber,
+          dob: dob ? dob.format("YYYY-MM-DD") : undefined,
+          address: address,
+        })
+      }
+
+      if (updatedCustomer) {
+        setCustomer(updatedCustomer)
+        // Gọi onSuccess để tiếp tục checkout, truyền customer vào
+        onSuccess(updatedCustomer)
+      } else {
+        setError(
+          customer
+            ? "Không thể cập nhật thông tin. Vui lòng thử lại."
+            : "Không thể tạo tài khoản. Vui lòng thử lại."
+        )
       }
     } catch (err) {
       setError("Có lỗi xảy ra. Vui lòng thử lại.")
@@ -189,7 +224,7 @@ export default function CustomerModalForCheckout({
                 className="p-4 sm:p-6"
               >
                 <Typography className="text-gray-900 !font-semibold !mb-6 sm:!mb-8 text-center tracking-tight !text-base sm:!text-2xl">
-                  Nhập thông tin
+                  Thông tin mua hàng
                 </Typography>
                 <Typography
                   variant="body1"
@@ -258,13 +293,15 @@ export default function CustomerModalForCheckout({
                 className="p-4 sm:p-6"
               >
                 <Typography className="text-gray-900 !font-semibold !mb-6 sm:!mb-8 text-center tracking-tight !text-base sm:!text-2xl">
-                  Thông tin của bạn
+                  Thông tin mua hàng
                 </Typography>
                 <Typography
                   variant="body1"
                   className="text-gray-600 !mb-3 sm:!mb-4 text-left !text-xs sm:!text-base"
                 >
-                  Vui lòng điền thông tin để hoàn tất đăng ký
+                  {customer
+                    ? "Kiểm tra và cập nhật thông tin nếu cần"
+                    : "Vui lòng điền thông tin để hoàn tất đăng ký"}
                 </Typography>
 
                 <form
@@ -374,7 +411,13 @@ export default function CustomerModalForCheckout({
                       disabled={loading}
                       className="!bg-neutral-900 !text-white !normal-case !font-semibold !py-2 sm:!py-2.5 !text-xs sm:!text-sm"
                     >
-                      {loading ? "Đang tạo..." : "Hoàn tất"}
+                      {loading
+                        ? customer
+                          ? "Đang cập nhật..."
+                          : "Đang tạo..."
+                        : customer
+                        ? "Tiếp tục"
+                        : "Hoàn tất"}
                     </Button>
                   </div>
                 </form>

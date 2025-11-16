@@ -9,6 +9,7 @@ import { StoreMetadata, CustomerCard } from "types/global"
 import { CustomerCardProvider } from "@lib/context/customer-card-context"
 import { CustomerProvider } from "@lib/context/customer-context"
 import CustomerModal from "@modules/layout/components/customer-modal"
+import LoadingBar from "@modules/common/components/loading-bar"
 
 export const metadata: Metadata = {
   metadataBase: new URL(getBaseURL()),
@@ -55,31 +56,32 @@ export default async function PageLayout(props: { children: React.ReactNode }) {
   return (
     <CustomerCardProvider initialCards={customerCards}>
       <CustomerProvider>
-        <Nav />
-        {/* {customer && cart && (
-          <CartMismatchBanner customer={customer} cart={cart} />
-        )} */}
+      <LoadingBar />
+      <Nav />
+      {/* {customer && cart && (
+        <CartMismatchBanner customer={customer} cart={cart} />
+      )} */}
 
-        {/* {cart && (
-          <FreeShippingPriceNudge
-            variant="popup"
-            cart={cart}
-            shippingOptions={shippingOptions}
-          />
-        )} */}
-        <div
-          // #fffdf8
-          style={{
-            background: metada.background_color,
-            // backgroundSize: "60px 60px",
-            minHeight: "100vh",
-          }}
-          className="pb-20"
-        >
-          {props.children}
-        </div>
+      {/* {cart && (
+        <FreeShippingPriceNudge
+          variant="popup"
+          cart={cart}
+          shippingOptions={shippingOptions}
+        />
+      )} */}
+      <div
+        // #fffdf8
+        style={{
+          background: metada.background_color,
+          // backgroundSize: "60px 60px",
+          minHeight: "100vh",
+        }}
+        className="pb-20"
+      >
+        {props.children}
+      </div>
 
-        <Footer metada={metada} />
+      <Footer metada={metada} />
         <CustomerModal />
       </CustomerProvider>
     </CustomerCardProvider>

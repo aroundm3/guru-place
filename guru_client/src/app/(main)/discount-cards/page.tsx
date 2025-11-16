@@ -130,13 +130,15 @@ export default function DiscountCardPage() {
                         {card.title}
                       </span>
                     </div>
-                    <div
-                      className={`text-xs mt-1 ${
-                        isSelected ? "text-white/80" : "text-gray-500"
-                      }`}
-                    >
-                      Giảm {formatBigNumber(card.discount, true)}
-                    </div>
+                    {card.discount > 0 && (
+                      <div
+                        className={`text-xs mt-1 ${
+                          isSelected ? "text-white/80" : "text-gray-500"
+                        }`}
+                      >
+                        Giảm {formatBigNumber(card.discount, true)}
+                      </div>
+                    )}
                   </motion.button>
                 )
               })}
@@ -190,35 +192,39 @@ export default function DiscountCardPage() {
 
                     <Divider className="my-3 sm:my-4" />
 
-                    {/* Discount Info */}
-                    <motion.div
-                      initial={{ opacity: 0, scale: 0.95 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ duration: 0.3, delay: 0.3 }}
-                      className={`mb-4 sm:mb-6 p-4 sm:p-5 ${getCardBgClasses(
-                        cardColor
-                      )} rounded-lg border ${getCardBorderClasses(cardColor)}`}
-                    >
-                      <div className="flex items-center gap-3 sm:gap-4">
-                        <CardGiftcardRoundedIcon
-                          className={`!h-6 !w-6 sm:!h-7 sm:!w-7 ${getCardIconClasses(
-                            cardColor
-                          )} flex-shrink-0`}
-                        />
-                        <div>
-                          <p className="text-xs sm:text-sm text-gray-600 font-medium uppercase tracking-wide mb-1">
-                            Giảm giá
-                          </p>
-                          <p
-                            className={`text-2xl sm:text-3xl font-bold ${getCardTextClasses(
+                    {/* Discount Info - chỉ hiển thị khi discount > 0 */}
+                    {selectedCard.discount > 0 && (
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ duration: 0.3, delay: 0.3 }}
+                        className={`mb-4 sm:mb-6 p-4 sm:p-5 ${getCardBgClasses(
+                          cardColor
+                        )} rounded-lg border ${getCardBorderClasses(
+                          cardColor
+                        )}`}
+                      >
+                        <div className="flex items-center gap-3 sm:gap-4">
+                          <CardGiftcardRoundedIcon
+                            className={`!h-6 !w-6 sm:!h-7 sm:!w-7 ${getCardIconClasses(
                               cardColor
-                            )}`}
-                          >
-                            {formatBigNumber(selectedCard.discount, true)}
-                          </p>
+                            )} flex-shrink-0`}
+                          />
+                          <div>
+                            <p className="text-xs sm:text-sm text-gray-600 font-medium uppercase tracking-wide mb-1">
+                              Giảm giá
+                            </p>
+                            <p
+                              className={`text-2xl sm:text-3xl font-bold ${getCardTextClasses(
+                                cardColor
+                              )}`}
+                            >
+                              {formatBigNumber(selectedCard.discount, true)}
+                            </p>
+                          </div>
                         </div>
-                      </div>
-                    </motion.div>
+                      </motion.div>
+                    )}
 
                     {/* Description */}
                     {selectedCard.description && (

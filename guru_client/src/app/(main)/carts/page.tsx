@@ -226,22 +226,61 @@ export default function CheckoutPage() {
   const handleCheckout = async () => {
     if (selectedItems.size === 0) return
 
-    // Nếu chưa có customer, mở modal để điền thông tin
-    if (!customer) {
-      setOpenCustomerModal(true)
-      return
-    }
-
-    // Nếu có customer, tiến hành checkout
-    await processCheckout()
+    // Luôn mở modal để user có thể xem/chỉnh sửa thông tin hoặc tiếp tục
+    setOpenCustomerModal(true)
   }
 
   // Hàm xử lý checkout khi đã có customer
   const processCheckout = async () => {
+    if (!customer) return
+
     setIsCheckoutLoading(true)
 
     try {
-      // Tính tổng tiền trước khi checkout
+      // Chuẩn bị items để gửi lên API
+      const items = Array.from(selectedItems).map((index) => {
+        const item = {
+          productId: cart[index].product.productData.documentId,
+          quantity: cart[index].quantity,
+        }
+        // Chỉ thêm variantId nếu có
+        if (cart[index].variantId) {
+          return { ...item, variantId: cart[index].variantId }
+        }
+        return item
+      })
+
+      // Chuẩn bị customerCards với quantity (format theo Strapi API: cardId, quantity)
+      const customerCards =
+        selectedCustomerCards.length > 0
+          ? selectedCustomerCards.map((card) => ({
+              cardId: card.documentId || card.id,
+              quantity: card.quantity,
+            }))
+          : []
+
+      // Call API checkout
+      const response = await fetch("/api/checkout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          customerId: customer.documentId,
+          items,
+          customerCards,
+          shippingFee: null, // API sẽ tự tính dựa trên isFreeShip
+          point: 0,
+        }),
+      })
+
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(result.error || "Checkout failed")
+      }
+
+      // Tính tổng tiền để hiển thị
       const checkoutSubtotal = cart.reduce((acc, item, index) => {
         if (!selectedItems.has(index)) return acc
 
@@ -261,26 +300,6 @@ export default function CheckoutPage() {
         return acc + price * item.quantity
       }, 0)
 
-      // TODO: Call API checkout khi API đã sẵn sàng
-      // const response = await fetch("/api/checkout", {
-      //   method: "POST",
-      //   headers: {
-      //     "Content-Type": "application/json",
-      //   },
-      //   body: JSON.stringify({
-      //     customerId: customer.documentId,
-      //     items: Array.from(selectedItems).map((index) => ({
-      //       variantId: cart[index].variantId,
-      //       quantity: cart[index].quantity,
-      //       productId: cart[index].product.productData.documentId,
-      //     })),
-      //     subtotal: checkoutSubtotal,
-      //   }),
-      // })
-
-      // Giả lập call API
-      await new Promise((resolve) => setTimeout(resolve, 2000))
-
       // Lấy danh sách items đã checkout
       const checkoutItems = Array.from(selectedItems).sort((a, b) => b - a)
 
@@ -296,27 +315,19 @@ export default function CheckoutPage() {
         window.dispatchEvent(new Event("cartUpdated"))
       }
 
-      // TODO: Redirect hoặc hiển thị thông báo thành công
+      // Hiển thị thông báo thành công
       alert(
-        `Checkout thành công ${
+        `Đặt hàng thành công ${
           checkoutItems.length
         } sản phẩm với tổng tiền ${formatBigNumber(checkoutSubtotal, true)}`
       )
-    } catch (error) {
+    } catch (error: any) {
       console.error("Checkout error:", error)
-      alert("Có lỗi xảy ra khi checkout. Vui lòng thử lại.")
+      alert(error.message || "Có lỗi xảy ra khi đặt hàng. Vui lòng thử lại.")
     } finally {
       setIsCheckoutLoading(false)
     }
   }
-
-  // Khi customer đăng nhập/đăng ký thành công, tự động tiếp tục checkout
-  useEffect(() => {
-    if (customer && openCustomerModal) {
-      setOpenCustomerModal(false)
-      processCheckout()
-    }
-  }, [customer])
 
   // Tính tổng tiền cho các item được chọn
   const calculateSubtotal = () => {
@@ -405,9 +416,17 @@ export default function CheckoutPage() {
       <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-8 max-w-6xl">
         <h1 className="text-xl sm:text-2xl font-bold mb-4">Giỏ hàng</h1>
         <div className="text-center py-12 sm:py-16">
-          <p className="text-sm sm:text-base text-gray-600">
+          <p className="text-sm sm:text-base text-gray-600 mb-6">
             Giỏ hàng của bạn đang trống.
           </p>
+          <Link href="/products">
+            <Button
+              variant="contained"
+              className="!bg-pink-700 !text-white !px-6 !py-2.5 !text-sm sm:!text-base !font-semibold"
+            >
+              Xem sản phẩm
+            </Button>
+          </Link>
         </div>
       </div>
     )
@@ -483,7 +502,7 @@ export default function CheckoutPage() {
                 isSelected ? "border-pink-700" : "border-gray-200"
               } bg-white`}
             >
-              <div className="flex gap-3 sm:gap-4 flex-1 min-w-0">
+              <div className="flex gap-2 sm:gap-3 flex-1 min-w-0">
                 <Checkbox
                   checked={isSelected}
                   onChange={() => toggleItemSelection(index)}
@@ -569,9 +588,6 @@ export default function CheckoutPage() {
               </div>
               <div className="flex items-center justify-between sm:justify-end sm:flex-col sm:text-right flex-shrink-0 sm:min-w-[100px] gap-2">
                 <div className="flex flex-col items-end sm:items-end">
-                  <div className="text-base sm:text-lg font-semibold text-pink-700">
-                    {formatBigNumber(itemTotal, true)}
-                  </div>
                   {basePrice > price && (
                     <div className="text-xs sm:text-sm text-gray-400 line-through">
                       {formatBigNumber(basePrice * item.quantity, true)}
@@ -579,6 +595,9 @@ export default function CheckoutPage() {
                   )}
                   <div className="text-xs sm:text-sm text-gray-500 mt-1">
                     {formatBigNumber(price, true)} × {item.quantity}
+                  </div>
+                  <div className="text-base sm:text-lg font-semibold text-pink-700">
+                    {formatBigNumber(itemTotal, true)}
                   </div>
                 </div>
                 {/* Nút xóa */}
@@ -613,9 +632,10 @@ export default function CheckoutPage() {
                 return (
                   <div
                     key={card.documentId}
+                    onClick={() => setOpenCardModal(card.documentId)}
                     className={`${getCardBgClasses(
                       cardColor
-                    )} border rounded-lg relative`}
+                    )} border rounded-lg relative cursor-pointer active:opacity-80 transition-opacity hover:shadow-lg`}
                   >
                     {/* Badge số lượng lòi ra ngoài ở góc trên bên phải */}
                     {card.quantity > 0 && (
@@ -652,21 +672,23 @@ export default function CheckoutPage() {
                         {card.title}
                       </h4>
                     </div>
-                    {/* Nội dung */}
-                    <div className="p-3 sm:p-4">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs sm:text-sm text-gray-600">
-                          Số tiền tích được
-                        </span>
-                        <span
-                          className={`text-sm sm:text-base font-bold ${getCardTextClasses(
-                            cardColor
-                          )}`}
-                        >
-                          {formatBigNumber(card.discount || 0, true)}
-                        </span>
+                    {/* Nội dung - chỉ hiển thị khi discount > 0 */}
+                    {card.discount > 0 && (
+                      <div className="p-3 sm:p-4">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs sm:text-sm text-gray-600">
+                            Số tiền tích được
+                          </span>
+                          <span
+                            className={`text-sm sm:text-base font-bold ${getCardTextClasses(
+                              cardColor
+                            )}`}
+                          >
+                            {formatBigNumber(card.discount || 0, true)}
+                          </span>
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </div>
                 )
               })}
@@ -708,22 +730,26 @@ export default function CheckoutPage() {
                       <h4
                         className={`${getCardTextClasses(
                           cardColor
-                        )} text-xs font-bold line-clamp-2 mb-1`}
+                        )} text-xs font-bold line-clamp-2 ${
+                          card.discount > 0 ? "mb-1" : ""
+                        }`}
                       >
                         {card.title}
                       </h4>
-                      <div className="flex items-center justify-between mt-1">
-                        <span className="text-[10px] text-gray-600">
-                          Tích được
-                        </span>
-                        <span
-                          className={`text-xs font-bold ${getCardTextClasses(
-                            cardColor
-                          )}`}
-                        >
-                          {formatBigNumber(card.discount || 0, true)}
-                        </span>
-                      </div>
+                      {card.discount > 0 && (
+                        <div className="flex items-center justify-between mt-1">
+                          <span className="text-[10px] text-gray-600">
+                            Tích được
+                          </span>
+                          <span
+                            className={`text-xs font-bold ${getCardTextClasses(
+                              cardColor
+                            )}`}
+                          >
+                            {formatBigNumber(card.discount || 0, true)}
+                          </span>
+                        </div>
+                      )}
                     </div>
                   </div>
                 )
@@ -773,13 +799,17 @@ export default function CheckoutPage() {
         />
       )}
 
-      {/* Customer Modal cho checkout - chỉ hiển thị khi chưa có customer */}
+      {/* Customer Modal cho checkout */}
       <CustomerModalForCheckout
-        open={openCustomerModal && !customer}
+        open={openCustomerModal}
         onClose={() => setOpenCustomerModal(false)}
-        onSuccess={() => {
+        onSuccess={(updatedCustomer) => {
           setOpenCustomerModal(false)
-          // processCheckout sẽ được gọi tự động qua useEffect khi customer được set
+          // Gọi processCheckout sau khi customer được set/update
+          // Customer đã được set trong context, nhưng để chắc chắn, đợi một chút
+          setTimeout(() => {
+            processCheckout()
+          }, 0)
         }}
       />
     </div>

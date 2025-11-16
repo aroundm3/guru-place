@@ -1,7 +1,7 @@
 "use client"
 
 import { formatBigNumber } from "@lib/util/format-big-number"
-import { Button, Snackbar, Drawer, Collapse } from "@mui/material"
+import { Button, Snackbar, Drawer, Collapse, IconButton } from "@mui/material"
 import Image from "next/image"
 import { Fragment, useState, useEffect, useMemo } from "react"
 import { Product, Variant, CustomerCard } from "types/global"
@@ -72,6 +72,17 @@ export default function Options({ productData }: OptionsProps) {
       minDiscountCardFromVariant
     return fullCard
   }, [minDiscountCardFromVariant, getCardById])
+
+  // Hàm xử lý khi switch variant
+  const handleVariantChange = (variant: Variant) => {
+    setCurrentPicked(variant)
+
+    // Kiểm tra nếu số lượng hiện tại lớn hơn số lượng sẵn của variant mới
+    const maxQuantity = Number(variant.quantity ?? 0)
+    if (quantityPicked > maxQuantity) {
+      setQuantityPicked(maxQuantity > 0 ? maxQuantity : 1)
+    }
+  }
 
   const handleConfirmAddToCart = () => {
     if (!currentPicked && productData.variants.length > 1) {
@@ -181,15 +192,24 @@ export default function Options({ productData }: OptionsProps) {
           {variants.length ? (
             <div className="flex flex-wrap gap-2">
               {variants.map((variant) => {
+                const isOutOfStock = Number(variant.quantity ?? 0) === 0
                 return (
                   <div
-                    onClick={() => setCurrentPicked(variant)}
+                    onClick={() => {
+                      if (!isOutOfStock) {
+                        handleVariantChange(variant)
+                      }
+                    }}
                     key={variant.id}
                     className={`flex space-x-2 items-center pr-2 rounded border-2 ${
                       currentPicked?.id === variant.id
                         ? "border-pink-700 text-pink-700"
                         : "border-stone-300"
-                    } cursor-pointer hover:bg-stone-100 bg-stone-50 duration-300`}
+                    } ${
+                      isOutOfStock
+                        ? "opacity-50 cursor-not-allowed"
+                        : "cursor-pointer hover:bg-stone-100"
+                    } bg-stone-50 duration-300`}
                   >
                     <Image
                       src={variant.variant_image?.thumbnail || "/logo.png"}
@@ -202,6 +222,9 @@ export default function Options({ productData }: OptionsProps) {
                     />
                     <span className="text-xs font-medium">
                       {variant.variant_value}
+                      {isOutOfStock && (
+                        <span className="text-red-500 ml-1">(Hết hàng)</span>
+                      )}
                     </span>
                   </div>
                 )
@@ -327,7 +350,7 @@ export default function Options({ productData }: OptionsProps) {
               Chọn số lượng
             </span>
             <div className="flex space-x-1">
-              <div
+              <IconButton
                 onClick={() => {
                   if (quantityPicked === 1) {
                     return
@@ -335,51 +358,76 @@ export default function Options({ productData }: OptionsProps) {
 
                   setQuantityPicked(quantityPicked - 1)
                 }}
-                className="px-2 py-1 bg-neutral-100 cursor-pointer hover:bg-neutral-50 duration-300 border border-stone-300 rounded"
+                disabled={quantityPicked === 1}
+                className="px-2 py-1 bg-neutral-100 cursor-pointer hover:bg-neutral-50 duration-300 border border-stone-300 rounded disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <RemoveRoundedIcon className="!w-5" />
-              </div>
-              <div className="text-sm font-semibold px-4 min-w-20 flex items-center justify-center bg-neutral-100 cursor-pointer hover:bg-neutral-50 duration-300 border border-stone-300 rounded">
+              </IconButton>
+              <div className="text-base font-semibold px-4 min-w-16 flex items-center justify-center cursor-pointer">
                 <span className="mx-auto my-auto">{quantityPicked}</span>
               </div>
 
-              <div
+              <IconButton
                 onClick={() => {
-                  if (
-                    (currentPicked &&
-                      quantityPicked >= Number(currentPicked.quantity ?? 0)) ||
-                    (!currentPicked &&
-                      quantityPicked >= Number(productData.quantity ?? 0))
-                  ) {
+                  const maxQuantity = currentPicked
+                    ? Number(currentPicked.quantity ?? 0)
+                    : Number(productData.quantity ?? 0)
+                  if (quantityPicked >= maxQuantity) {
                     return
                   }
                   setQuantityPicked(quantityPicked + 1)
                 }}
-                className="px-2 py-1 bg-neutral-100 cursor-pointer hover:bg-neutral-50 duration-300 border border-stone-300 rounded"
+                disabled={
+                  (currentPicked &&
+                    quantityPicked >= Number(currentPicked.quantity ?? 0)) ||
+                  (!currentPicked &&
+                    quantityPicked >= Number(productData.quantity ?? 0))
+                }
+                className="px-2 py-1 bg-neutral-100 cursor-pointer hover:bg-neutral-50 duration-300 border border-stone-300 rounded disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <AddRoundedIcon className="!w-5" />
-              </div>
+              </IconButton>
             </div>
           </div>
 
-          <Button
-            variant="contained"
-            className="!bg-neutral-900 !text-white !normal-case !font-semibold"
-            onClick={handleAddToCart}
-          >
-            Thêm vào giỏ
-          </Button>
+          {(() => {
+            const availableQuantity = currentPicked
+              ? Number(currentPicked.quantity ?? 0)
+              : Number(productData.quantity ?? 0)
+            const isOutOfStock = availableQuantity === 0
+
+            return (
+              <Button
+                variant="contained"
+                className="!bg-neutral-900 !text-white !normal-case !font-semibold"
+                onClick={handleAddToCart}
+                disabled={isOutOfStock}
+              >
+                {isOutOfStock ? "Hết hàng" : "Thêm vào giỏ"}
+              </Button>
+            )
+          })()}
         </div>
 
         {/* Mobile: Chỉ hiện nút thêm vào giỏ */}
         <div className="sm:hidden">
-          <Button
-            variant="contained"
-            className="!bg-neutral-900 !text-white !normal-case !font-semibold !w-full"
-            onClick={handleAddToCart}
-          >
-            Thêm vào giỏ
-          </Button>
+          {(() => {
+            const availableQuantity = currentPicked
+              ? Number(currentPicked.quantity ?? 0)
+              : Number(productData.quantity ?? 0)
+            const isOutOfStock = availableQuantity === 0
+
+            return (
+              <Button
+                variant="contained"
+                className="!bg-neutral-900 !text-white !normal-case !font-semibold !w-full"
+                onClick={handleAddToCart}
+                disabled={isOutOfStock}
+              >
+                {isOutOfStock ? "Hết hàng" : "Thêm vào giỏ"}
+              </Button>
+            )
+          })()}
         </div>
       </div>
 
@@ -430,6 +478,18 @@ export default function Options({ productData }: OptionsProps) {
                       )}
                     </span>
                   </span>
+                  <span className="text-xs font-normal text-neutral-600">
+                    Đã bán:{" "}
+                    <span className="text-sm font-semibold">
+                      {formatBigNumber(
+                        Number(
+                          currentPicked?.sold_quantity ??
+                            productData.sold_quantity ??
+                            0
+                        )
+                      )}
+                    </span>
+                  </span>
                 </div>
               </div>
             </div>
@@ -443,15 +503,24 @@ export default function Options({ productData }: OptionsProps) {
                 </p>
                 <div className="flex flex-wrap gap-2">
                   {variants.map((variant) => {
+                    const isOutOfStock = Number(variant.quantity ?? 0) === 0
                     return (
                       <div
-                        onClick={() => setCurrentPicked(variant)}
+                        onClick={() => {
+                          if (!isOutOfStock) {
+                            handleVariantChange(variant)
+                          }
+                        }}
                         key={variant.id}
                         className={`flex space-x-2 items-center pr-2 rounded border-2 ${
                           currentPicked?.id === variant.id
                             ? "border-pink-700 text-pink-700"
                             : "border-stone-300"
-                        } cursor-pointer hover:bg-stone-100 bg-stone-50 duration-300`}
+                        } ${
+                          isOutOfStock
+                            ? "opacity-50 cursor-not-allowed"
+                            : "cursor-pointer hover:bg-stone-100"
+                        } bg-stone-50 duration-300`}
                       >
                         <Image
                           src={variant.variant_image?.thumbnail || "/logo.png"}
@@ -464,6 +533,11 @@ export default function Options({ productData }: OptionsProps) {
                         />
                         <span className="text-xs font-medium">
                           {variant.variant_value}
+                          {isOutOfStock && (
+                            <span className="text-red-500 ml-1">
+                              (Hết hàng)
+                            </span>
+                          )}
                         </span>
                       </div>
                     )
@@ -529,7 +603,7 @@ export default function Options({ productData }: OptionsProps) {
                 Chọn số lượng
               </span>
               <div className="flex space-x-1">
-                <div
+                <IconButton
                   onClick={() => {
                     if (quantityPicked === 1) {
                       return
@@ -537,44 +611,58 @@ export default function Options({ productData }: OptionsProps) {
 
                     setQuantityPicked(quantityPicked - 1)
                   }}
-                  className="px-2 py-1 bg-neutral-100 cursor-pointer hover:bg-neutral-50 duration-300 border border-stone-300 rounded"
+                  disabled={quantityPicked === 1}
+                  className="px-2 py-1 bg-neutral-100 cursor-pointer hover:bg-neutral-50 duration-300 border border-stone-300 rounded disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <RemoveRoundedIcon className="!w-5" />
-                </div>
-                <div className="text-sm font-semibold px-4 min-w-20 flex items-center justify-center bg-neutral-100 cursor-pointer hover:bg-neutral-50 duration-300 border border-stone-300 rounded">
+                </IconButton>
+                <div className="text-sm font-semibold px-4 min-w-16 flex items-center justify-center">
                   <span className="mx-auto my-auto">{quantityPicked}</span>
                 </div>
 
-                <div
+                <IconButton
                   onClick={() => {
-                    if (
-                      (currentPicked &&
-                        quantityPicked >=
-                          Number(currentPicked.quantity ?? 0)) ||
-                      (!currentPicked &&
-                        quantityPicked >= Number(productData.quantity ?? 0))
-                    ) {
+                    const maxQuantity = currentPicked
+                      ? Number(currentPicked.quantity ?? 0)
+                      : Number(productData.quantity ?? 0)
+                    if (quantityPicked >= maxQuantity) {
                       return
                     }
                     setQuantityPicked(quantityPicked + 1)
                   }}
-                  className="px-2 py-1 bg-neutral-100 cursor-pointer hover:bg-neutral-50 duration-300 border border-stone-300 rounded"
+                  disabled={
+                    (currentPicked &&
+                      quantityPicked >= Number(currentPicked.quantity ?? 0)) ||
+                    (!currentPicked &&
+                      quantityPicked >= Number(productData.quantity ?? 0))
+                  }
+                  className="px-2 py-1 bg-neutral-100 cursor-pointer hover:bg-neutral-50 duration-300 border border-stone-300 rounded disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <AddRoundedIcon className="!w-5" />
-                </div>
+                </IconButton>
               </div>
             </div>
 
             <Divider className="my-4" />
 
             {/* Confirm Button */}
-            <Button
-              variant="contained"
-              className="!bg-neutral-900 !text-white !normal-case !font-semibold !w-full !py-3"
-              onClick={handleConfirmAddToCart}
-            >
-              Xác nhận thêm vào giỏ
-            </Button>
+            {(() => {
+              const availableQuantity = currentPicked
+                ? Number(currentPicked.quantity ?? 0)
+                : Number(productData.quantity ?? 0)
+              const isOutOfStock = availableQuantity === 0
+
+              return (
+                <Button
+                  variant="contained"
+                  className="!bg-neutral-900 !text-white !normal-case !font-semibold !w-full !py-3"
+                  onClick={handleConfirmAddToCart}
+                  disabled={isOutOfStock}
+                >
+                  {isOutOfStock ? "Hết hàng" : "Xác nhận thêm vào giỏ"}
+                </Button>
+              )
+            })()}
           </div>
         </Drawer>
       )}
