@@ -9,6 +9,7 @@
   "options": {
     "draftAndPublish": true
   },
+  "pluginOptions": {},
   "attributes": {
     "customer": {
       "type": "relation",
@@ -17,9 +18,9 @@
       "inversedBy": "orders"
     },
     "shipping_fee": {
+      "type": "biginteger",
       "required": true,
-      "default": "15000",
-      "type": "biginteger"
+      "default": "15000"
     },
     "point": {
       "type": "biginteger",
@@ -37,6 +38,18 @@
       "relation": "oneToMany",
       "target": "api::order-customer-card.order-customer-card",
       "mappedBy": "order"
+    },
+    "order_status": {
+      "type": "enumeration",
+      "default": "pending_approval",
+      "enum": [
+        "pending_approval",
+        "approved",
+        "shipping",
+        "completed",
+        "cancelled",
+        "refunded"
+      ]
     }
   }
 }
