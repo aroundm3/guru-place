@@ -56,52 +56,140 @@ export default factories.createCoreController(
           }),
         ]);
 
-        const orderIds = orders.map((order) => order.id);
+        const ordersArray = Array.isArray(orders) ? orders : [orders];
+        const orderIds = ordersArray.map((order: any) => order.id);
+        strapi.log.info("Fetching order items and cards for orders:", orderIds);
         let orderItemsMap: Record<number, any[]> = {};
         let orderCardsMap: Record<number, any[]> = {};
 
         if (orderIds.length > 0) {
-          const [orderItems, orderCustomerCards] = await Promise.all([
+          strapi.log.info(
+            "Querying order items and cards for orderIds:",
+            orderIds
+          );
+
+          // Query tất cả order items và cards, rồi filter trong code
+          // Vì filter relation có thể không hoạt động đúng, query tất cả rồi filter sẽ đảm bảo
+          const [allOrderItems, allOrderCustomerCards] = await Promise.all([
             strapi.entityService.findMany("api::order-item.order-item", {
-              filters: {
-                order: {
-                  id: {
-                    $in: orderIds,
-                  },
-                },
-              },
               populate: {
+                order: true,
                 variant: {
                   populate: ["product", "variant_image"],
                 },
               },
-              limit: 1000,
+              limit: 10000, // Query tất cả
             }),
             strapi.entityService.findMany(
               "api::order-customer-card.order-customer-card",
               {
-                filters: {
-                  order: {
-                    id: {
-                      $in: orderIds,
-                    },
-                  },
-                },
                 populate: {
+                  order: true,
                   customer_card: {
                     populate: ["image"],
                   },
                 },
-                limit: 1000,
+                limit: 10000, // Query tất cả
               }
             ),
           ]);
 
+          strapi.log.info(
+            `Total order items in DB: ${Array.isArray(allOrderItems) ? allOrderItems.length : 0}, Total order cards in DB: ${Array.isArray(allOrderCustomerCards) ? allOrderCustomerCards.length : 0}`
+          );
+
+          // Filter trong code bằng orderIds
+          const allOrderItemsArray = Array.isArray(allOrderItems)
+            ? allOrderItems
+            : [];
+          const allOrderCustomerCardsArray = Array.isArray(
+            allOrderCustomerCards
+          )
+            ? allOrderCustomerCards
+            : [];
+
+          // Debug: Log sample item để xem structure
+          if (allOrderItemsArray.length > 0) {
+            const sampleItem = allOrderItemsArray[0] as any;
+            strapi.log.info(
+              `Sample order item: id=${sampleItem.id}, order=${JSON.stringify(sampleItem.order)}, orderType=${typeof sampleItem.order}`
+            );
+            strapi.log.info(
+              `orderIds to match:`,
+              orderIds,
+              `type:`,
+              typeof orderIds[0]
+            );
+          }
+
+          const orderItems = allOrderItemsArray.filter((item: any) => {
+            // Thử nhiều cách để lấy order.id
+            let oid: number | null = null;
+
+            if (item.order) {
+              if (typeof item.order === "object" && item.order !== null) {
+                oid = item.order.id || null;
+              } else if (typeof item.order === "number") {
+                oid = item.order;
+              }
+            }
+
+            // Convert cả hai về number để so sánh
+            const orderIdsNumbers = orderIds.map((id: any) => Number(id));
+            const oidNumber = oid !== null ? Number(oid) : null;
+
+            const match =
+              oidNumber !== null && orderIdsNumbers.includes(oidNumber);
+
+            if (!match && oid !== null) {
+              strapi.log.info(
+                `Order item ${item.id} mismatch: oid=${oid} (${typeof oid}), orderIds=${JSON.stringify(orderIds)}`
+              );
+            }
+
+            return match;
+          });
+
+          const orderCustomerCards = allOrderCustomerCardsArray.filter(
+            (card: any) => {
+              // Thử nhiều cách để lấy order.id
+              let oid: number | null = null;
+
+              if (card.order) {
+                if (typeof card.order === "object" && card.order !== null) {
+                  oid = card.order.id || null;
+                } else if (typeof card.order === "number") {
+                  oid = card.order;
+                }
+              }
+
+              // Convert cả hai về number để so sánh
+              const orderIdsNumbers = orderIds.map((id: any) => Number(id));
+              const oidNumber = oid !== null ? Number(oid) : null;
+
+              const match =
+                oidNumber !== null && orderIdsNumbers.includes(oidNumber);
+              return match;
+            }
+          );
+
+          strapi.log.info(
+            `Filtered: ${orderItems.length} order items and ${orderCustomerCards.length} order customer cards for ${orderIds.length} orders`
+          );
+
           orderItemsMap = orderItems.reduce(
             (acc, item: any) => {
-              const oid = item.order?.id || item.order;
-              if (!acc[oid]) acc[oid] = [];
-              acc[oid].push(item);
+              // Lấy order.id từ relation đã populate hoặc từ field trực tiếp
+              const oid =
+                typeof item.order === "object" && item.order?.id
+                  ? item.order.id
+                  : typeof item.order === "number"
+                    ? item.order
+                    : null;
+              if (oid) {
+                if (!acc[oid]) acc[oid] = [];
+                acc[oid].push(item);
+              }
               return acc;
             },
             {} as Record<number, any[]>
@@ -109,18 +197,30 @@ export default factories.createCoreController(
 
           orderCardsMap = orderCustomerCards.reduce(
             (acc, card: any) => {
-              const oid = card.order?.id || card.order;
-              if (!acc[oid]) acc[oid] = [];
-              acc[oid].push(card);
+              // Lấy order.id từ relation đã populate hoặc từ field trực tiếp
+              const oid =
+                typeof card.order === "object" && card.order?.id
+                  ? card.order.id
+                  : typeof card.order === "number"
+                    ? card.order
+                    : null;
+              if (oid) {
+                if (!acc[oid]) acc[oid] = [];
+                acc[oid].push(card);
+              }
               return acc;
             },
             {} as Record<number, any[]>
+          );
+
+          strapi.log.info(
+            `Mapped ${Object.keys(orderItemsMap).length} orders with items, ${Object.keys(orderCardsMap).length} orders with cards`
           );
         }
 
         const pageCount = Math.max(1, Math.ceil(total / pageSize));
 
-        const enrichedOrders = orders.map((order) => {
+        const enrichedOrders = ordersArray.map((order: any) => {
           const oid = order.id;
           return {
             ...order,
@@ -290,9 +390,23 @@ export default factories.createCoreController(
 
         strapi.log.info("Order created:", {
           orderId: order.id,
+          documentId: order.documentId,
           customerId: customer.id,
           shippingFee: order.shipping_fee,
         });
+
+        // Publish order để đảm bảo order được publish trong Strapi v5
+        if (order.documentId) {
+          try {
+            await strapi.documents("api::order.order").publish({
+              documentId: order.documentId,
+            });
+            strapi.log.info("Order published successfully:", order.documentId);
+          } catch (publishError: any) {
+            strapi.log.error("Error publishing order:", publishError);
+            // Không throw error, vì order đã được tạo thành công
+          }
+        }
 
         // Tạo order items và trừ số lượng
         strapi.log.info(
@@ -328,10 +442,22 @@ export default factories.createCoreController(
 
             strapi.log.info("Order item created successfully:", {
               orderItemId: orderItem.id,
+              documentId: orderItem.documentId,
               orderId: order.id,
               variantId: itemData.variant?.id || null,
               quantity: orderItem.quantity,
             });
+
+            // Publish order item
+            if (orderItem.documentId) {
+              try {
+                await strapi.documents("api::order-item.order-item").publish({
+                  documentId: orderItem.documentId,
+                });
+              } catch (publishError: any) {
+                strapi.log.error("Error publishing order item:", publishError);
+              }
+            }
           } catch (itemError: any) {
             strapi.log.error(`Error creating order item ${i + 1}:`, {
               error: itemError.message,
@@ -526,9 +652,26 @@ export default factories.createCoreController(
 
             strapi.log.info("Order customer card created:", {
               orderCustomerCardId: orderCustomerCard.id,
+              documentId: orderCustomerCard.documentId,
               cardId: card.id,
               quantity: orderCustomerCard.quantity,
             });
+
+            // Publish order customer card
+            if (orderCustomerCard.documentId) {
+              try {
+                await strapi
+                  .documents("api::order-customer-card.order-customer-card")
+                  .publish({
+                    documentId: orderCustomerCard.documentId,
+                  });
+              } catch (publishError: any) {
+                strapi.log.error(
+                  "Error publishing order customer card:",
+                  publishError
+                );
+              }
+            }
           }
         } else {
           strapi.log.info("No customer cards to process");
