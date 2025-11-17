@@ -16,9 +16,27 @@ export const metadata: Metadata = {
   metadataBase: new URL(getBaseURL()),
 }
 
+const fallbackMetadata: StoreMetadata = {
+  documentId: "fallback",
+  background_color: "#fffdf8",
+  phone_number: "",
+  address: "",
+  google_map_link: "",
+  email_contact: "",
+  facebook_link: "",
+  zalo_link: "",
+  description: "",
+  about_me: [],
+}
+
 export default async function PageLayout(props: { children: React.ReactNode }) {
-  const storeMetadataRs = await fetcher("/api/store-metadata")
-  const metada: StoreMetadata = storeMetadataRs.data
+  let metada: StoreMetadata = fallbackMetadata
+  try {
+    const storeMetadataRs = await fetcher("/api/store-metadata")
+    metada = storeMetadataRs.data
+  } catch (error) {
+    console.error("Failed to fetch store metadata:", error)
+  }
 
   // Fetch customer cards (discount cards) from guru-server
   let customerCards: CustomerCard[] = []
