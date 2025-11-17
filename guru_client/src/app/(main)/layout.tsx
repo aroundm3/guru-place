@@ -1,3 +1,4 @@
+import { Suspense } from "react"
 import { Metadata } from "next"
 
 import { getBaseURL } from "@lib/util/env"
@@ -56,32 +57,34 @@ export default async function PageLayout(props: { children: React.ReactNode }) {
   return (
     <CustomerCardProvider initialCards={customerCards}>
       <CustomerProvider>
-      <LoadingBar />
-      <Nav />
-      {/* {customer && cart && (
+        <Suspense fallback={null}>
+          <LoadingBar />
+        </Suspense>
+        <Nav />
+        {/* {customer && cart && (
         <CartMismatchBanner customer={customer} cart={cart} />
       )} */}
 
-      {/* {cart && (
+        {/* {cart && (
         <FreeShippingPriceNudge
           variant="popup"
           cart={cart}
           shippingOptions={shippingOptions}
         />
       )} */}
-      <div
-        // #fffdf8
-        style={{
-          background: metada.background_color,
-          // backgroundSize: "60px 60px",
-          minHeight: "100vh",
-        }}
-        className="pb-20"
-      >
-        {props.children}
-      </div>
+        <div
+          // #fffdf8
+          style={{
+            background: metada.background_color,
+            // backgroundSize: "60px 60px",
+            minHeight: "100vh",
+          }}
+          className="pb-20"
+        >
+          {props.children}
+        </div>
 
-      <Footer metada={metada} />
+        <Footer metada={metada} />
         <CustomerModal />
       </CustomerProvider>
     </CustomerCardProvider>
