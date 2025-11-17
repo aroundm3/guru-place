@@ -16,8 +16,8 @@ export const sdk = new Medusa({
 //===================================
 
 const BASE_URL = process.env.BASE_URL
-const API_KEY = process.env.API_KEY
-const API_KEY_FOR_ORDER = process.env.API_KEY_FOR_ORDER
+const API_KEY = process.env.FULL_ACCESS_API_KEY
+const API_KEY_FOR_ORDER = process.env.FULL_ACCESS_API_KEY
 
 type FetcherOptions = RequestInit & {
   next?: {
@@ -74,6 +74,8 @@ export async function fetcherForOrderModule(
   })
 
   if (!res.ok) {
+    console.log("dbahjsbdhas: ", { res })
+
     const errorData = await res.json().catch(() => ({}))
     throw new Error(errorData?.message || "API request failed")
   }

@@ -7,6 +7,92 @@ import { factories } from "@strapi/strapi";
 export default factories.createCoreController(
   "api::order.order",
   ({ strapi }) => ({
+    async listByCustomer(ctx) {
+      try {
+        const query = ctx.request.query as Record<string, any>;
+        const customerId = query.customerId as string;
+
+        if (!customerId) {
+          return ctx.badRequest("customerId is required");
+        }
+
+        const page = Number(query.page) > 0 ? Number(query.page) : 1;
+        const pageSize =
+          Number(query.pageSize) > 0 ? Number(query.pageSize) : 10;
+
+        const sortParam =
+          typeof query.sort !== "undefined" ? query.sort : "createdAt:desc";
+
+        // Remove custom params so they don't interfere with filters/populate parsing
+        delete query.customerId;
+        delete query.page;
+        delete query.pageSize;
+        delete query.sort;
+
+        const defaultPopulate = {
+          order_items: {
+            populate: {
+              variant: {
+                populate: ["product"],
+              },
+              product: true,
+            },
+          },
+          order_customer_cards: {
+            populate: {
+              customer_card: true,
+            },
+          },
+          customer: true,
+        };
+
+        const populate = query.populate || defaultPopulate;
+        delete query.populate;
+
+        const filtersFromQuery = query.filters || {};
+        const filters = {
+          ...filtersFromQuery,
+          customer: {
+            ...(filtersFromQuery.customer || {}),
+            documentId: customerId,
+          },
+        };
+
+        const start = (page - 1) * pageSize;
+
+        const [orders, total] = await Promise.all([
+          strapi.entityService.findMany("api::order.order", {
+            filters,
+            populate,
+            sort: sortParam,
+            limit: pageSize,
+            start,
+          }),
+          strapi.entityService.count("api::order.order", {
+            filters,
+          }),
+        ]);
+
+        const pageCount = Math.max(1, Math.ceil(total / pageSize));
+
+        ctx.body = {
+          data: orders,
+          meta: {
+            pagination: {
+              page,
+              pageSize,
+              pageCount,
+              total,
+            },
+          },
+        };
+      } catch (error: any) {
+        strapi.log.error("Error fetching orders by customer:", error);
+        return ctx.internalServerError("Failed to fetch orders", {
+          error: error?.message || String(error),
+        });
+      }
+    },
     async checkout(ctx) {
       try {
         strapi.log.info("Checkout request received:", ctx.request.body);
