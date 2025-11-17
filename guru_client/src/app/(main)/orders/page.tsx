@@ -7,8 +7,21 @@ import CustomerInfoEdit from "@modules/layout/components/customer-info-edit"
 import { useCustomer } from "@lib/context/customer-context"
 import { formatBigNumber } from "@lib/util/format-big-number"
 import Image from "next/image"
-import { Button, CircularProgress, IconButton, Alert } from "@mui/material"
+import {
+  Button,
+  CircularProgress,
+  IconButton,
+  Alert,
+  Collapse,
+} from "@mui/material"
 import ExpandMoreRoundedIcon from "@mui/icons-material/ExpandMoreRounded"
+import {
+  getCardBgClasses,
+  getCardBadgeClasses,
+  getCardColor,
+  getCardTextClasses,
+  getCardBorderClasses,
+} from "@lib/util/card-colors"
 
 const PAGE_SIZE = 5
 
@@ -165,7 +178,7 @@ export default function OrdersPage() {
     }
 
     return (
-      <div className="space-y-4">
+      <div className="space-y-3">
         {items.map((item) => {
           const variant = item.variant
           const product = variant?.product || item.product
@@ -184,17 +197,17 @@ export default function OrdersPage() {
           return (
             <div
               key={item.id}
-              className="flex flex-col sm:flex-row gap-3 sm:gap-4 p-3 border rounded-lg"
+              className="flex flex-col sm:flex-row gap-3 sm:gap-4 p-3 sm:p-4 border border-stone-200 rounded-xl bg-white"
             >
-              <div className="relative w-full sm:w-28 h-36 sm:h-24 flex-shrink-0">
+              <div className="relative w-full sm:w-24 h-32 sm:h-24 flex-shrink-0 rounded-lg overflow-hidden bg-stone-50">
                 <Image
                   src={imageSrc}
                   alt={productName}
                   fill
-                  className="object-cover rounded"
+                  className="object-cover"
                 />
               </div>
-              <div className="flex-1 min-w-0">
+              <div className="flex-1 min-w-0 space-y-1">
                 <h4 className="font-semibold text-base text-gray-900">
                   {productName}
                 </h4>
@@ -208,8 +221,10 @@ export default function OrdersPage() {
                 </p>
               </div>
               <div className="text-right">
-                <p className="text-sm text-gray-500">Đơn giá</p>
-                <p className="text-base font-semibold text-pink-700">
+                <p className="text-xs uppercase tracking-wide text-gray-400">
+                  Đơn giá
+                </p>
+                <p className="text-base sm:text-lg font-semibold text-pink-700">
                   {formatBigNumber(price, true)}
                 </p>
                 <p className="text-xs text-gray-500 mt-1">
@@ -230,36 +245,111 @@ export default function OrdersPage() {
     }
 
     return (
-      <div className="space-y-2">
-        <h4 className="font-semibold text-base">Thẻ quà tặng</h4>
-        <div className="grid gap-3 sm:grid-cols-2">
-          {cards.map((card) => (
-            <div
-              key={card.id}
-              className="border rounded-lg p-3 bg-stone-50 flex flex-col gap-1"
-            >
-              <div className="flex items-center justify-between">
-                <span className="font-semibold text-sm">
-                  {card.customer_card?.title || "Thẻ quà tặng"}
+      <div className="space-y-3">
+        <h4 className="text-base font-semibold text-gray-900">
+          Thẻ quà tặng nhận được
+        </h4>
+        <div className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {cards.map((card) => {
+            const baseCard = card.customer_card as any
+            const color = getCardColor(baseCard)
+            const discount = toNumber(baseCard?.discount)
+            const title = baseCard?.title || "Thẻ quà tặng"
+            const description = baseCard?.description
+            const imageSrc = baseCard?.image?.default || "/logo.png"
+            return (
+              <div
+                key={card.id}
+                className={`${getCardBgClasses(
+                  color
+                )} border rounded-2xl relative cursor-pointer transition hover:shadow-lg`}
+              >
+                <span
+                  className={`absolute -top-2 -right-2 ${getCardBadgeClasses(
+                    color
+                  )} text-white rounded-full w-8 h-8 flex items-center justify-center text-xs font-bold shadow-lg z-20 border-2 border-white`}
+                >
+                  x{card.quantity}
                 </span>
-                <span className="text-xs text-gray-500">x{card.quantity}</span>
-              </div>
-              {typeof card.customer_card?.discount !== "undefined" && (
-                <p className="text-xs text-gray-600">
-                  Giá trị:{" "}
-                  {formatBigNumber(
-                    toNumber(card.customer_card?.discount),
-                    true
+                <div className="relative w-full overflow-hidden rounded-t-2xl bg-white">
+                  <Image
+                    src={imageSrc}
+                    alt={title}
+                    width={800}
+                    height={600}
+                    className="w-full h-auto object-contain"
+                    sizes="(max-width: 1024px) 50vw, 33vw"
+                  />
+                </div>
+                <div className={`p-4 border-t ${getCardBorderClasses(color)}`}>
+                  <h4
+                    className={`${getCardTextClasses(
+                      color
+                    )} text-base font-bold line-clamp-2 mb-2`}
+                  >
+                    {title}
+                  </h4>
+                  {discount > 0 && (
+                    <div className="text-sm text-gray-700">
+                      Tích được{" "}
+                      <span
+                        className={`font-semibold ${getCardTextClasses(color)}`}
+                      >
+                        {formatBigNumber(discount, true)}
+                      </span>
+                    </div>
                   )}
+                  {description && (
+                    <p className="text-xs text-gray-500 line-clamp-2 mt-1">
+                      {description}
+                    </p>
+                  )}
+                </div>
+              </div>
+            )
+          })}
+        </div>
+        <div className="sm:hidden flex gap-3 overflow-x-auto pb-2 -mx-3 px-3">
+          {cards.map((card) => {
+            const baseCard = card.customer_card as any
+            const color = getCardColor(baseCard)
+            const discount = toNumber(baseCard?.discount)
+            const title = baseCard?.title || "Thẻ quà tặng"
+            const description = baseCard?.description
+            return (
+              <div
+                key={card.id}
+                className={`${getCardBgClasses(
+                  color
+                )} border rounded-2xl p-3 flex-shrink-0 w-[220px] relative overflow-visible shadow-sm`}
+              >
+                <span
+                  className={`absolute -top-2 -right-2 ${getCardBadgeClasses(
+                    color
+                  )} text-white rounded-full w-7 h-7 flex items-center justify-center text-xs font-bold shadow-lg z-20 border-2 border-white`}
+                >
+                  x{card.quantity}
+                </span>
+                <p
+                  className={`${getCardTextClasses(
+                    color
+                  )} font-semibold text-sm mb-1`}
+                >
+                  {title}
                 </p>
-              )}
-              {card.customer_card?.description && (
-                <p className="text-xs text-gray-500 line-clamp-2">
-                  {card.customer_card.description}
-                </p>
-              )}
-            </div>
-          ))}
+                {discount > 0 && (
+                  <p className="text-xs text-gray-600">
+                    Giá trị: {formatBigNumber(discount, true)}
+                  </p>
+                )}
+                {description && (
+                  <p className="text-xs text-gray-500 line-clamp-3 mt-1">
+                    {description}
+                  </p>
+                )}
+              </div>
+            )
+          })}
         </div>
       </div>
     )
@@ -275,7 +365,7 @@ export default function OrdersPage() {
     }, 0)
     const shippingFee = toNumber(order.shipping_fee)
     const totalItems = items.reduce(
-      (sum, item) => sum + (item.quantity || 0),
+      (sum, item) => sum + toNumber(item.quantity || 0),
       0
     )
 
@@ -309,9 +399,14 @@ export default function OrdersPage() {
 
   return (
     <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-8 max-w-6xl">
-      <h1 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6">
-        Đơn hàng của tôi
-      </h1>
+      <div className="mb-4 sm:mb-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
+          Đơn hàng của tôi
+        </h1>
+        <p className="text-sm text-gray-500">
+          Theo dõi trạng thái và chi tiết từng đơn hàng của bạn
+        </p>
+      </div>
 
       <CustomerInfoEdit />
 
@@ -334,20 +429,23 @@ export default function OrdersPage() {
       )}
 
       {!loading && customer && orders.length === 0 && !error && (
-        <div className="text-center py-12 sm:py-16">
-          <p className="text-sm sm:text-base text-gray-600">
+        <div className="text-center py-12 sm:py-16 border border-dashed rounded-2xl bg-white">
+          <p className="text-sm sm:text-base text-gray-600 mb-3">
             Bạn chưa có đơn hàng nào.
+          </p>
+          <p className="text-xs text-gray-400">
+            Khi đặt hàng thành công, đơn của bạn sẽ xuất hiện ở đây.
           </p>
         </div>
       )}
 
-      <div className="space-y-4">
+      <div className="space-y-5">
         {orders.map((order) => {
           const orderItems = order.order_items || []
           const isExpanded = expandedOrderId === order.id
           const createdDate = dayjs(order.createdAt).format("DD/MM/YYYY HH:mm")
           const totalProducts = orderItems.reduce(
-            (sum, item) => sum + (item.quantity || 0),
+            (sum, item) => sum + toNumber(item.quantity || 0),
             0
           )
           const orderTotal = orderItems.reduce((sum, item) => {
@@ -361,70 +459,84 @@ export default function OrdersPage() {
           return (
             <div
               key={order.id}
-              className="border rounded-xl p-4 sm:p-6 bg-white"
+              className="border border-stone-200 rounded-2xl bg-white shadow-sm transition-shadow hover:shadow-md"
             >
-              <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 justify-between">
-                <div>
-                  <p className="text-sm text-gray-500">
+              <div className="flex flex-col gap-3 sm:flex-row sm:gap-6 justify-between p-4 sm:p-6">
+                <div className="flex-1 space-y-1">
+                  <p className="text-xs sm:text-sm text-gray-500 uppercase tracking-wide">
                     Mã đơn #{order.documentId}
                   </p>
                   <p className="text-base font-semibold text-gray-900">
                     Ngày đặt: {createdDate}
                   </p>
                 </div>
-                <div className="flex items-center sm:items-end sm:flex-col gap-2 sm:gap-1">
-                  <span className="text-sm text-gray-500">
-                    {totalProducts} sản phẩm
-                  </span>
-                  <span className="text-base font-bold text-pink-700">
-                    {formatBigNumber(finalTotal, true)}
-                  </span>
+                <div className="flex items-center gap-4 sm:gap-6">
+                  <div className="text-right">
+                    <span className="text-xs text-gray-400 uppercase block">
+                      Số sản phẩm
+                    </span>
+                    <span className="text-sm font-semibold text-gray-800">
+                      {totalProducts}
+                    </span>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-xs text-gray-400 uppercase block">
+                      Tổng tiền
+                    </span>
+                    <span className="text-lg font-bold text-pink-700">
+                      {formatBigNumber(finalTotal, true)}
+                    </span>
+                  </div>
+                  <IconButton
+                    onClick={() =>
+                      setExpandedOrderId((prev) =>
+                        prev === order.id ? null : order.id
+                      )
+                    }
+                    className={`transition-transform text-pink-700 hover:bg-pink-50 ${
+                      isExpanded ? "rotate-180" : ""
+                    }`}
+                  >
+                    <ExpandMoreRoundedIcon />
+                  </IconButton>
                 </div>
-                <IconButton
-                  onClick={() =>
-                    setExpandedOrderId((prev) =>
-                      prev === order.id ? null : order.id
-                    )
-                  }
-                  className={`self-start sm:self-auto transition-transform ${
-                    isExpanded ? "rotate-180" : ""
-                  }`}
-                >
-                  <ExpandMoreRoundedIcon />
-                </IconButton>
               </div>
 
-              {isExpanded && (
-                <div className="mt-4 space-y-6">
+              <Collapse in={isExpanded} timeout="auto" unmountOnExit>
+                <div className="px-4 sm:px-6 pb-4 sm:pb-6 space-y-6">
                   {renderOrderItems(order)}
                   {renderOrderCards(order)}
                   {renderOrderSummary(order)}
                 </div>
-              )}
+              </Collapse>
             </div>
           )
         })}
       </div>
 
       {customer && orders.length > 0 && (
-        <div className="flex items-center justify-between mt-6">
-          <Button
-            variant="outlined"
-            onClick={() => handlePageChange("prev")}
-            disabled={pagination.page <= 1 || loading}
-          >
-            Trang trước
-          </Button>
-          <span className="text-sm text-gray-600">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mt-6 border-t pt-4">
+          <span className="text-sm text-gray-500">
             Trang {pagination.page} / {pagination.pageCount}
           </span>
-          <Button
-            variant="outlined"
-            onClick={() => handlePageChange("next")}
-            disabled={pagination.page >= pagination.pageCount || loading}
-          >
-            Trang sau
-          </Button>
+          <div className="flex w-full sm:w-auto gap-3">
+            <Button
+              variant="outlined"
+              onClick={() => handlePageChange("prev")}
+              disabled={pagination.page <= 1 || loading}
+              className="flex-1 sm:flex-none !border-neutral-200 !text-gray-700"
+            >
+              Trang trước
+            </Button>
+            <Button
+              variant="contained"
+              onClick={() => handlePageChange("next")}
+              disabled={pagination.page >= pagination.pageCount || loading}
+              className="flex-1 sm:flex-none !bg-neutral-900 !text-white"
+            >
+              Trang sau
+            </Button>
+          </div>
         </div>
       )}
     </div>

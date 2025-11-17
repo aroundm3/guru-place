@@ -20,18 +20,23 @@ export async function GET(request: NextRequest) {
     params.set("pagination[pageSize]", pageSize)
     params.set("sort", "createdAt:desc")
     params.set(
-      "populate[order_items][populate][variant][populate][product]",
+      "populate[order_items][populate][variant][populate][variant_image]",
       "true"
     )
-    params.set("populate[order_items][populate][variant]", "true")
     params.set(
-      "populate[order_customer_cards][populate][customer_card]",
+      "populate[order_customer_cards][populate][customer_card][populate][image]",
       "true"
     )
     params.set("populate[customer]", "true")
 
-    const url = `/api/orders?${params.toString()}`
-    console.log("order url request: ", url)
+    params.set("customerId", customerId)
+    params.set("page", page)
+    params.set("pageSize", pageSize)
+    params.set("sort", "createdAt:desc")
+
+    const url = `/api/order/customer?${params.toString()}`
+    console.log("dbahjbsjhasbd: ", url)
+
     const orders = await fetcherForOrderModule(url, {
       cache: "no-store",
     })

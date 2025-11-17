@@ -29,26 +29,6 @@ export default factories.createCoreController(
         delete query.pageSize;
         delete query.sort;
 
-        const defaultPopulate = {
-          order_items: {
-            populate: {
-              variant: {
-                populate: ["product"],
-              },
-              product: true,
-            },
-          },
-          order_customer_cards: {
-            populate: {
-              customer_card: true,
-            },
-          },
-          customer: true,
-        };
-
-        const populate = query.populate || defaultPopulate;
-        delete query.populate;
-
         const filtersFromQuery = query.filters || {};
         const filters = {
           ...filtersFromQuery,
@@ -57,13 +37,16 @@ export default factories.createCoreController(
             documentId: customerId,
           },
         };
+        delete query.filters;
 
         const start = (page - 1) * pageSize;
 
         const [orders, total] = await Promise.all([
           strapi.entityService.findMany("api::order.order", {
             filters,
-            populate,
+            populate: {
+              customer: true,
+            },
             sort: sortParam,
             limit: pageSize,
             start,
@@ -73,10 +56,81 @@ export default factories.createCoreController(
           }),
         ]);
 
+        const orderIds = orders.map((order) => order.id);
+        let orderItemsMap: Record<number, any[]> = {};
+        let orderCardsMap: Record<number, any[]> = {};
+
+        if (orderIds.length > 0) {
+          const [orderItems, orderCustomerCards] = await Promise.all([
+            strapi.entityService.findMany("api::order-item.order-item", {
+              filters: {
+                order: {
+                  id: {
+                    $in: orderIds,
+                  },
+                },
+              },
+              populate: {
+                variant: {
+                  populate: ["product", "variant_image"],
+                },
+              },
+              limit: 1000,
+            }),
+            strapi.entityService.findMany(
+              "api::order-customer-card.order-customer-card",
+              {
+                filters: {
+                  order: {
+                    id: {
+                      $in: orderIds,
+                    },
+                  },
+                },
+                populate: {
+                  customer_card: {
+                    populate: ["image"],
+                  },
+                },
+                limit: 1000,
+              }
+            ),
+          ]);
+
+          orderItemsMap = orderItems.reduce(
+            (acc, item: any) => {
+              const oid = item.order?.id || item.order;
+              if (!acc[oid]) acc[oid] = [];
+              acc[oid].push(item);
+              return acc;
+            },
+            {} as Record<number, any[]>
+          );
+
+          orderCardsMap = orderCustomerCards.reduce(
+            (acc, card: any) => {
+              const oid = card.order?.id || card.order;
+              if (!acc[oid]) acc[oid] = [];
+              acc[oid].push(card);
+              return acc;
+            },
+            {} as Record<number, any[]>
+          );
+        }
+
         const pageCount = Math.max(1, Math.ceil(total / pageSize));
 
+        const enrichedOrders = orders.map((order) => {
+          const oid = order.id;
+          return {
+            ...order,
+            order_items: orderItemsMap[oid] || [],
+            order_customer_cards: orderCardsMap[oid] || [],
+          };
+        });
+
         ctx.body = {
-          data: orders,
+          data: enrichedOrders,
           meta: {
             pagination: {
               page,
