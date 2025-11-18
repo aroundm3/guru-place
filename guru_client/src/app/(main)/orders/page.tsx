@@ -6,7 +6,7 @@ import "dayjs/locale/vi"
 import CustomerInfoEdit from "@modules/layout/components/customer-info-edit"
 import { useCustomer } from "@lib/context/customer-context"
 import { formatBigNumber } from "@lib/util/format-big-number"
-import Image from "next/image"
+import { getFullLinkResource } from "@lib/config"
 import {
   Button,
   CircularProgress,
@@ -30,22 +30,46 @@ dayjs.locale("vi")
 type OrderProduct = {
   name?: string
   slug?: string
-  images?: { default?: string; thumbnail?: string }[]
+  images?: { url?: string; default?: string; thumbnail?: string }[]
   sale_price?: number | string
+}
+
+type OrderVariantImage = {
+  id?: number
+  documentId?: string
+  url?: string
+  formats?: {
+    large?: { url?: string }
+    small?: { url?: string }
+    medium?: { url?: string }
+    thumbnail?: { url?: string }
+  } | null
 }
 
 type OrderVariant = {
   variant_value?: string
   sale_price?: number | string
-  variant_image?: { default?: string; thumbnail?: string }
+  variant_image?: OrderVariantImage | null
   product?: OrderProduct
 }
 
 type OrderItem = {
   id: number
-  quantity: number
+  quantity: number | string // Có thể là string từ API
   product?: OrderProduct
   variant?: OrderVariant | null
+}
+
+type OrderCustomerCardImage = {
+  id?: number
+  documentId?: string
+  url?: string
+  formats?: {
+    large?: { url?: string }
+    small?: { url?: string }
+    medium?: { url?: string }
+    thumbnail?: { url?: string }
+  } | null
 }
 
 type OrderCustomerCard = {
@@ -55,6 +79,7 @@ type OrderCustomerCard = {
     title?: string
     discount?: number | string
     description?: string | null
+    image?: OrderCustomerCardImage | null
   }
 }
 
@@ -182,17 +207,31 @@ export default function OrdersPage() {
         {items.map((item) => {
           const variant = item.variant
           const product = variant?.product || item.product
-          const imageSrc =
-            variant?.variant_image?.thumbnail ||
-            variant?.variant_image?.default ||
-            product?.images?.[0]?.default ||
-            "/logo.png"
+
+          // Lấy ảnh variant nếu có, nếu không thì lấy ảnh product
+          // Ưu tiên formats.thumbnail hoặc formats.small, sau đó mới dùng url
+          let imageSrc = "/logo.png"
+          if (variant?.variant_image?.formats?.thumbnail?.url) {
+            imageSrc = getFullLinkResource(
+              variant.variant_image.formats.thumbnail.url
+            )
+          } else if (variant?.variant_image?.formats?.small?.url) {
+            imageSrc = getFullLinkResource(
+              variant.variant_image.formats.small.url
+            )
+          } else if (variant?.variant_image?.url) {
+            imageSrc = getFullLinkResource(variant.variant_image.url)
+          } else if (product?.images?.[0]?.url) {
+            imageSrc = getFullLinkResource(product.images[0].url)
+          } else if (product?.images?.[0]?.default) {
+            imageSrc = product.images[0].default
+          }
           const productName = product?.name || "Sản phẩm"
           const variantName = variant?.variant_value
           const price = toNumber(
             variant?.sale_price ?? product?.sale_price ?? 0
           )
-          const quantity = item.quantity || 0
+          const quantity = toNumber(item.quantity)
 
           return (
             <div
@@ -200,11 +239,10 @@ export default function OrdersPage() {
               className="flex flex-col sm:flex-row gap-3 sm:gap-4 p-3 sm:p-4 border border-stone-200 rounded-xl bg-white"
             >
               <div className="relative w-full sm:w-24 h-32 sm:h-24 flex-shrink-0 rounded-lg overflow-hidden bg-stone-50">
-                <Image
+                <img
                   src={imageSrc}
                   alt={productName}
-                  fill
-                  className="object-cover"
+                  className="w-full h-full object-cover"
                 />
               </div>
               <div className="flex-1 min-w-0 space-y-1">
@@ -256,7 +294,14 @@ export default function OrdersPage() {
             const discount = toNumber(baseCard?.discount)
             const title = baseCard?.title || "Thẻ quà tặng"
             const description = baseCard?.description
-            const imageSrc = baseCard?.image?.default || "/logo.png"
+            // Ưu tiên formats.thumbnail hoặc formats.small, sau đó mới dùng url
+            const imageSrc = baseCard?.image?.formats?.thumbnail?.url
+              ? getFullLinkResource(baseCard.image.formats.thumbnail.url)
+              : baseCard?.image?.formats?.small?.url
+              ? getFullLinkResource(baseCard.image.formats.small.url)
+              : baseCard?.image?.url
+              ? getFullLinkResource(baseCard.image.url)
+              : baseCard?.image?.default || "/logo.png"
             return (
               <div
                 key={card.id}
@@ -272,13 +317,10 @@ export default function OrdersPage() {
                   x{card.quantity}
                 </span>
                 <div className="relative w-full overflow-hidden rounded-t-2xl bg-white">
-                  <Image
+                  <img
                     src={imageSrc}
                     alt={title}
-                    width={800}
-                    height={600}
                     className="w-full h-auto object-contain"
-                    sizes="(max-width: 1024px) 50vw, 33vw"
                   />
                 </div>
                 <div className={`p-4 border-t ${getCardBorderClasses(color)}`}>
@@ -309,13 +351,22 @@ export default function OrdersPage() {
             )
           })}
         </div>
-        <div className="sm:hidden flex gap-3 overflow-x-auto pb-2 -mx-3 px-3">
+        <div className="sm:hidden flex gap-3 overflow-x-auto pb-2 -mx-3 px-3 pt-2">
           {cards.map((card) => {
             const baseCard = card.customer_card as any
             const color = getCardColor(baseCard)
             const discount = toNumber(baseCard?.discount)
             const title = baseCard?.title || "Thẻ quà tặng"
             const description = baseCard?.description
+            // Ưu tiên formats.thumbnail hoặc formats.small, sau đó mới dùng url
+            const imageSrc = baseCard?.image?.formats?.thumbnail?.url
+              ? getFullLinkResource(baseCard.image.formats.thumbnail.url)
+              : baseCard?.image?.formats?.small?.url
+              ? getFullLinkResource(baseCard.image.formats.small.url)
+              : baseCard?.image?.url
+              ? getFullLinkResource(baseCard.image.url)
+              : baseCard?.image?.default || "/logo.png"
+
             return (
               <div
                 key={card.id}
@@ -330,23 +381,39 @@ export default function OrdersPage() {
                 >
                   x{card.quantity}
                 </span>
-                <p
-                  className={`${getCardTextClasses(
-                    color
-                  )} font-semibold text-sm mb-1`}
-                >
-                  {title}
-                </p>
-                {discount > 0 && (
-                  <p className="text-xs text-gray-600">
-                    Giá trị: {formatBigNumber(discount, true)}
-                  </p>
-                )}
-                {description && (
-                  <p className="text-xs text-gray-500 line-clamp-3 mt-1">
-                    {description}
-                  </p>
-                )}
+                <div className="relative w-full overflow-hidden rounded-t-2xl bg-white mb-2">
+                  <img
+                    src={imageSrc}
+                    alt={title}
+                    className="w-full h-auto object-contain"
+                  />
+                </div>
+                <div className="p-3 border-t border-gray-200">
+                  <h4
+                    className={`${getCardTextClasses(
+                      color
+                    )} text-sm font-bold line-clamp-2 ${
+                      discount > 0 ? "mb-1" : ""
+                    }`}
+                  >
+                    {title}
+                  </h4>
+                  {discount > 0 && (
+                    <div className="flex items-center justify-between text-xs text-gray-600">
+                      <span>Tích được</span>
+                      <span
+                        className={`font-semibold ${getCardTextClasses(color)}`}
+                      >
+                        {formatBigNumber(discount, true)}
+                      </span>
+                    </div>
+                  )}
+                  {description && (
+                    <p className="text-xs text-gray-500 line-clamp-3 mt-1">
+                      {description}
+                    </p>
+                  )}
+                </div>
               </div>
             )
           })}
@@ -361,7 +428,7 @@ export default function OrdersPage() {
       const unitPrice = toNumber(
         item.variant?.sale_price ?? item.product?.sale_price ?? 0
       )
-      return sum + unitPrice * (item.quantity || 0)
+      return sum + unitPrice * toNumber(item.quantity || 0)
     }, 0)
     const shippingFee = toNumber(order.shipping_fee)
     const totalItems = items.reduce(
@@ -452,7 +519,7 @@ export default function OrdersPage() {
             const unitPrice = toNumber(
               item.variant?.sale_price ?? item.product?.sale_price ?? 0
             )
-            return sum + unitPrice * (item.quantity || 0)
+            return sum + unitPrice * toNumber(item.quantity || 0)
           }, 0)
           const finalTotal = orderTotal + toNumber(order.shipping_fee)
 

@@ -34,8 +34,12 @@ export default factories.createCoreController(
           ...filtersFromQuery,
           customer: {
             ...(filtersFromQuery.customer || {}),
-            documentId: customerId,
+            documentId: customerId, // Filter bằng documentId của customer
           },
+          // Tạm thời bỏ filter publishedAt để test
+          // publishedAt: {
+          //   $notNull: true, // Chỉ lấy published orders
+          // },
         };
         delete query.filters;
 
@@ -57,6 +61,14 @@ export default factories.createCoreController(
         ]);
 
         const ordersArray = Array.isArray(orders) ? orders : [orders];
+
+        strapi.log.info("Query results:", {
+          ordersFound: ordersArray.length,
+          total,
+          customerId,
+          page,
+          pageSize,
+        });
         const orderIds = ordersArray.map((order: any) => order.id);
         strapi.log.info("Fetching order items and cards for orders:", orderIds);
         let orderItemsMap: Record<number, any[]> = {};
@@ -70,6 +82,7 @@ export default factories.createCoreController(
 
           // Query tất cả order items và cards, rồi filter trong code
           // Vì filter relation có thể không hoạt động đúng, query tất cả rồi filter sẽ đảm bảo
+          // Tạm thời bỏ filter publishedAt để test
           const [allOrderItems, allOrderCustomerCards] = await Promise.all([
             strapi.entityService.findMany("api::order-item.order-item", {
               populate: {
@@ -176,6 +189,22 @@ export default factories.createCoreController(
           strapi.log.info(
             `Filtered: ${orderItems.length} order items and ${orderCustomerCards.length} order customer cards for ${orderIds.length} orders`
           );
+
+          // Debug: Log một vài order items đã filter được
+          if (orderItems.length > 0) {
+            const sampleItem = orderItems[0] as any;
+            strapi.log.info("Sample filtered order item:", {
+              id: sampleItem.id,
+              orderId: sampleItem.order?.id || sampleItem.order,
+            });
+          }
+          if (orderCustomerCards.length > 0) {
+            const sampleCard = orderCustomerCards[0] as any;
+            strapi.log.info("Sample filtered order card:", {
+              id: sampleCard.id,
+              orderId: sampleCard.order?.id || sampleCard.order,
+            });
+          }
 
           orderItemsMap = orderItems.reduce(
             (acc, item: any) => {
@@ -396,16 +425,41 @@ export default factories.createCoreController(
         });
 
         // Publish order để đảm bảo order được publish trong Strapi v5
+        // QUAN TRỌNG: Phải publish order TRƯỚC khi tạo order items để relation hoạt động
         if (order.documentId) {
           try {
             await strapi.documents("api::order.order").publish({
               documentId: order.documentId,
             });
             strapi.log.info("Order published successfully:", order.documentId);
+
+            // Đợi một chút để đảm bảo publish hoàn tất
+            await new Promise((resolve) => setTimeout(resolve, 200));
+
+            // Query lại order đã publish để đảm bảo nó tồn tại và có thể dùng cho relation
+            const publishedOrder = await strapi
+              .documents("api::order.order")
+              .findOne({
+                documentId: order.documentId,
+              });
+
+            if (!publishedOrder) {
+              throw new Error("Order not found after publishing");
+            }
+
+            strapi.log.info("Verified published order exists:", {
+              id: publishedOrder.id,
+              documentId: publishedOrder.documentId,
+            });
+
+            // Update order variable để dùng id từ published order
+            order.id = publishedOrder.id;
           } catch (publishError: any) {
             strapi.log.error("Error publishing order:", publishError);
-            // Không throw error, vì order đã được tạo thành công
+            throw publishError; // Throw error vì cần order được publish để tạo order items
           }
+        } else {
+          throw new Error("Order documentId is missing, cannot publish");
         }
 
         // Tạo order items và trừ số lượng
@@ -427,18 +481,39 @@ export default factories.createCoreController(
               }
             );
 
-            // Tạo order item - dùng variant.id (integer) thay vì variantId (documentId string)
-            const orderItem = await strapi.entityService.create(
-              "api::order-item.order-item",
-              {
+            // Tạo order item - dùng strapi.documents().create() để đảm bảo relation hoạt động
+            // Cần query variant để lấy id nếu có
+            let variantIdForRelation = null;
+            if (itemData.variant?.id) {
+              variantIdForRelation = itemData.variant.id;
+            } else if (itemData.variantId) {
+              // Query variant bằng documentId để lấy id
+              const variantDoc = await strapi
+                .documents("api::variant.variant")
+                .findOne({
+                  documentId: itemData.variantId,
+                });
+              if (variantDoc) {
+                variantIdForRelation = variantDoc.id;
+              }
+            }
+
+            strapi.log.info("Creating order item with:", {
+              orderId: order.id,
+              variantId: variantIdForRelation,
+              quantity: itemData.quantity,
+            });
+
+            const orderItem = await strapi
+              .documents("api::order-item.order-item")
+              .create({
                 data: {
-                  order: order.id,
-                  variant: itemData.variant?.id || null, // Dùng id (integer) cho relation
+                  order: order.id, // Dùng id (integer) từ published order
+                  variant: variantIdForRelation, // Dùng id (integer) cho relation
                   quantity: Number(itemData.quantity),
                   publishedAt: new Date(),
                 },
-              }
-            );
+              });
 
             strapi.log.info("Order item created successfully:", {
               orderItemId: orderItem.id,
@@ -638,17 +713,16 @@ export default factories.createCoreController(
               quantity: cardQuantity,
             });
 
-            const orderCustomerCard = await strapi.entityService.create(
-              "api::order-customer-card.order-customer-card",
-              {
+            const orderCustomerCard = await strapi
+              .documents("api::order-customer-card.order-customer-card")
+              .create({
                 data: {
-                  order: order.id,
+                  order: order.id, // Dùng id (integer) từ published order
                   customer_card: card.id, // Dùng id (integer) cho relation
                   quantity: cardQuantity,
                   publishedAt: new Date(),
                 },
-              }
-            );
+              });
 
             strapi.log.info("Order customer card created:", {
               orderCustomerCardId: orderCustomerCard.id,
@@ -681,6 +755,7 @@ export default factories.createCoreController(
         strapi.log.info("Fetching full order with relations...");
 
         // Query order items và customer cards manually vì populate có thể không hoạt động
+        // Chỉ lấy published order items và cards
         const orderItems = await strapi.entityService.findMany(
           "api::order-item.order-item",
           {
@@ -689,6 +764,9 @@ export default factories.createCoreController(
                 id: {
                   $eq: order.id,
                 },
+              },
+              publishedAt: {
+                $notNull: true, // Chỉ lấy published
               },
             },
             populate: {
@@ -710,6 +788,9 @@ export default factories.createCoreController(
                 id: {
                   $eq: order.id,
                 },
+              },
+              publishedAt: {
+                $notNull: true, // Chỉ lấy published
               },
             },
             populate: {
