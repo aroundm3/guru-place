@@ -101,7 +101,8 @@ export default function CustomerInfoEdit() {
       const existingCustomer = await getCustomerByPhone(phoneNumber)
 
       if (existingCustomer) {
-        // Customer exists - chuyển sang step edit với data đã fill sẵn
+        // Customer exists - lưu vào localStorage và chuyển sang step edit với data đã fill sẵn
+        setCustomer(existingCustomer)
         setCustomerToEdit(existingCustomer)
         setFullName(existingCustomer.full_name || "")
         setDob(existingCustomer.dob ? dayjs(existingCustomer.dob) : null)
@@ -140,10 +141,8 @@ export default function CustomerInfoEdit() {
       })
 
       if (updatedCustomer) {
-        // Update customer context nếu đang edit chính customer hiện tại
-        if (customer?.documentId === updatedCustomer.documentId) {
-          setCustomer(updatedCustomer)
-        }
+        // Luôn cập nhật customer context và localStorage sau khi update thành công
+        setCustomer(updatedCustomer)
         setSuccess(true)
         setTimeout(() => {
           handleClose()

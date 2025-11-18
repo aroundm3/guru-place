@@ -3,18 +3,25 @@
 import { useEffect, useMemo, useState } from "react"
 import dayjs from "dayjs"
 import "dayjs/locale/vi"
+import Link from "next/link"
 import CustomerInfoEdit from "@modules/layout/components/customer-info-edit"
+import { CustomerCardModal } from "@modules/product/components/customer-card-modal"
 import { useCustomer } from "@lib/context/customer-context"
 import { formatBigNumber } from "@lib/util/format-big-number"
-import { getFullLinkResource } from "@lib/config"
+import { CustomerCard } from "types/global"
 import {
   Button,
   CircularProgress,
   IconButton,
   Alert,
   Collapse,
+  Snackbar,
+  Skeleton,
 } from "@mui/material"
 import ExpandMoreRoundedIcon from "@mui/icons-material/ExpandMoreRounded"
+import ContentCopyIcon from "@mui/icons-material/ContentCopy"
+import ChevronLeftIcon from "@mui/icons-material/ChevronLeft"
+import ChevronRightIcon from "@mui/icons-material/ChevronRight"
 import {
   getCardBgClasses,
   getCardBadgeClasses,
@@ -83,11 +90,20 @@ type OrderCustomerCard = {
   }
 }
 
+type OrderStatus =
+  | "pending_approval"
+  | "approved"
+  | "shipping"
+  | "completed"
+  | "cancelled"
+  | "refunded"
+
 type OrderEntity = {
   id: number
   documentId: string
   createdAt: string
   shipping_fee?: number | string | null
+  order_status?: OrderStatus
   order_items?: OrderItem[]
   order_customer_cards?: OrderCustomerCard[]
 }
@@ -111,6 +127,60 @@ const toNumber = (value: unknown) => {
   return Number.isNaN(parsed) ? 0 : parsed
 }
 
+const getOrderStatusInfo = (status?: OrderStatus) => {
+  switch (status) {
+    case "pending_approval":
+      return {
+        text: "Chờ duyệt",
+        bgColor: "bg-yellow-100",
+        textColor: "text-yellow-800",
+        borderColor: "border-yellow-300",
+      }
+    case "approved":
+      return {
+        text: "Đã duyệt",
+        bgColor: "bg-blue-100",
+        textColor: "text-blue-800",
+        borderColor: "border-blue-300",
+      }
+    case "shipping":
+      return {
+        text: "Đang giao",
+        bgColor: "bg-purple-100",
+        textColor: "text-purple-800",
+        borderColor: "border-purple-300",
+      }
+    case "completed":
+      return {
+        text: "Hoàn thành",
+        bgColor: "bg-green-100",
+        textColor: "text-green-800",
+        borderColor: "border-green-300",
+      }
+    case "cancelled":
+      return {
+        text: "Đã hủy",
+        bgColor: "bg-red-100",
+        textColor: "text-red-800",
+        borderColor: "border-red-300",
+      }
+    case "refunded":
+      return {
+        text: "Đã hoàn tiền",
+        bgColor: "bg-gray-100",
+        textColor: "text-gray-800",
+        borderColor: "border-gray-300",
+      }
+    default:
+      return {
+        text: "Chờ duyệt",
+        bgColor: "bg-yellow-100",
+        textColor: "text-yellow-800",
+        borderColor: "border-yellow-300",
+      }
+  }
+}
+
 export default function OrdersPage() {
   const { customer } = useCustomer()
   const [orders, setOrders] = useState<OrderEntity[]>([])
@@ -119,6 +189,24 @@ export default function OrdersPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const [expandedOrderId, setExpandedOrderId] = useState<number | null>(null)
+  const [snackbar, setSnackbar] = useState<{
+    open: boolean
+    message: string
+  }>({ open: false, message: "" })
+  const [openCardModal, setOpenCardModal] = useState(false)
+  const [selectedCard, setSelectedCard] = useState<CustomerCard | undefined>(
+    undefined
+  )
+
+  const handleCopyOrderId = async (orderId: string) => {
+    try {
+      await navigator.clipboard.writeText(orderId)
+      setSnackbar({ open: true, message: "Đã sao chép mã đơn hàng!" })
+    } catch (err) {
+      console.error("Failed to copy:", err)
+      setSnackbar({ open: true, message: "Không thể sao chép mã đơn hàng" })
+    }
+  }
 
   const fetchOrders = async (targetPage: number) => {
     if (!customer) return
@@ -209,20 +297,17 @@ export default function OrdersPage() {
           const product = variant?.product || item.product
 
           // Lấy ảnh variant nếu có, nếu không thì lấy ảnh product
-          // Ưu tiên formats.thumbnail hoặc formats.small, sau đó mới dùng url
+          // Ưu tiên formats.large hoặc url (default) để có chất lượng tốt hơn
+          // URL đã được transform bằng getFullLinkResource trong API route
           let imageSrc = "/logo.png"
-          if (variant?.variant_image?.formats?.thumbnail?.url) {
-            imageSrc = getFullLinkResource(
-              variant.variant_image.formats.thumbnail.url
-            )
-          } else if (variant?.variant_image?.formats?.small?.url) {
-            imageSrc = getFullLinkResource(
-              variant.variant_image.formats.small.url
-            )
-          } else if (variant?.variant_image?.url) {
-            imageSrc = getFullLinkResource(variant.variant_image.url)
+          if (variant?.variant_image?.url) {
+            imageSrc = variant.variant_image.url
+          } else if (variant?.variant_image?.formats?.large?.url) {
+            imageSrc = variant.variant_image.formats.large.url
+          } else if (variant?.variant_image?.formats?.medium?.url) {
+            imageSrc = variant.variant_image.formats.medium.url
           } else if (product?.images?.[0]?.url) {
-            imageSrc = getFullLinkResource(product.images[0].url)
+            imageSrc = product.images[0].url
           } else if (product?.images?.[0]?.default) {
             imageSrc = product.images[0].default
           }
@@ -232,44 +317,56 @@ export default function OrdersPage() {
             variant?.sale_price ?? product?.sale_price ?? 0
           )
           const quantity = toNumber(item.quantity)
+          const productSlug = product?.slug
 
           return (
-            <div
+            <Link
               key={item.id}
-              className="flex flex-col sm:flex-row gap-3 sm:gap-4 p-3 sm:p-4 border border-stone-200 rounded-xl bg-white"
+              href={productSlug ? `/product/${productSlug}` : "#"}
+              className="flex flex-col pb-2 sm:pb-4 cursor-pointer"
+              style={{ borderBottom: "1px solid #e0e0e0" }}
             >
-              <div className="relative w-full sm:w-24 h-32 sm:h-24 flex-shrink-0 rounded-lg overflow-hidden bg-stone-50">
-                <img
-                  src={imageSrc}
-                  alt={productName}
-                  className="w-full h-full object-cover"
-                />
+              <div className="flex sm:space-x-6 space-x-4 w-full">
+                <div className="relative w-20 sm:w-24 h-20 sm:h-24 flex-shrink-0 rounded-lg overflow-hidden bg-stone-50">
+                  <img
+                    src={imageSrc}
+                    alt={productName}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div className="flex flex-col space-y-1 w-full">
+                  <h4 className="font-semibold text-sm sm:text-base text-gray-900 line-clamp-2">
+                    {productName}
+                  </h4>
+                  <div className="w-full space-x-2 flex justify-between">
+                    {variantName && (
+                      <span className="text-sm sm:text-base text-gray-500">
+                        • {variantName}
+                      </span>
+                    )}
+                    <span className="text-sm sm:text-base text-gray-500 font-semibold">
+                      x{quantity}
+                    </span>
+                  </div>
+                </div>
               </div>
-              <div className="flex-1 min-w-0 space-y-1">
-                <h4 className="font-semibold text-base text-gray-900">
-                  {productName}
-                </h4>
-                {variantName && (
-                  <p className="text-sm text-gray-500">
-                    Phân loại: {variantName}
+
+              <div className="text-right flex flex-col justify-center gap-1 flex-shrink-0">
+                <div>
+                  <p className="text-xs uppercase tracking-wide text-gray-400">
+                    Đơn giá
                   </p>
-                )}
-                <p className="text-sm text-gray-500">
-                  Số lượng: <span className="font-semibold">{quantity}</span>
-                </p>
+                  <p className="text-sm sm:text-base font-semibold text-pink-700">
+                    {formatBigNumber(price, true)}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500">
+                    Tổng: {formatBigNumber(price * quantity, true)}
+                  </p>
+                </div>
               </div>
-              <div className="text-right">
-                <p className="text-xs uppercase tracking-wide text-gray-400">
-                  Đơn giá
-                </p>
-                <p className="text-base sm:text-lg font-semibold text-pink-700">
-                  {formatBigNumber(price, true)}
-                </p>
-                <p className="text-xs text-gray-500 mt-1">
-                  Tổng: {formatBigNumber(price * quantity, true)}
-                </p>
-              </div>
-            </div>
+            </Link>
           )
         })}
       </div>
@@ -294,17 +391,48 @@ export default function OrdersPage() {
             const discount = toNumber(baseCard?.discount)
             const title = baseCard?.title || "Thẻ quà tặng"
             const description = baseCard?.description
-            // Ưu tiên formats.thumbnail hoặc formats.small, sau đó mới dùng url
-            const imageSrc = baseCard?.image?.formats?.thumbnail?.url
-              ? getFullLinkResource(baseCard.image.formats.thumbnail.url)
-              : baseCard?.image?.formats?.small?.url
-              ? getFullLinkResource(baseCard.image.formats.small.url)
-              : baseCard?.image?.url
-              ? getFullLinkResource(baseCard.image.url)
+            // Ưu tiên url (default) hoặc formats.large để có chất lượng tốt hơn
+            // URL đã được transform bằng getFullLinkResource trong API route
+            const imageSrc = baseCard?.image?.url
+              ? baseCard.image.url
+              : baseCard?.image?.formats?.large?.url
+              ? baseCard.image.formats.large.url
+              : baseCard?.image?.formats?.medium?.url
+              ? baseCard.image.formats.medium.url
               : baseCard?.image?.default || "/logo.png"
+            const handleCardClick = () => {
+              const customerCard = {
+                id: baseCard?.id || 0,
+                documentId: baseCard?.documentId || "",
+                title: title,
+                description: baseCard?.description || "",
+                discount: discount,
+                image: baseCard?.image
+                  ? {
+                      default: imageSrc,
+                      small: baseCard.image.formats?.small?.url || imageSrc,
+                      thumbnail:
+                        baseCard.image.formats?.thumbnail?.url || imageSrc,
+                    }
+                  : {
+                      default: "/logo.png",
+                      small: "/logo.png",
+                      thumbnail: "/logo.png",
+                    },
+                index: 0,
+                products: [],
+                createdAt: "",
+                updatedAt: "",
+                publishedAt: "",
+              } as CustomerCard
+              setSelectedCard(customerCard)
+              setOpenCardModal(true)
+            }
+
             return (
               <div
                 key={card.id}
+                onClick={handleCardClick}
                 className={`${getCardBgClasses(
                   color
                 )} border rounded-2xl relative cursor-pointer transition hover:shadow-lg`}
@@ -331,21 +459,6 @@ export default function OrdersPage() {
                   >
                     {title}
                   </h4>
-                  {discount > 0 && (
-                    <div className="text-sm text-gray-700">
-                      Tích được{" "}
-                      <span
-                        className={`font-semibold ${getCardTextClasses(color)}`}
-                      >
-                        {formatBigNumber(discount, true)}
-                      </span>
-                    </div>
-                  )}
-                  {description && (
-                    <p className="text-xs text-gray-500 line-clamp-2 mt-1">
-                      {description}
-                    </p>
-                  )}
                 </div>
               </div>
             )
@@ -357,22 +470,52 @@ export default function OrdersPage() {
             const color = getCardColor(baseCard)
             const discount = toNumber(baseCard?.discount)
             const title = baseCard?.title || "Thẻ quà tặng"
-            const description = baseCard?.description
-            // Ưu tiên formats.thumbnail hoặc formats.small, sau đó mới dùng url
-            const imageSrc = baseCard?.image?.formats?.thumbnail?.url
-              ? getFullLinkResource(baseCard.image.formats.thumbnail.url)
-              : baseCard?.image?.formats?.small?.url
-              ? getFullLinkResource(baseCard.image.formats.small.url)
-              : baseCard?.image?.url
-              ? getFullLinkResource(baseCard.image.url)
+            // Ưu tiên url (default) hoặc formats.large để có chất lượng tốt hơn
+            // URL đã được transform bằng getFullLinkResource trong API route
+            const imageSrc = baseCard?.image?.url
+              ? baseCard.image.url
+              : baseCard?.image?.formats?.large?.url
+              ? baseCard.image.formats.large.url
+              : baseCard?.image?.formats?.medium?.url
+              ? baseCard.image.formats.medium.url
               : baseCard?.image?.default || "/logo.png"
+
+            const handleCardClick = () => {
+              const customerCard = {
+                id: baseCard?.id || 0,
+                documentId: baseCard?.documentId || "",
+                title: title,
+                description: baseCard?.description || "",
+                discount: discount,
+                image: baseCard?.image
+                  ? {
+                      default: imageSrc,
+                      small: baseCard.image.formats?.small?.url || imageSrc,
+                      thumbnail:
+                        baseCard.image.formats?.thumbnail?.url || imageSrc,
+                    }
+                  : {
+                      default: "/logo.png",
+                      small: "/logo.png",
+                      thumbnail: "/logo.png",
+                    },
+                index: 0,
+                products: [],
+                createdAt: "",
+                updatedAt: "",
+                publishedAt: "",
+              } as CustomerCard
+              setSelectedCard(customerCard)
+              setOpenCardModal(true)
+            }
 
             return (
               <div
                 key={card.id}
+                onClick={handleCardClick}
                 className={`${getCardBgClasses(
                   color
-                )} border rounded-2xl p-3 flex-shrink-0 w-[220px] relative overflow-visible shadow-sm`}
+                )} border rounded-2xl p-3 flex-shrink-0 w-[220px] relative overflow-visible shadow-sm cursor-pointer`}
               >
                 <span
                   className={`absolute -top-2 -right-2 ${getCardBadgeClasses(
@@ -398,21 +541,6 @@ export default function OrdersPage() {
                   >
                     {title}
                   </h4>
-                  {discount > 0 && (
-                    <div className="flex items-center justify-between text-xs text-gray-600">
-                      <span>Tích được</span>
-                      <span
-                        className={`font-semibold ${getCardTextClasses(color)}`}
-                      >
-                        {formatBigNumber(discount, true)}
-                      </span>
-                    </div>
-                  )}
-                  {description && (
-                    <p className="text-xs text-gray-500 line-clamp-3 mt-1">
-                      {description}
-                    </p>
-                  )}
                 </div>
               </div>
             )
@@ -452,14 +580,6 @@ export default function OrdersPage() {
               : formatBigNumber(shippingFee, true)}
           </span>
         </div>
-        <div className="flex justify-between items-center pt-2 border-t">
-          <span className="font-semibold text-gray-900">
-            Tổng ({totalItems} sản phẩm)
-          </span>
-          <span className="font-bold text-pink-700 text-lg">
-            {formatBigNumber(subtotal + shippingFee, true)}
-          </span>
-        </div>
       </div>
     )
   }
@@ -478,7 +598,7 @@ export default function OrdersPage() {
       <CustomerInfoEdit />
 
       {!customer && (
-        <Alert severity="info" className="mb-6">
+        <Alert severity="warning" className="mb-6">
           Vui lòng nhập thông tin khách hàng để xem đơn hàng.
         </Alert>
       )}
@@ -490,8 +610,37 @@ export default function OrdersPage() {
       )}
 
       {loading && (
-        <div className="flex justify-center py-10">
-          <CircularProgress />
+        <div className="space-y-5">
+          {[1, 2, 3].map((index) => (
+            <div
+              key={index}
+              className="border border-stone-200 rounded-2xl bg-white shadow-sm"
+            >
+              <div className="flex flex-row items-center gap-3 sm:gap-6 justify-between p-4 sm:p-6">
+                <div className="flex-1 min-w-0 space-y-1.5">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <Skeleton variant="text" width={60} height={16} />
+                    <Skeleton
+                      variant="rectangular"
+                      width={120}
+                      height={28}
+                      className="rounded-md"
+                    />
+                    <Skeleton
+                      variant="rectangular"
+                      width={80}
+                      height={24}
+                      className="rounded"
+                    />
+                  </div>
+                  <Skeleton variant="text" width={180} height={20} />
+                </div>
+                <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
+                  <Skeleton variant="circular" width={32} height={32} />
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       )}
 
@@ -521,48 +670,63 @@ export default function OrdersPage() {
             )
             return sum + unitPrice * toNumber(item.quantity || 0)
           }, 0)
-          const finalTotal = orderTotal + toNumber(order.shipping_fee)
+
+          const statusInfo = getOrderStatusInfo(order.order_status)
+
+          const items = order.order_items || []
+          const subtotal = items.reduce((sum, item) => {
+            const unitPrice = toNumber(
+              item.variant?.sale_price ?? item.product?.sale_price ?? 0
+            )
+            return sum + unitPrice * toNumber(item.quantity || 0)
+          }, 0)
+          const shippingFee = toNumber(order.shipping_fee)
+          const totalItems = items.reduce(
+            (sum, item) => sum + toNumber(item.quantity || 0),
+            0
+          )
 
           return (
             <div
               key={order.id}
               className="border border-stone-200 rounded-2xl bg-white shadow-sm transition-shadow hover:shadow-md"
             >
-              <div className="flex flex-col gap-3 sm:flex-row sm:gap-6 justify-between p-4 sm:p-6">
-                <div className="flex-1 space-y-1">
-                  <p className="text-xs sm:text-sm text-gray-500 uppercase tracking-wide">
-                    Mã đơn #{order.documentId}
-                  </p>
-                  <p className="text-base font-semibold text-gray-900">
+              <div className="flex flex-row items-center gap-3 sm:gap-6 justify-between p-4 sm:p-6">
+                <div className="flex-1 min-w-0 space-y-1.5">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <p className="text-xs sm:text-sm text-gray-500 uppercase tracking-wide">
+                      Mã đơn:
+                    </p>
+                    <button
+                      onClick={() => handleCopyOrderId(order.documentId)}
+                      className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-pink-50 hover:bg-pink-100 transition-colors group"
+                    >
+                      <span className="text-xs sm:text-sm font-semibold text-pink-700">
+                        #{order.documentId}
+                      </span>
+                      <ContentCopyIcon className="!w-4 !h-4 text-pink-600 opacity-70 group-hover:opacity-100 transition-opacity" />
+                    </button>
+                    <span
+                      className={`inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium ${statusInfo.bgColor} ${statusInfo.textColor} border ${statusInfo.borderColor}`}
+                    >
+                      {statusInfo.text}
+                    </span>
+                  </div>
+                  <p className="text-sm sm:text-base text-gray-600 truncate">
                     Ngày đặt: {createdDate}
                   </p>
                 </div>
-                <div className="flex items-center gap-4 sm:gap-6">
-                  <div className="text-right">
-                    <span className="text-xs text-gray-400 uppercase block">
-                      Số sản phẩm
-                    </span>
-                    <span className="text-sm font-semibold text-gray-800">
-                      {totalProducts}
-                    </span>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-xs text-gray-400 uppercase block">
-                      Tổng tiền
-                    </span>
-                    <span className="text-lg font-bold text-pink-700">
-                      {formatBigNumber(finalTotal, true)}
-                    </span>
-                  </div>
+                <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
                   <IconButton
                     onClick={() =>
                       setExpandedOrderId((prev) =>
                         prev === order.id ? null : order.id
                       )
                     }
-                    className={`transition-transform text-pink-700 hover:bg-pink-50 ${
+                    className={`transition-transform text-pink-700 hover:bg-pink-50 flex-shrink-0 ${
                       isExpanded ? "rotate-180" : ""
                     }`}
+                    size="small"
                   >
                     <ExpandMoreRoundedIcon />
                   </IconButton>
@@ -576,6 +740,14 @@ export default function OrdersPage() {
                   {renderOrderSummary(order)}
                 </div>
               </Collapse>
+              <div className="flex justify-between items-center pt-2 border-t p-3 sm:p-4">
+                <span className="font-semibold text-gray-900">
+                  Tổng ({totalItems} sản phẩm)
+                </span>
+                <span className="font-bold text-pink-700 text-lg">
+                  {formatBigNumber(subtotal + shippingFee, true)}
+                </span>
+              </div>
             </div>
           )
         })}
@@ -586,26 +758,53 @@ export default function OrdersPage() {
           <span className="text-sm text-gray-500">
             Trang {pagination.page} / {pagination.pageCount}
           </span>
-          <div className="flex w-full sm:w-auto gap-3">
-            <Button
-              variant="outlined"
+          <div className="flex items-center gap-2">
+            <IconButton
               onClick={() => handlePageChange("prev")}
               disabled={pagination.page <= 1 || loading}
-              className="flex-1 sm:flex-none !border-neutral-200 !text-gray-700"
+              className="!border !border-neutral-200 !text-gray-700 hover:!bg-gray-50 disabled:!opacity-50"
+              size="small"
             >
-              Trang trước
-            </Button>
-            <Button
-              variant="contained"
+              <ChevronLeftIcon />
+            </IconButton>
+            <IconButton
               onClick={() => handlePageChange("next")}
               disabled={pagination.page >= pagination.pageCount || loading}
-              className="flex-1 sm:flex-none !bg-neutral-900 !text-white"
+              className="!border !border-neutral-200 !text-gray-700 hover:!bg-gray-50 disabled:!opacity-50"
+              size="small"
             >
-              Trang sau
-            </Button>
+              <ChevronRightIcon />
+            </IconButton>
           </div>
         </div>
       )}
+
+      <CustomerCardModal
+        open={openCardModal}
+        onClose={() => setOpenCardModal(false)}
+        card={selectedCard}
+      />
+
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={2000}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
+      >
+        <Alert
+          icon={false}
+          onClose={() => setSnackbar({ ...snackbar, open: false })}
+          sx={{
+            width: "100%",
+            bgcolor: "#111",
+            color: "#fff",
+            fontWeight: 600,
+            borderRadius: "999px",
+          }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </div>
   )
 }
