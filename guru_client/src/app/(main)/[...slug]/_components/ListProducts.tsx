@@ -24,18 +24,34 @@ export default function ListProducts({
   const [listProductDisplay, setListProductDisplay] =
     useState<Product[]>(products)
   const [currentPage, setCurrentPage] = useState(1)
+  const [categoryId, setCategoryId] = useState(currentCategory?.documentId)
+  const [brandId, setBrandId] = useState(currentBrand?.documentId)
+  const [blockProductId, setBlockProductId] = useState(
+    currentBlockProduct?.documentId
+  )
   const { listProduct, isLoading } = useGetListProducts(
     {
       page: currentPage,
-      brandId: currentBrand?.documentId,
-      categoryId: currentCategory?.documentId,
+      brandId: brandId,
+      categoryId: categoryId,
+      blockProductId: blockProductId,
     },
     currentPage <= 1
   )
 
+  console.log("dbahbdjhabjsda filter2, ", {
+    page: currentPage,
+    brandId: brandId,
+    categoryId: categoryId,
+    blockProductId: blockProductId,
+  })
+
   useEffect(() => {
     setListProductDisplay(products)
     setCurrentPage(1)
+    setCategoryId(currentCategory?.documentId)
+    setBrandId(currentBrand?.documentId)
+    setBlockProductId(currentBlockProduct?.documentId)
   }, [currentCategory, currentBrand, currentBlockProduct, products])
 
   useEffect(() => {

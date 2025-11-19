@@ -369,6 +369,8 @@ export default async function Home(props: { params: { slug: string[] } }) {
     }
   }
 
+  console.log("dbahbdjhabjsda currentBrand:", { currentBrand })
+
   return (
     <div className="lg:max-w-5xl max-w-4xl lg:px-0 px-4 mx-auto flex flex-col space-y-10">
       <div className="relative flex space-x-2 justify-between bg-[#fffdf8] border border-stone-300 rounded-lg mt-10 p-4">
@@ -401,7 +403,13 @@ export default async function Home(props: { params: { slug: string[] } }) {
           currentCategory={currentCategory}
           currentBlockProduct={currentBlockProduct}
         />
-        <ListProducts products={products} pageCount={pageCount} />
+        <ListProducts
+          products={products}
+          pageCount={pageCount}
+          currentCategory={currentCategory}
+          currentBrand={currentBrand}
+          currentBlockProduct={currentBlockProduct}
+        />
       </div>
     </div>
   )

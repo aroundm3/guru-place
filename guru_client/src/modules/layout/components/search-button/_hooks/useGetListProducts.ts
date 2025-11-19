@@ -8,13 +8,18 @@ const useGetListProducts = (
     page?: number
     brandId?: string
     categoryId?: string
+    blockProductId?: string
     pageSizeCustom?: number
   },
   isNotFetch?: boolean
 ) => {
-  const { searchQuery, page, brandId, categoryId } = filter
+  console.log("dbahbdjhabjsda filter:", { filter })
+
+  const { searchQuery, page, brandId, categoryId, blockProductId } = filter
   const { data, isLoading, mutate } = useSWR<Product[]>(
-    isNotFetch ? null : [searchQuery, page, brandId, categoryId],
+    isNotFetch
+      ? null
+      : [searchQuery, page, brandId, categoryId, blockProductId],
     async (url) => {
       return await getListProducts(filter).then(({ data }) => data)
     },
