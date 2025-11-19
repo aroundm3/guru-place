@@ -45,7 +45,7 @@ export const CustomerCardProvider = ({
       setCustomerCards(sortedCards)
     } catch (err) {
       console.error("Failed to fetch customer cards:", err)
-      setError("Không thể tải danh sách thẻ quà tặng")
+      setError("Không thể tải danh sách thẻ tích điểm")
     } finally {
       setLoading(false)
     }

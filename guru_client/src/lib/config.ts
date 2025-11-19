@@ -74,8 +74,6 @@ export async function fetcherForOrderModule(
   })
 
   if (!res.ok) {
-    console.log("dbahjsbdhas: ", { res })
-
     const errorData = await res.json().catch(() => ({}))
     throw new Error(errorData?.message || "API request failed")
   }

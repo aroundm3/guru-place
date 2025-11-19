@@ -9,8 +9,6 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
 
-    console.log("bdhajshbjds body: ", body)
-
     if (!BASE_URL || !FULL_ACCESS_API_KEY) {
       return NextResponse.json(
         { error: "Server configuration error" },

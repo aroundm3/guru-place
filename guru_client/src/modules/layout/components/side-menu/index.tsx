@@ -19,6 +19,7 @@ import CardGiftcardRoundedIcon from "@mui/icons-material/CardGiftcardRounded"
 import AdjustIcon from "@mui/icons-material/Adjust"
 import PhoneIcon from "@mui/icons-material/Phone"
 import ShoppingBagRoundedIcon from "@mui/icons-material/ShoppingBagRounded"
+import AddCardIcon from "@mui/icons-material/AddCard"
 
 const SideMenu = ({ regions }: { regions: HttpTypes.StoreRegion[] | null }) => {
   const [isOpenSideBar, setIsOpenSideBar] = useState(false)
@@ -118,6 +119,18 @@ const SideMenu = ({ regions }: { regions: HttpTypes.StoreRegion[] | null }) => {
         </header>
 
         <div className="flex flex-col p-6">
+          <div className="flex flex-col space-y-4 w-full min-w-[250px] cursor-pointer mb-4">
+            <Link
+              href={"/has_gift"}
+              onClick={closeSideBar}
+              className="mr-4 flex sm:space-x-1 space-x-0.5 text-gray-700 items-center"
+            >
+              <CardGiftcardRoundedIcon className="sm:!h-5 !h-4" />
+              <h6 className="my-auto sm:text-lg text-base font-semibold">
+                Chương trình tích điểm
+              </h6>
+            </Link>
+          </div>
           <div className="flex flex-col space-y-4 w-full min-w-[250px] cursor-pointer">
             <div
               className="mr-4 flex justify-between text-gray-700 items-center"
@@ -259,6 +272,18 @@ const SideMenu = ({ regions }: { regions: HttpTypes.StoreRegion[] | null }) => {
             </Link>
           </div>
           <div className="flex mt-4 flex-col space-y-4 w-full min-w-[250px] cursor-pointer">
+            <Link
+              href={"/discount-cards"}
+              onClick={closeSideBar}
+              className="mr-4 flex sm:space-x-1 space-x-0.5 text-gray-700 items-center"
+            >
+              <AddCardIcon className="sm:!h-5 !h-4" />
+              <h6 className="my-auto sm:text-lg text-base font-semibold">
+                Tra cứu thẻ tích điểm
+              </h6>
+            </Link>
+          </div>
+          <div className="flex mt-4 flex-col space-y-4 w-full min-w-[250px] cursor-pointer">
             <div className="mr-4 flex sm:space-x-1 space-x-0.5 text-gray-700 items-center">
               <DateRangeRoundedIcon className="sm:!h-5 !h-4" />
               <h6 className="my-auto sm:text-lg text-base font-semibold">
@@ -266,18 +291,7 @@ const SideMenu = ({ regions }: { regions: HttpTypes.StoreRegion[] | null }) => {
               </h6>
             </div>
           </div>
-          <div className="flex mt-4 flex-col space-y-4 w-full min-w-[250px] cursor-pointer">
-            <Link
-              href={"/discount-cards"}
-              onClick={closeSideBar}
-              className="mr-4 flex sm:space-x-1 space-x-0.5 text-gray-700 items-center"
-            >
-              <CardGiftcardRoundedIcon className="sm:!h-5 !h-4" />
-              <h6 className="my-auto sm:text-lg text-base font-semibold">
-                Tra cứu thẻ quà tặng
-              </h6>
-            </Link>
-          </div>
+
           <div className="flex mt-4 flex-col space-y-4 w-full min-w-[250px] cursor-pointer">
             <div className="mr-4 flex sm:space-x-1 space-x-0.5 text-gray-700 items-center">
               <PhoneIcon className="sm:!h-5 !h-4" />

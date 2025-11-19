@@ -32,7 +32,7 @@ const fallbackMetadata: StoreMetadata = {
 export default async function PageLayout(props: { children: React.ReactNode }) {
   let metada: StoreMetadata = fallbackMetadata
   try {
-  const storeMetadataRs = await fetcher("/api/store-metadata")
+    const storeMetadataRs = await fetcher("/api/store-metadata")
     metada = storeMetadataRs.data
   } catch (error) {
     console.error("Failed to fetch store metadata:", error)
@@ -66,8 +66,6 @@ export default async function PageLayout(props: { children: React.ReactNode }) {
           }
         : null,
     }))
-
-    console.log({ customerCardsRs, customerCards })
   } catch (error) {
     console.error("Failed to fetch customer cards:", error)
   }
@@ -78,31 +76,31 @@ export default async function PageLayout(props: { children: React.ReactNode }) {
         <Suspense fallback={null}>
           <LoadingBar />
         </Suspense>
-      <Nav />
-      {/* {customer && cart && (
+        <Nav />
+        {/* {customer && cart && (
         <CartMismatchBanner customer={customer} cart={cart} />
       )} */}
 
-      {/* {cart && (
+        {/* {cart && (
         <FreeShippingPriceNudge
           variant="popup"
           cart={cart}
           shippingOptions={shippingOptions}
         />
       )} */}
-      <div
-        // #fffdf8
-        style={{
-          background: metada.background_color,
-          // backgroundSize: "60px 60px",
-          minHeight: "100vh",
-        }}
-        className="pb-20"
-      >
-        {props.children}
-      </div>
+        <div
+          // #fffdf8
+          style={{
+            background: metada.background_color,
+            // backgroundSize: "60px 60px",
+            minHeight: "100vh",
+          }}
+          className="pb-20"
+        >
+          {props.children}
+        </div>
 
-      <Footer metada={metada} />
+        <Footer metada={metada} />
         <CustomerModal />
       </CustomerProvider>
     </CustomerCardProvider>

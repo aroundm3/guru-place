@@ -65,15 +65,50 @@ export default function CustomerModal() {
   // Chỉ hiển thị modal trên 2 route cụ thể: /orders và /discount-cards
   const allowedRoutes = ["/orders", "/discount-cards"]
   const shouldShowModal = allowedRoutes.includes(pathname)
+  const isDiscountCardsPage = pathname === "/discount-cards"
+  const shouldAutoOpen = shouldShowModal && !isDiscountCardsPage
 
   // Check if customer exists in localStorage on mount và chỉ khi ở đúng route
   useEffect(() => {
-    if (!isLoading && !customer && shouldShowModal) {
+    if (!isLoading && !customer && shouldAutoOpen) {
       setOpen(true)
     } else if (customer || !shouldShowModal) {
       setOpen(false)
     }
-  }, [customer, isLoading, shouldShowModal, pathname])
+  }, [customer, isLoading, shouldAutoOpen, shouldShowModal])
+
+  useEffect(() => {
+    if (!isDiscountCardsPage || typeof window === "undefined") {
+      return
+    }
+
+    const handleOpenRequest = () => {
+      setOpen(true)
+      setStep("phone")
+      setError("")
+    }
+
+    window.addEventListener(
+      "discount-cards-open-profile-modal",
+      handleOpenRequest
+    )
+
+    return () => {
+      window.removeEventListener(
+        "discount-cards-open-profile-modal",
+        handleOpenRequest
+      )
+    }
+  }, [isDiscountCardsPage])
+
+  const resetForm = () => {
+    setPhoneNumber("")
+    setFullName("")
+    setDob(null)
+    setAddress("")
+    setStep("phone")
+    setError("")
+  }
 
   const handlePhoneSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -92,10 +127,7 @@ export default function CustomerModal() {
         // Customer exists - đóng modal luôn
         setCustomer(existingCustomer)
         setOpen(false)
-        // Reset form
-        setPhoneNumber("")
-        setDob(null)
-        setStep("phone")
+        resetForm()
       } else {
         // New customer - chuyển sang form thông tin
         setStep("info")
@@ -129,12 +161,7 @@ export default function CustomerModal() {
       if (newCustomer) {
         setCustomer(newCustomer)
         setOpen(false)
-        // Reset form
-        setPhoneNumber("")
-        setFullName("")
-        setDob(null)
-        setAddress("")
-        setStep("phone")
+        resetForm()
       } else {
         setError("Không thể tạo tài khoản. Vui lòng thử lại.")
       }
@@ -150,8 +177,23 @@ export default function CustomerModal() {
     setOpen(false)
   }
 
+  const notifyDiscountCardsSkip = () => {
+    if (typeof window === "undefined") {
+      return
+    }
+
+    window.dispatchEvent(new Event("discount-cards-modal-skip"))
+  }
+
   const handleSkip = () => {
     setOpen(false)
+    resetForm()
+
+    if (isDiscountCardsPage) {
+      notifyDiscountCardsSkip()
+      return
+    }
+
     router.push("/")
   }
 
@@ -160,7 +202,7 @@ export default function CustomerModal() {
     if (pathname === "/orders") {
       return "Vui lòng nhập thông tin để tra cứu đơn hàng"
     } else if (pathname === "/discount-cards") {
-      return "Vui lòng nhập thông tin để tra cứu thẻ quà tặng"
+      return "Vui lòng nhập thông tin để tra cứu thẻ tích điểm"
     }
     return "Hãy cho chúng tôi số điện thoại của bạn để được hỗ trợ tốt nhất"
   }

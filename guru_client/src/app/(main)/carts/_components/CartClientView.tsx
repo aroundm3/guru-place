@@ -649,7 +649,7 @@ export default function CartClientView() {
         {selectedCustomerCards.length > 0 && (
           <div className="mb-4 sm:mb-6">
             <h3 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4">
-              Thẻ quà tặng nhận được
+              Thẻ tích điểm nhận được
             </h3>
             {/* Desktop: Grid layout dàn ngang */}
             <div className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">

@@ -114,13 +114,6 @@ export default function Options({ productData }: OptionsProps) {
 
       // Kiểm tra sản phẩm đã có trong giỏ chưa (theo productId + variantId)
       const existingIndex = cart.findIndex((item) => {
-        console.log("vdagsgdas check------: ", {
-          documentIdMatch:
-            item.product?.productData?.documentId ===
-            cartItem?.product?.productData?.documentId,
-          variantIdMatch: item.variantId === cartItem.variantId,
-        })
-
         return (
           item.product?.productData?.documentId ===
             cartItem?.product?.productData?.documentId &&
@@ -128,19 +121,8 @@ export default function Options({ productData }: OptionsProps) {
         )
       })
 
-      console.log("vdagsgdas check:", {
-        existingIndex,
-        cartItem,
-        cart,
-      })
-
       if (existingIndex > -1) {
         // Nếu đã có thì cộng dồn số lượng
-        console.log("vdagsgdas: ", {
-          current: cart[existingIndex].quantity,
-          new: cartItem.quantity,
-        })
-
         cart[existingIndex].quantity += cartItem.quantity
       } else {
         // Nếu chưa có thì thêm mới
@@ -331,7 +313,7 @@ export default function Options({ productData }: OptionsProps) {
                         cardColor
                       )} mb-2`}
                     >
-                      {minDiscountCard.title || "Thẻ quà tặng"}
+                      {minDiscountCard.title || "Thẻ tích điểm"}
                     </p>
                     <Button
                       variant="outlined"
@@ -582,7 +564,7 @@ export default function Options({ productData }: OptionsProps) {
                           cardColor
                         )} mb-2`}
                       >
-                        {minDiscountCard.title || "Thẻ quà tặng"}
+                        {minDiscountCard.title || "Thẻ tích điểm"}
                       </p>
                       <Button
                         variant="outlined"

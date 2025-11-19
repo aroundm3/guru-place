@@ -101,7 +101,7 @@ export default function FilterMobile({
                   ) : (
                     <CardGiftcardRoundedIcon className="!w-4 !h-4 text-gray-500" />
                   )}
-                  <span>Sản phẩm có ưu đãi</span>
+                  <span>Sản phẩm trong chương trình tích điểm</span>
                 </Link>
               </div>
             </div>

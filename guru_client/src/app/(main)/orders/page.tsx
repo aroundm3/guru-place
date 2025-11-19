@@ -382,14 +382,14 @@ export default function OrdersPage() {
     return (
       <div className="space-y-3">
         <h4 className="text-base font-semibold text-gray-900">
-          Thẻ quà tặng nhận được
+          Thẻ tích điểm nhận được
         </h4>
         <div className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {cards.map((card) => {
             const baseCard = card.customer_card as any
             const color = getCardColor(baseCard)
             const discount = toNumber(baseCard?.discount)
-            const title = baseCard?.title || "Thẻ quà tặng"
+            const title = baseCard?.title || "Thẻ tích điểm"
             const description = baseCard?.description
             // Ưu tiên url (default) hoặc formats.large để có chất lượng tốt hơn
             // URL đã được transform bằng getFullLinkResource trong API route
@@ -469,7 +469,7 @@ export default function OrdersPage() {
             const baseCard = card.customer_card as any
             const color = getCardColor(baseCard)
             const discount = toNumber(baseCard?.discount)
-            const title = baseCard?.title || "Thẻ quà tặng"
+            const title = baseCard?.title || "Thẻ tích điểm"
             // Ưu tiên url (default) hoặc formats.large để có chất lượng tốt hơn
             // URL đã được transform bằng getFullLinkResource trong API route
             const imageSrc = baseCard?.image?.url
@@ -559,21 +559,17 @@ export default function OrdersPage() {
       return sum + unitPrice * toNumber(item.quantity || 0)
     }, 0)
     const shippingFee = toNumber(order.shipping_fee)
-    const totalItems = items.reduce(
-      (sum, item) => sum + toNumber(item.quantity || 0),
-      0
-    )
 
     return (
       <div className="space-y-2 text-sm text-gray-600">
         <div className="flex justify-between">
-          <span>Tạm tính</span>
+          <span>Thành tiền:</span>
           <span className="font-semibold">
             {formatBigNumber(subtotal, true)}
           </span>
         </div>
         <div className="flex justify-between">
-          <span>Phí vận chuyển</span>
+          <span>Phí vận chuyển:</span>
           <span className="font-semibold">
             {shippingFee === 0
               ? "Miễn phí"
@@ -691,7 +687,14 @@ export default function OrdersPage() {
               key={order.id}
               className="border border-stone-200 rounded-2xl bg-white shadow-sm transition-shadow hover:shadow-md"
             >
-              <div className="flex flex-row items-center gap-3 sm:gap-6 justify-between p-4 sm:p-6">
+              <div
+                onClick={() =>
+                  setExpandedOrderId((prev) =>
+                    prev === order.id ? null : order.id
+                  )
+                }
+                className="cursor-pointer flex flex-row items-center gap-3 sm:gap-6 justify-between p-4 sm:p-6"
+              >
                 <div className="flex-1 min-w-0 space-y-1.5">
                   <div className="flex items-center gap-2 flex-wrap">
                     <p className="text-xs sm:text-sm text-gray-500 uppercase tracking-wide">

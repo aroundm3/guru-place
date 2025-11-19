@@ -29,7 +29,6 @@ export default function Filter({
   currentBrand,
   currentBlockProduct,
 }: FilterProps) {
-  console.log({ categories })
   const pathname = usePathname()
   const isHasGift = pathname?.includes("/has_gift")
 
@@ -94,7 +93,7 @@ export default function Filter({
                   }`}
                 >
                   {isHasGift ? <PlayArrowRoundedIcon className="!w-4" /> : ""}
-                  <span>Sản phẩm có ưu đãi</span>
+                  <span>Sản phẩm trong chương trình tích điểm</span>
                 </Link>
               </div>
             </div>

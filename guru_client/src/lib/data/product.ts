@@ -88,31 +88,6 @@ export async function getListProducts(filter: {
           : `&filters[variants][customer_cards][$null]=true`
         : ""
 
-    console.log(
-      "urlrequest: ",
-      `/api/products?pagination[page]=${
-        filter.page ?? 1
-      }&pagination[pageSize]=${
-        filter.pageSizeCustom
-          ? filter.pageSizeCustom
-          : PAGINATION_CONFIG.pageSize
-      }&populate=media&${
-        filter.searchQuery
-          ? `filters[$or][0][name][$containsi]=${filter.searchQuery}&filters[$or][1][brand][name][$containsi]=${filter.searchQuery}&filters[$or][2][category][name][$containsi]=${filter.searchQuery}`
-          : ""
-      }${
-        filter.categoryId
-          ? `&filters[category][documentId]=${filter.categoryId}`
-          : ""
-      }${
-        filter.brandId ? `&filters[brand][documentId]=${filter.brandId}` : ""
-      }${
-        filter.blockProductId
-          ? `&filters[product_list_blocks][documentId]=${filter.blockProductId}`
-          : ""
-      }${customerCardsFilter}&[populate]=variants`
-    )
-
     const data = await fetcher(
       `/api/products?pagination[page]=${
         filter.page ?? 1
@@ -199,8 +174,6 @@ export async function getListProductsBlock(
         next: { revalidate: 10 },
       }
     )
-
-    console.log("jbdjahbsdas: ", data.data[0].banner)
 
     return data.data.map((item: any) => {
       return {

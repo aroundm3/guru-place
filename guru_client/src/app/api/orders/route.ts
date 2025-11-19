@@ -35,7 +35,6 @@ export async function GET(request: NextRequest) {
     params.set("sort", "createdAt:desc")
 
     const url = `/api/order/customer?${params.toString()}`
-    console.log("dbahjbsjhasbd: ", url)
 
     const orders = await fetcherForOrderModule(url, {
       cache: "no-store",

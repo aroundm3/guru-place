@@ -150,7 +150,7 @@ export async function generateMetadata(
 
         case "has": {
           if (listParamsToFilter[1] === "gift") {
-            subRouteTitle = "Sản phẩm có ưu đãi"
+            subRouteTitle = "Sản phẩm trong chương trình tích điểm"
             thumbImage = "/logo.png"
             const productsRs = await getListProducts({
               hasCustomerCards: true,
@@ -321,11 +321,6 @@ export default async function Home(props: { params: { slug: string[] } }) {
 
           products = productsRs.data
           pageCount = productsRs.pageCount
-
-          console.log({
-            blockProductId: currentBlockProduct.documentId,
-            aaaaaproducts: products,
-          })
         }
 
         break
@@ -361,7 +356,7 @@ export default async function Home(props: { params: { slug: string[] } }) {
 
       case "has": {
         if (listParamsToFilter[1] === "gift") {
-          subRouteTitle = "Sản phẩm có ưu đãi"
+          subRouteTitle = "Sản phẩm trong chương trình tích điểm"
           const productsRs = await getListProducts({
             hasCustomerCards: true,
           })
