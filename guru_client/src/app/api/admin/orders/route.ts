@@ -1,58 +1,89 @@
 import { NextRequest, NextResponse } from "next/server"
-import { fetcherForOrderModule, getFullLinkResource } from "@lib/config"
+import { getFullLinkResource } from "@lib/config"
+import { cookies } from "next/headers"
 
-const DEFAULT_PAGE_SIZE = 5
+const DEFAULT_PAGE_SIZE = 20
+const BASE_URL = process.env.BASE_URL
 
 export async function GET(request: NextRequest) {
-  const { searchParams } = new URL(request.url)
-  const customerId = searchParams.get("customerId")
-  const page = searchParams.get("page") || "1"
-  const pageSize = searchParams.get("pageSize") || DEFAULT_PAGE_SIZE.toString()
-  const status = searchParams.get("status")
-
-  if (!customerId) {
-    return NextResponse.json({ error: "Missing customerId" }, { status: 400 })
-  }
-
   try {
-    const params = new URLSearchParams()
-    params.set("filters[customer][documentId][$eq]", customerId)
-    if (status && status !== "all") {
-      // Khi filter là "shipping" thì lấy cả "approved" và "shipping"
-      if (status === "shipping") {
-        params.set("filters[$or][0][order_status][$eq]", "approved")
-        params.set("filters[$or][1][order_status][$eq]", "shipping")
-      } else {
-        params.set("filters[order_status][$eq]", status)
-      }
-    }
-    params.set("pagination[page]", page)
-    params.set("pagination[pageSize]", pageSize)
-    params.set("sort", "createdAt:desc")
-    params.set(
-      "populate[order_items][populate][variant][populate][variant_image]",
-      "true"
-    )
-    params.set(
-      "populate[order_customer_cards][populate][customer_card][populate][image]",
-      "true"
-    )
-    params.set("populate[customer]", "true")
+    // Kiểm tra authentication
+    const cookieStore = await cookies()
+    const adminToken = cookieStore.get("admin_jwt")?.value
 
-    params.set("customerId", customerId)
+    if (!adminToken) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    if (!BASE_URL) {
+      return NextResponse.json(
+        { error: "Server configuration error" },
+        { status: 500 }
+      )
+    }
+
+    const { searchParams } = new URL(request.url)
+    const page = searchParams.get("page") || "1"
+    const pageSize =
+      searchParams.get("pageSize") || DEFAULT_PAGE_SIZE.toString()
+    const phoneNumber = searchParams.get("phoneNumber") || ""
+    const orderId = searchParams.get("orderId") || ""
+    const customerName = searchParams.get("customerName") || ""
+
+    // Dùng Content Manager API endpoint như Strapi admin panel
+    const params = new URLSearchParams()
     params.set("page", page)
     params.set("pageSize", pageSize)
-    params.set("sort", "createdAt:desc")
+    params.set("sort", "id:DESC") // hoặc createdAt:DESC tùy preference
 
-    const url = `/api/order/customer?${params.toString()}`
+    // Populate relations - Content Manager API format
+    // Có thể dùng populate=* hoặc specify cụ thể
+    params.set("populate", "*")
 
-    const orders = await fetcherForOrderModule(url, {
+    // Build filters - Content Manager API dùng format filters[key][operator]
+    if (phoneNumber) {
+      params.set("filters[customer][phone_number][$containsi]", phoneNumber)
+    }
+
+    if (orderId) {
+      params.set("filters[documentId][$containsi]", orderId)
+    }
+
+    if (customerName) {
+      params.set("filters[customer][full_name][$containsi]", customerName)
+    }
+
+    // Endpoint Content Manager API
+    const url = `${BASE_URL}/content-manager/collection-types/api::order.order?${params.toString()}`
+
+    // Gọi Strapi với admin token trong header
+    const response = await fetch(url, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${adminToken}`,
+      },
       cache: "no-store",
     })
 
-    // Transform data để xử lý ảnh bằng getFullLinkResource (giống product/category/brand)
-    if (orders?.data) {
-      const transformedData = orders.data.map((order: any) => {
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}))
+      return NextResponse.json(
+        { error: errorData?.error?.message || "Failed to fetch orders" },
+        { status: response.status }
+      )
+    }
+
+    const orders = await response.json()
+
+    // Content Manager API trả về format khác, cần check structure
+    // Có thể là { results: [...], pagination: {...} } hoặc { data: [...], meta: {...} }
+    const ordersData = orders.results || orders.data || []
+    const paginationMeta = orders.pagination || orders.meta?.pagination
+
+    // Transform data để xử lý ảnh bằng getFullLinkResource
+    if (ordersData && ordersData.length > 0) {
+      const transformedData = ordersData.map((order: any) => {
         // Transform order_items - xử lý variant_image
         const transformedOrderItems = (order.order_items || []).map(
           (item: any) => {
@@ -135,14 +166,30 @@ export async function GET(request: NextRequest) {
       })
 
       return NextResponse.json({
-        ...orders,
         data: transformedData,
+        meta: {
+          pagination: paginationMeta || {
+            page: parseInt(page),
+            pageSize: parseInt(pageSize),
+            pageCount: 1,
+            total: transformedData.length,
+          },
+        },
       })
     }
 
-    return NextResponse.json(orders)
+    return NextResponse.json({
+      data: [],
+      meta: {
+        pagination: paginationMeta || {
+          page: parseInt(page),
+          pageSize: parseInt(pageSize),
+          pageCount: 0,
+          total: 0,
+        },
+      },
+    })
   } catch (error: any) {
-    console.error("Failed to fetch orders:", error)
     return NextResponse.json(
       { error: error?.message || "Failed to fetch orders" },
       { status: 500 }

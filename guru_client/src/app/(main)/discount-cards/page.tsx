@@ -210,7 +210,7 @@ export default function DiscountCardPage() {
         >
           Thẻ tích điểm của bạn
           {groupedCards.length > 0 && (
-            <span className="ml-2 px-2 py-0.5 bg-pink-100 text-pink-700 rounded-full text-xs">
+            <span className="ml-2 px-2 py-0.5 bg-pink-100 text-pink-700 rounded-full text-xs sm:text-sm">
               {groupedCards.reduce((sum, g) => sum + g.totalQuantity, 0)}
             </span>
           )}

@@ -1,32 +1,26 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useState } from "react"
 import dayjs from "dayjs"
 import "dayjs/locale/vi"
-import Link from "next/link"
-import CustomerInfoEdit from "@modules/layout/components/customer-info-edit"
-import { CustomerCardModal } from "@modules/product/components/customer-card-modal"
-import { useCustomer } from "@lib/context/customer-context"
 import { formatBigNumber } from "@lib/util/format-big-number"
-import { CustomerCard } from "types/global"
 import {
   Button,
-  CircularProgress,
-  IconButton,
+  TextField,
   Alert,
   Collapse,
-  Snackbar,
+  IconButton,
+  CircularProgress,
   Skeleton,
   Dialog,
-  DialogTitle,
   DialogContent,
-  DialogContentText,
-  DialogActions,
+  Typography,
 } from "@mui/material"
 import ExpandMoreRoundedIcon from "@mui/icons-material/ExpandMoreRounded"
-import ContentCopyIcon from "@mui/icons-material/ContentCopy"
+import SearchIcon from "@mui/icons-material/Search"
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft"
 import ChevronRightIcon from "@mui/icons-material/ChevronRight"
+import LogoutIcon from "@mui/icons-material/Logout"
 import {
   getCardBgClasses,
   getCardBadgeClasses,
@@ -34,8 +28,10 @@ import {
   getCardTextClasses,
   getCardBorderClasses,
 } from "@lib/util/card-colors"
+import { CustomerCard } from "types/global"
+import { CustomerCardModal } from "@modules/product/components/customer-card-modal"
 
-const PAGE_SIZE = 5
+const PAGE_SIZE = 20
 
 dayjs.locale("vi")
 
@@ -67,7 +63,7 @@ type OrderVariant = {
 
 type OrderItem = {
   id: number
-  quantity: number | string // Có thể là string từ API
+  quantity: number | string
   product?: OrderProduct
   variant?: OrderVariant | null
 }
@@ -103,16 +99,13 @@ type OrderStatus =
   | "cancelled"
   | "refunded"
 
-type OrderStatusFilter = OrderStatus | "all"
-
-const ORDER_STATUS_OPTIONS: { label: string; value: OrderStatusFilter }[] = [
-  { label: "Tất cả", value: "all" },
-  { label: "Chờ duyệt", value: "pending_approval" },
-  { label: "Đang giao", value: "shipping" },
-  { label: "Hoàn thành", value: "completed" },
-  { label: "Đã hủy", value: "cancelled" },
-  { label: "Đã hoàn tiền", value: "refunded" },
-]
+type Customer = {
+  documentId?: string
+  full_name?: string
+  phone_number?: string
+  address?: string
+  dob?: string
+}
 
 type OrderEntity = {
   id: number
@@ -122,6 +115,7 @@ type OrderEntity = {
   order_status?: OrderStatus
   order_items?: OrderItem[]
   order_customer_cards?: OrderCustomerCard[]
+  customer?: Customer
 }
 
 interface PaginationState {
@@ -154,10 +148,10 @@ const getOrderStatusInfo = (status?: OrderStatus) => {
       }
     case "approved":
       return {
-        text: "Đang giao",
-        bgColor: "bg-purple-100",
-        textColor: "text-purple-800",
-        borderColor: "border-purple-300",
+        text: "Đã duyệt",
+        bgColor: "bg-blue-100",
+        textColor: "text-blue-800",
+        borderColor: "border-blue-300",
       }
     case "shipping":
       return {
@@ -197,61 +191,114 @@ const getOrderStatusInfo = (status?: OrderStatus) => {
   }
 }
 
-export default function OrdersPage() {
-  const { customer } = useCustomer()
+export default function ReconciliationPage() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [isLoadingAuth, setIsLoadingAuth] = useState(true)
   const [orders, setOrders] = useState<OrderEntity[]>([])
-  const [pagination, setPagination] =
-    useState<PaginationState>(defaultPagination)
+  const [pagination, setPagination] = useState<PaginationState>(defaultPagination)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const [expandedOrderId, setExpandedOrderId] = useState<number | null>(null)
-  const [snackbar, setSnackbar] = useState<{
-    open: boolean
-    message: string
-  }>({ open: false, message: "" })
   const [openCardModal, setOpenCardModal] = useState(false)
-  const [selectedCard, setSelectedCard] = useState<CustomerCard | undefined>(
-    undefined
-  )
-  const [statusFilter, setStatusFilter] = useState<OrderStatusFilter>("all")
-  const [cancelDialogOpen, setCancelDialogOpen] = useState(false)
-  const [orderToCancel, setOrderToCancel] = useState<OrderEntity | null>(null)
-  const [cancelling, setCancelling] = useState(false)
+  const [selectedCard, setSelectedCard] = useState<CustomerCard | undefined>(undefined)
 
-  const handleCopyOrderId = async (orderId: string) => {
+  // Login form state
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [loginError, setLoginError] = useState("")
+  const [loginLoading, setLoginLoading] = useState(false)
+
+  // Filter state
+  const [phoneNumber, setPhoneNumber] = useState("")
+  const [orderId, setOrderId] = useState("")
+  const [customerName, setCustomerName] = useState("")
+
+  // Check authentication on mount
+  useEffect(() => {
+    checkAuth()
+  }, [])
+
+  const checkAuth = async () => {
     try {
-      await navigator.clipboard.writeText(orderId)
-      setSnackbar({ open: true, message: "Đã sao chép mã đơn hàng!" })
+      // Kiểm tra xem có token trong cookie không bằng cách gọi API
+      const response = await fetch("/api/admin/orders?page=1&pageSize=1")
+      if (response.ok) {
+        setIsAuthenticated(true)
+      } else {
+        setIsAuthenticated(false)
+      }
     } catch (err) {
-      console.error("Failed to copy:", err)
-      setSnackbar({ open: true, message: "Không thể sao chép mã đơn hàng" })
+      setIsAuthenticated(false)
+    } finally {
+      setIsLoadingAuth(false)
     }
   }
 
-  const fetchOrders = async (
-    targetPage: number,
-    status: OrderStatusFilter = statusFilter
-  ) => {
-    if (!customer) return
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoginError("")
+    setLoginLoading(true)
 
+    try {
+      const response = await fetch("/api/admin/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        setLoginError(data.error || "Đăng nhập thất bại")
+        return
+      }
+
+      setIsAuthenticated(true)
+      setEmail("")
+      setPassword("")
+      fetchOrders(1)
+    } catch (err: any) {
+      setLoginError(err.message || "Có lỗi xảy ra")
+    } finally {
+      setLoginLoading(false)
+    }
+  }
+
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/admin/logout", { method: "POST" })
+      setIsAuthenticated(false)
+      setOrders([])
+      setPagination(defaultPagination)
+    } catch (err) {
+      // Ignore error
+    }
+  }
+
+  const fetchOrders = async (targetPage: number) => {
     setLoading(true)
     setError("")
 
     try {
       const params = new URLSearchParams({
-        customerId: customer.documentId,
         page: targetPage.toString(),
         pageSize: pagination.pageSize.toString(),
       })
 
-      if (status && status !== "all") {
-        params.set("status", status)
-      }
+      if (phoneNumber) params.set("phoneNumber", phoneNumber)
+      if (orderId) params.set("orderId", orderId)
+      if (customerName) params.set("customerName", customerName)
 
-      const res = await fetch(`/api/orders?${params.toString()}`)
+      const res = await fetch(`/api/admin/orders?${params.toString()}`)
       const data = await res.json()
 
       if (!res.ok) {
+        if (res.status === 401) {
+          setIsAuthenticated(false)
+          return
+        }
         throw new Error(data?.error || "Không thể tải danh sách đơn hàng.")
       }
 
@@ -279,7 +326,6 @@ export default function OrdersPage() {
         setExpandedOrderId(null)
       }
     } catch (err: any) {
-      console.error("Failed to load orders", err)
       setError(err?.message || "Không thể tải danh sách đơn hàng.")
       setOrders([])
     } finally {
@@ -288,13 +334,10 @@ export default function OrdersPage() {
   }
 
   useEffect(() => {
-    if (customer?.documentId) {
-      fetchOrders(1, statusFilter)
-    } else {
-      setOrders([])
+    if (isAuthenticated) {
+      fetchOrders(1)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [customer?.documentId, statusFilter])
+  }, [isAuthenticated])
 
   const handlePageChange = (direction: "prev" | "next") => {
     const targetPage =
@@ -303,61 +346,22 @@ export default function OrdersPage() {
       targetPage < 1 ||
       targetPage > pagination.pageCount ||
       loading ||
-      !customer
+      !isAuthenticated
     ) {
       return
     }
-    fetchOrders(targetPage, statusFilter)
+    fetchOrders(targetPage)
   }
 
-  const handleOpenCancelDialog = (order: OrderEntity) => {
-    setOrderToCancel(order)
-    setCancelDialogOpen(true)
+  const handleSearch = () => {
+    fetchOrders(1)
   }
 
-  const handleCloseCancelDialog = () => {
-    if (!cancelling) {
-      setCancelDialogOpen(false)
-      setOrderToCancel(null)
-    }
-  }
-
-  const handleConfirmCancel = async () => {
-    if (!orderToCancel || !customer) return
-
-    setCancelling(true)
-    try {
-      const res = await fetch(
-        `/api/orders/${orderToCancel.documentId}/cancel`,
-        {
-          method: "PUT",
-        }
-      )
-
-      const data = await res.json()
-
-      if (!res.ok) {
-        throw new Error(data?.error || "Không thể hủy đơn hàng.")
-      }
-
-      setSnackbar({
-        open: true,
-        message: "Đã hủy đơn hàng thành công!",
-      })
-      setCancelDialogOpen(false)
-      setOrderToCancel(null)
-
-      // Refresh danh sách đơn hàng
-      await fetchOrders(pagination.page, statusFilter)
-    } catch (err: any) {
-      console.error("Failed to cancel order:", err)
-      setSnackbar({
-        open: true,
-        message: err?.message || "Không thể hủy đơn hàng.",
-      })
-    } finally {
-      setCancelling(false)
-    }
+  const handleReset = () => {
+    setPhoneNumber("")
+    setOrderId("")
+    setCustomerName("")
+    fetchOrders(1)
   }
 
   const renderOrderItems = (order: OrderEntity) => {
@@ -373,9 +377,6 @@ export default function OrdersPage() {
           const variant = item.variant
           const product = variant?.product || item.product
 
-          // Lấy ảnh variant nếu có, nếu không thì lấy ảnh product
-          // Ưu tiên formats.large hoặc url (default) để có chất lượng tốt hơn
-          // URL đã được transform bằng getFullLinkResource trong API route
           let imageSrc = "/logo.png"
           if (variant?.variant_image?.url) {
             imageSrc = variant.variant_image.url
@@ -394,13 +395,11 @@ export default function OrdersPage() {
             variant?.sale_price ?? product?.sale_price ?? 0
           )
           const quantity = toNumber(item.quantity)
-          const productSlug = product?.slug
 
           return (
-            <Link
+            <div
               key={item.id}
-              href={productSlug ? `/product/${productSlug}` : "#"}
-              className="flex flex-col pb-2 sm:pb-4 cursor-pointer"
+              className="flex flex-col pb-2 sm:pb-4"
               style={{ borderBottom: "1px solid #e0e0e0" }}
             >
               <div className="flex sm:space-x-6 space-x-4 w-full">
@@ -443,7 +442,7 @@ export default function OrdersPage() {
                   </p>
                 </div>
               </div>
-            </Link>
+            </div>
           )
         })}
       </div>
@@ -467,9 +466,6 @@ export default function OrdersPage() {
             const color = getCardColor(baseCard)
             const discount = toNumber(baseCard?.discount)
             const title = baseCard?.title || "Thẻ tích điểm"
-            const description = baseCard?.description
-            // Ưu tiên url (default) hoặc formats.large để có chất lượng tốt hơn
-            // URL đã được transform bằng getFullLinkResource trong API route
             const imageSrc = baseCard?.image?.url
               ? baseCard.image.url
               : baseCard?.image?.formats?.large?.url
@@ -547,8 +543,6 @@ export default function OrdersPage() {
             const color = getCardColor(baseCard)
             const discount = toNumber(baseCard?.discount)
             const title = baseCard?.title || "Thẻ tích điểm"
-            // Ưu tiên url (default) hoặc formats.large để có chất lượng tốt hơn
-            // URL đã được transform bằng getFullLinkResource trong API route
             const imageSrc = baseCard?.image?.url
               ? baseCard.image.url
               : baseCard?.image?.formats?.large?.url
@@ -657,52 +651,126 @@ export default function OrdersPage() {
     )
   }
 
+  if (isLoadingAuth) {
+    return (
+      <div className="container mx-auto px-3 sm:px-4 py-6 sm:py-8">
+        <div className="text-center py-12 sm:py-16">
+          <CircularProgress />
+        </div>
+      </div>
+    )
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="container mx-auto px-3 sm:px-4 py-6 sm:py-8 max-w-md">
+        <div className="bg-white border border-gray-200 rounded-lg p-6 sm:p-8 shadow-sm">
+          <h1 className="text-2xl font-bold text-gray-900 mb-6 text-center">
+            Đăng nhập đối soát
+          </h1>
+          <form onSubmit={handleLogin} className="space-y-4">
+            <TextField
+              fullWidth
+              label="Email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              disabled={loginLoading}
+              size="small"
+            />
+            <TextField
+              fullWidth
+              label="Mật khẩu"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              disabled={loginLoading}
+              size="small"
+            />
+            {loginError && (
+              <Alert severity="error" className="!text-sm">
+                {loginError}
+              </Alert>
+            )}
+            <Button
+              type="submit"
+              variant="contained"
+              fullWidth
+              disabled={loginLoading}
+              className="!bg-neutral-900 !text-white !normal-case !font-semibold !py-2.5"
+            >
+              {loginLoading ? "Đang đăng nhập..." : "Đăng nhập"}
+            </Button>
+          </form>
+        </div>
+      </div>
+    )
+  }
+
   return (
-    <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-8 max-w-6xl">
+    <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-8 max-w-7xl">
       <div className="mb-4 sm:mb-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
-          Đơn hàng của tôi
+          Đối soát đơn hàng
         </h1>
-        <p className="text-sm text-gray-500">
-          Theo dõi trạng thái và chi tiết từng đơn hàng của bạn
-        </p>
+        <Button
+          variant="outlined"
+          onClick={handleLogout}
+          startIcon={<LogoutIcon />}
+          className="!normal-case !font-semibold !text-neutral-900 !border-neutral-900"
+        >
+          Đăng xuất
+        </Button>
       </div>
 
-      <CustomerInfoEdit />
-
-      {customer && (
-        <div className="mt-6 mb-6">
-          <div className="flex flex-wrap gap-2">
-            {ORDER_STATUS_OPTIONS.map((option) => {
-              const isActive = statusFilter === option.value
-              return (
-                <button
-                  key={option.value}
-                  onClick={() => {
-                    if (statusFilter !== option.value) {
-                      setStatusFilter(option.value)
-                      setPagination((prev) => ({ ...prev, page: 1 }))
-                    }
-                  }}
-                  className={`px-3 sm:px-4 py-1.5 rounded-full text-sm font-semibold border transition-all ${
-                    isActive
-                      ? "bg-pink-600 text-white border-pink-600 shadow-sm"
-                      : "bg-white text-gray-600 border-gray-200 hover:border-gray-300"
-                  }`}
-                >
-                  {option.label}
-                </button>
-              )
-            })}
-          </div>
+      {/* Filter Section */}
+      <div className="bg-white border border-gray-200 rounded-lg p-4 sm:p-6 mb-6">
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">
+          Tìm kiếm & Lọc
+        </h2>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+          <TextField
+            label="Số điện thoại"
+            value={phoneNumber}
+            onChange={(e) => setPhoneNumber(e.target.value)}
+            size="small"
+            placeholder="0901234567"
+          />
+          <TextField
+            label="Mã đơn hàng"
+            value={orderId}
+            onChange={(e) => setOrderId(e.target.value)}
+            size="small"
+            placeholder="Nhập mã đơn hàng"
+          />
+          <TextField
+            label="Tên khách hàng"
+            value={customerName}
+            onChange={(e) => setCustomerName(e.target.value)}
+            size="small"
+            placeholder="Nhập tên khách hàng"
+          />
         </div>
-      )}
-
-      {!customer && (
-        <Alert severity="warning" className="mb-6">
-          Vui lòng nhập thông tin khách hàng để xem đơn hàng.
-        </Alert>
-      )}
+        <div className="flex gap-2">
+          <Button
+            variant="contained"
+            onClick={handleSearch}
+            startIcon={<SearchIcon />}
+            className="!bg-neutral-900 !text-white !normal-case !font-semibold"
+          >
+            Tìm kiếm
+          </Button>
+          <Button
+            variant="outlined"
+            onClick={handleReset}
+            className="!normal-case !font-semibold !text-neutral-900 !border-neutral-900"
+          >
+            Đặt lại
+          </Button>
+        </div>
+      </div>
 
       {error && (
         <Alert severity="error" className="mb-6">
@@ -719,36 +787,20 @@ export default function OrdersPage() {
             >
               <div className="flex flex-row items-center gap-3 sm:gap-6 justify-between p-4 sm:p-6">
                 <div className="flex-1 min-w-0 space-y-1.5">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <Skeleton variant="text" width={60} height={16} />
-                    <Skeleton
-                      variant="rectangular"
-                      width={120}
-                      height={28}
-                      className="rounded-md"
-                    />
-                    <Skeleton
-                      variant="rectangular"
-                      width={80}
-                      height={24}
-                      className="rounded"
-                    />
-                  </div>
+                  <Skeleton variant="text" width={60} height={16} />
                   <Skeleton variant="text" width={180} height={20} />
                 </div>
-                <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
-                  <Skeleton variant="circular" width={32} height={32} />
-                </div>
+                <Skeleton variant="circular" width={32} height={32} />
               </div>
             </div>
           ))}
         </div>
       )}
 
-      {!loading && customer && orders.length === 0 && !error && (
+      {!loading && orders.length === 0 && !error && (
         <div className="text-center py-12 sm:py-16 border border-dashed rounded-2xl bg-white">
-          <p className="text-sm sm:text-base text-gray-600 mb-3">
-            Bạn chưa có đơn hàng nào.
+          <p className="text-sm sm:text-base text-gray-600">
+            Không tìm thấy đơn hàng nào.
           </p>
         </div>
       )}
@@ -790,11 +842,11 @@ export default function OrdersPage() {
               className="border border-stone-200 rounded-2xl bg-white shadow-sm transition-shadow hover:shadow-md"
             >
               <div
-                // onClick={() =>
-                //   setExpandedOrderId((prev) =>
-                //     prev === order.id ? null : order.id
-                //   )
-                // }
+                onClick={() =>
+                  setExpandedOrderId((prev) =>
+                    prev === order.id ? null : order.id
+                  )
+                }
                 className="cursor-pointer flex flex-row items-center gap-3 sm:gap-6 justify-between p-4 sm:p-6"
               >
                 <div className="flex-1 min-w-0 space-y-1.5">
@@ -802,15 +854,9 @@ export default function OrdersPage() {
                     <p className="text-xs sm:text-sm text-gray-500 uppercase tracking-wide">
                       Mã đơn:
                     </p>
-                    <button
-                      onClick={() => handleCopyOrderId(order.documentId)}
-                      className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-pink-50 hover:bg-pink-100 transition-colors group"
-                    >
-                      <span className="text-xs sm:text-sm font-semibold uppercase text-pink-700">
-                        {order.documentId}
-                      </span>
-                      <ContentCopyIcon className="!w-4 !h-4 text-pink-600 opacity-70 group-hover:opacity-100 transition-opacity" />
-                    </button>
+                    <span className="text-xs sm:text-sm font-semibold text-pink-700">
+                      #{order.documentId}
+                    </span>
                     <span
                       className={`inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium ${statusInfo.bgColor} ${statusInfo.textColor} border ${statusInfo.borderColor}`}
                     >
@@ -820,6 +866,24 @@ export default function OrdersPage() {
                   <p className="text-sm sm:text-base text-gray-600 truncate">
                     Ngày đặt: {createdDate}
                   </p>
+                  {order.customer && (
+                    <div className="text-xs sm:text-sm text-gray-600 space-y-1">
+                      <p>
+                        <span className="font-semibold">Khách hàng:</span>{" "}
+                        {order.customer.full_name || "N/A"}
+                      </p>
+                      <p>
+                        <span className="font-semibold">SĐT:</span>{" "}
+                        {order.customer.phone_number || "N/A"}
+                      </p>
+                      {order.customer.address && (
+                        <p>
+                          <span className="font-semibold">Địa chỉ:</span>{" "}
+                          {order.customer.address}
+                        </p>
+                      )}
+                    </div>
+                  )}
                 </div>
                 <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
                   <IconButton
@@ -831,7 +895,7 @@ export default function OrdersPage() {
                     className={`transition-transform text-pink-700 hover:bg-pink-50 flex-shrink-0 ${
                       isExpanded ? "rotate-180" : ""
                     }`}
-                    size="medium"
+                    size="small"
                   >
                     <ExpandMoreRoundedIcon />
                   </IconButton>
@@ -849,32 +913,19 @@ export default function OrdersPage() {
                 <span className="font-semibold text-gray-900">
                   Tổng ({totalItems} sản phẩm)
                 </span>
-                <div className="flex items-center gap-3">
-                  {order.order_status === "pending_approval" && (
-                    <Button
-                      variant="outlined"
-                      color="error"
-                      size="small"
-                      onClick={() => handleOpenCancelDialog(order)}
-                      className="!normal-case !text-sm !font-semibold"
-                    >
-                      Hủy đơn
-                    </Button>
-                  )}
-                  <span className="font-bold text-pink-700 text-lg">
-                    {formatBigNumber(subtotal + shippingFee, true)}
-                  </span>
-                </div>
+                <span className="font-bold text-pink-700 text-lg">
+                  {formatBigNumber(subtotal + shippingFee, true)}
+                </span>
               </div>
             </div>
           )
         })}
       </div>
 
-      {customer && orders.length > 0 && (
+      {orders.length > 0 && (
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mt-6 border-t pt-4">
           <span className="text-sm text-gray-500">
-            Trang {pagination.page} / {pagination.pageCount}
+            Trang {pagination.page} / {pagination.pageCount} (Tổng: {pagination.total} đơn hàng)
           </span>
           <div className="flex items-center gap-2">
             <IconButton
@@ -902,68 +953,7 @@ export default function OrdersPage() {
         onClose={() => setOpenCardModal(false)}
         card={selectedCard}
       />
-
-      <Dialog
-        open={cancelDialogOpen}
-        onClose={handleCloseCancelDialog}
-        aria-labelledby="cancel-dialog-title"
-        aria-describedby="cancel-dialog-description"
-      >
-        <DialogTitle
-          id="cancel-dialog-title"
-          className="!font-semibold uppercase !my-4"
-        >
-          Xác nhận hủy đơn hàng
-        </DialogTitle>
-        <DialogContent>
-          <DialogContentText id="cancel-dialog-description">
-            Bạn có chắc chắn muốn hủy đơn hàng{" "}
-            <strong className="uppercase">{orderToCancel?.documentId}</strong>?
-            <br />
-            Hành động này không thể hoàn tác.
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions className="mx-3 mb-3">
-          <Button
-            onClick={handleCloseCancelDialog}
-            disabled={cancelling}
-            color="inherit"
-            className="!normal-case !font-semibold"
-          >
-            Hủy
-          </Button>
-          <Button
-            onClick={handleConfirmCancel}
-            variant="contained"
-            disabled={cancelling}
-            startIcon={cancelling ? <CircularProgress size={16} /> : null}
-            className="!bg-neutral-900 !text-white !normal-case !font-semibold"
-          >
-            {cancelling ? "Đang xử lý..." : "Đồng ý"}
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={2000}
-        onClose={() => setSnackbar({ ...snackbar, open: false })}
-        anchorOrigin={{ vertical: "top", horizontal: "center" }}
-      >
-        <Alert
-          icon={false}
-          onClose={() => setSnackbar({ ...snackbar, open: false })}
-          sx={{
-            width: "100%",
-            bgcolor: "#111",
-            color: "#fff",
-            fontWeight: 600,
-            borderRadius: "999px",
-          }}
-        >
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
     </div>
   )
 }
+

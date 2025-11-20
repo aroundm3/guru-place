@@ -2,15 +2,13 @@
 
 import { Fragment, useEffect, useState } from "react"
 import { Brand, Category, ProductListBlock } from "types/global"
-import { Button, Collapse, Skeleton } from "@mui/material"
+import { Button } from "@mui/material"
 import useGetListBrandByCategory from "../_hooks/useGetListBrandByCategory"
 import Link from "next/link"
 import PlayArrowRoundedIcon from "@mui/icons-material/PlayArrowRounded"
-import Image from "next/image"
 import SortRoundedIcon from "@mui/icons-material/SortRounded"
 import FilterMobile from "./FilterMobile"
 import { usePathname } from "next/navigation"
-import CardGiftcardRoundedIcon from "@mui/icons-material/CardGiftcardRounded"
 
 interface FilterProps {
   brands: Brand[]
@@ -73,7 +71,7 @@ export default function Filter({
           <SortRoundedIcon className="!h-5 my-auto" />
         </Button>
       </div>
-      <div className="bg-[#fffdf8] border border-stone-300 sm:min-w-[200px] sm:flex hidden flex-col p-4 rounded h-fit pb-10 sticky top-24">
+      <div className="bg-[#fffdf8] border border-stone-300 sm:min-w-[250px] sm:flex hidden flex-col p-4 rounded h-fit pb-10 sticky top-24">
         <span className="text-md font-semibold text-stone-600">
           Bộ lọc sản phẩm
         </span>
@@ -170,50 +168,6 @@ export default function Filter({
                       )}
                       <span>{category.name}</span>
                     </Link>
-                    {/* brand of category */}
-                    <Collapse
-                      in={currentCategory?.documentId === category.documentId}
-                    >
-                      <div className="ml-1 mt-2 flex flex-col space-y-2">
-                        {listBrandToDisplay.map((brand) => {
-                          return (
-                            <div
-                              key={brand.documentId}
-                              className="flex flex-col space-y-1.5 text-gray-600 hover:text-gray-700 duration-300 cursor-pointer"
-                            >
-                              <div className="flex space-x-2 items-center">
-                                <Link
-                                  href={
-                                    currentCategory
-                                      ? `/brand&category_${currentCategory.slug}_${brand.slug}`
-                                      : `/brand_${brand.slug}`
-                                  }
-                                  className={`text-xs flex space-x-1 items-center pl-5 duration-300 ${
-                                    currentBrand?.documentId ===
-                                    brand.documentId
-                                      ? "font-semibold text-pink-700"
-                                      : "font-normal duration-300 hover:text-stone-500 "
-                                  }`}
-                                >
-                                  <span className="uppercase">
-                                    {brand.name}
-                                  </span>
-                                  <Image
-                                    src={brand.logo}
-                                    alt={brand.name}
-                                    height={0}
-                                    width={0}
-                                    className="h-3.5 w-3.5 object-cover my-auto rounded-full"
-                                    loading="eager"
-                                    sizes="80vw"
-                                  />
-                                </Link>
-                              </div>
-                            </div>
-                          )
-                        })}
-                      </div>
-                    </Collapse>
                   </div>
                 </div>
               )

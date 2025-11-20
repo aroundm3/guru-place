@@ -834,5 +834,44 @@ export default factories.createCoreController(
         });
       }
     },
+    async update(ctx) {
+      try {
+        const { id } = ctx.params;
+        const { data } = ctx.request.body;
+
+        if (!id) {
+          return ctx.badRequest("Order ID is required");
+        }
+
+        if (!data) {
+          return ctx.badRequest("Data is required");
+        }
+
+        // Update order bằng id
+        const updatedOrder = await strapi.entityService.update(
+          "api::order.order",
+          id,
+          {
+            data,
+          }
+        );
+
+        // Publish order nếu cần
+        if (updatedOrder) {
+          await strapi.documents("api::order.order").publish({
+            documentId: updatedOrder.documentId,
+          });
+        }
+
+        ctx.body = {
+          data: updatedOrder,
+        };
+      } catch (error: any) {
+        strapi.log.error("Update order error:", error);
+        return ctx.internalServerError("Failed to update order", {
+          error: error?.message || String(error),
+        });
+      }
+    },
   })
 );

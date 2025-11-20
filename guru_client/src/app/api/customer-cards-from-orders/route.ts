@@ -10,9 +10,10 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    // Fetch tất cả orders của customer (không phân trang để lấy hết)
+    // Fetch tất cả orders của customer có trạng thái completed (không phân trang để lấy hết)
     const params = new URLSearchParams()
     params.set("filters[customer][documentId][$eq]", customerId)
+    params.set("filters[order_status][$eq]", "completed") // Chỉ lấy orders có trạng thái completed
     params.set("pagination[page]", "1")
     params.set("pagination[pageSize]", "1000") // Lấy tối đa 1000 orders
     params.set("sort", "createdAt:desc")

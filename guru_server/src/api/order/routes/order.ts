@@ -36,5 +36,11 @@ export default {
       handler: "order.checkout",
       config: AUTH_CONFIG,
     },
+    {
+      method: "PUT",
+      path: "/orders/:id",
+      handler: "order.update",
+      config: AUTH_CONFIG,
+    },
   ],
 };
