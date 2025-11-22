@@ -95,6 +95,10 @@
       "relation": "manyToMany",
       "target": "api::blog.blog",
       "mappedBy": "products"
+    },
+    "isService": {
+      "type": "boolean",
+      "default": false
     }
   }
 }

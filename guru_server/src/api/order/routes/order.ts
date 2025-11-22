@@ -31,6 +31,12 @@ export default {
       config: AUTH_CONFIG,
     },
     {
+      method: "GET",
+      path: "/order/detail/:documentId",
+      handler: "order.getByDocumentId",
+      config: AUTH_CONFIG,
+    },
+    {
       method: "POST",
       path: "/order/checkout",
       handler: "order.checkout",

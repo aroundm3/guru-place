@@ -276,6 +276,92 @@ export default factories.createCoreController(
         });
       }
     },
+    async getByDocumentId(ctx) {
+      try {
+        const documentId = ctx.params.documentId as string;
+
+        if (!documentId) {
+          return ctx.badRequest("documentId is required");
+        }
+
+        // Tìm order bằng documentId sử dụng documents API
+        const order = await strapi.documents("api::order.order").findOne({
+          documentId: documentId,
+        });
+
+        if (!order) {
+          return ctx.notFound("Order not found");
+        }
+
+        const orderId = order.id;
+
+        // Lấy customerId từ order (có thể là id hoặc object, nhưng documents API không populate)
+        const orderWithCustomer = order as any;
+        let customerId: number | null = null;
+        if (orderWithCustomer.customer) {
+          const customerRef = orderWithCustomer.customer;
+          if (typeof customerRef === "object" && customerRef?.id) {
+            customerId = customerRef.id;
+          } else if (typeof customerRef === "number") {
+            customerId = customerRef;
+          }
+        }
+
+        // Fetch customer, order_items và customer_cards với populate đầy đủ
+        const [customer, orderItems, orderCustomerCards] = await Promise.all([
+          customerId
+            ? strapi.entityService.findOne("api::customer.customer", customerId)
+            : Promise.resolve(null),
+          strapi.entityService.findMany("api::order-item.order-item", {
+            filters: {
+              order: {
+                id: orderId,
+              },
+            },
+            populate: {
+              variant: {
+                populate: ["product", "variant_image"],
+              },
+            },
+            limit: 1000,
+          }),
+          strapi.entityService.findMany(
+            "api::order-customer-card.order-customer-card",
+            {
+              filters: {
+                order: {
+                  id: orderId,
+                },
+              },
+              populate: {
+                customer_card: {
+                  populate: ["image"],
+                },
+              },
+              limit: 1000,
+            }
+          ),
+        ]);
+
+        const enrichedOrder = {
+          ...order,
+          customer: customer || null,
+          order_items: Array.isArray(orderItems) ? orderItems : [],
+          order_customer_cards: Array.isArray(orderCustomerCards)
+            ? orderCustomerCards
+            : [],
+        };
+
+        ctx.body = {
+          data: enrichedOrder,
+        };
+      } catch (error: any) {
+        strapi.log.error("Error fetching order by documentId:", error);
+        return ctx.internalServerError("Failed to fetch order", {
+          error: error?.message || String(error),
+        });
+      }
+    },
     async checkout(ctx) {
       try {
         strapi.log.info("Checkout request received:", ctx.request.body);
