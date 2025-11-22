@@ -16,6 +16,7 @@ import {
   DialogContent,
   DialogActions,
   DialogContentText,
+  Snackbar,
 } from "@mui/material"
 import SearchIcon from "@mui/icons-material/Search"
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft"
@@ -23,6 +24,7 @@ import ChevronRightIcon from "@mui/icons-material/ChevronRight"
 import LogoutIcon from "@mui/icons-material/Logout"
 import VisibilityIcon from "@mui/icons-material/Visibility"
 import SwapHorizIcon from "@mui/icons-material/SwapHoriz"
+import ContentCopyIcon from "@mui/icons-material/ContentCopy"
 
 import {
   getCardBgClasses,
@@ -96,6 +98,10 @@ export default function CustomersContent() {
   // Filter state
   const [phoneNumber, setPhoneNumber] = useState("")
   const [customerName, setCustomerName] = useState("")
+
+  // Snackbar state for copy notification
+  const [snackbarOpen, setSnackbarOpen] = useState(false)
+  const [snackbarMessage, setSnackbarMessage] = useState("")
 
   // Function để update URL query params
   const updateURLParams = (updates: {
@@ -295,6 +301,18 @@ export default function CustomersContent() {
     }
   }
 
+  const handleCopy = async (text: string, label: string) => {
+    try {
+      await navigator.clipboard.writeText(text)
+      setSnackbarMessage(`Đã copy ${label}`)
+      setSnackbarOpen(true)
+    } catch (error) {
+      console.error("Failed to copy:", error)
+      setSnackbarMessage("Không thể copy")
+      setSnackbarOpen(true)
+    }
+  }
+
   const handleOpenExchangeDialog = (cardItem: {
     card: any
     quantity: number
@@ -453,17 +471,44 @@ export default function CustomersContent() {
                           ID:
                         </p>
                         <span className="text-xs uppercase sm:text-sm font-semibold text-pink-700">
-                          #{customer.documentId}
+                          {customer.documentId}
                         </span>
+                        <IconButton
+                          size="small"
+                          onClick={() =>
+                            handleCopy(customer.documentId, "mã đơn")
+                          }
+                          className="!p-1 !h-6 !w-6"
+                          title="Copy mã đơn"
+                        >
+                          <ContentCopyIcon className="!h-3 !w-3 text-gray-500 hover:text-gray-700" />
+                        </IconButton>
                       </div>
                       <p className="text-sm sm:text-base font-semibold text-gray-900">
                         {customer.full_name || "N/A"}
                       </p>
                       <div className="text-xs sm:text-sm text-gray-600 space-y-1">
-                        <p>
-                          <span className="font-semibold">SĐT:</span>{" "}
-                          {customer.phone_number || "N/A"}
-                        </p>
+                        <div className="flex items-center gap-2">
+                          <p>
+                            <span className="font-semibold">SĐT:</span>{" "}
+                            {customer.phone_number || "N/A"}
+                          </p>
+                          {customer.phone_number && (
+                            <IconButton
+                              size="small"
+                              onClick={() =>
+                                handleCopy(
+                                  customer.phone_number || "",
+                                  "số điện thoại"
+                                )
+                              }
+                              className="!p-1 !h-5 !w-5"
+                              title="Copy số điện thoại"
+                            >
+                              <ContentCopyIcon className="!h-3 !w-3 text-gray-500 hover:text-gray-700" />
+                            </IconButton>
+                          )}
+                        </div>
                         {customer.address && (
                           <p>
                             <span className="font-semibold">Địa chỉ:</span>{" "}
@@ -573,7 +618,7 @@ export default function CustomersContent() {
                 {customerCards.map((item, index) => {
                   const card = item.card
                   const quantity = item.quantity
-                  const color = getCardColor(card.index || 0)
+                  const color = getCardColor(card)
                   const title = card.title || "N/A"
                   const discount = Number(card.discount || 0)
                   const imageSrc = card.image?.default || "/logo.png"
@@ -733,6 +778,15 @@ export default function CustomersContent() {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Snackbar for copy notification */}
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={2000}
+        onClose={() => setSnackbarOpen(false)}
+        message={snackbarMessage}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      />
     </div>
   )
 }

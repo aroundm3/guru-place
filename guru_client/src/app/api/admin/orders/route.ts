@@ -39,9 +39,21 @@ export async function GET(request: NextRequest) {
     params.set("pageSize", pageSize)
     params.set("sort", "id:DESC") // hoặc createdAt:DESC tùy preference
 
-    // Populate relations - Content Manager API format
-    // Có thể dùng populate=* hoặc specify cụ thể
-    params.set("populate", "*")
+    // Populate nested relations trực tiếp trong query chính (join bảng)
+    params.set("populate[customer]", "true")
+    params.set(
+      "populate[order_items][populate][variant][populate][product]",
+      "true"
+    )
+    params.set(
+      "populate[order_items][populate][variant][populate][variant_image]",
+      "true"
+    )
+    params.set("populate[order_items][populate][product]", "true")
+    params.set(
+      "populate[order_customer_cards][populate][customer_card][populate][image]",
+      "true"
+    )
 
     // Build filters - Content Manager API dùng format filters[key][operator]
     if (phoneNumber) {
@@ -102,210 +114,96 @@ export async function GET(request: NextRequest) {
     const ordersData = orders.results || orders.data || []
     const paginationMeta = orders.pagination || orders.meta?.pagination
 
-    // Fetch thêm order_items và customer_cards với populate đầy đủ (vì populate=* chỉ populate cấp 1)
-    if (ordersData && ordersData.length > 0) {
-      const orderIds = ordersData.map((order: any) => order.id)
-
-      // Fetch order_items và customer_cards với filter trực tiếp theo orderIds (join hợp lý)
-      // Sử dụng $in operator để filter ngay trong query, không fetch tất cả rồi filter
-      const [allOrderItems, allOrderCards] = await Promise.all([
-        // Fetch order_items với filter theo orderIds sử dụng $in operator
-        (async () => {
-          try {
-            const itemsParams = new URLSearchParams()
-            itemsParams.set("populate", "*")
-            // Filter theo orderIds sử dụng $in để join hợp lý
-            orderIds.forEach((orderId: number, index: number) => {
-              itemsParams.set(
-                `filters[order][id][$in][${index}]`,
-                orderId.toString()
-              )
-            })
-
-            const itemsResponse = await fetch(
-              `${BASE_URL}/content-manager/collection-types/api::order-item.order-item?${itemsParams.toString()}`,
-              {
-                method: "GET",
-                headers: {
-                  "Content-Type": "application/json",
-                  Authorization: `Bearer ${adminToken}`,
-                },
-                cache: "no-store",
-              }
-            )
-
-            if (itemsResponse.ok) {
-              const itemsData = await itemsResponse.json()
-              return itemsData.results || itemsData.data || []
+    // Data đã được populate trực tiếp từ query chính (join bảng), không cần fetch riêng
+    // Transform data để xử lý ảnh bằng getFullLinkResource
+    const transformedData = ordersData.map((order: any) => {
+      // Transform order_items - xử lý variant_image
+      const transformedOrderItems = (order.order_items || []).map(
+        (item: any) => {
+          if (item.variant?.variant_image) {
+            const variantImage = item.variant.variant_image
+            item.variant.variant_image = {
+              ...variantImage,
+              url: variantImage.url
+                ? getFullLinkResource(variantImage.url)
+                : variantImage.url,
+              formats: variantImage.formats
+                ? {
+                    ...variantImage.formats,
+                    thumbnail: variantImage.formats.thumbnail
+                      ? {
+                          ...variantImage.formats.thumbnail,
+                          url: getFullLinkResource(
+                            variantImage.formats.thumbnail.url
+                          ),
+                        }
+                      : undefined,
+                    small: variantImage.formats.small
+                      ? {
+                          ...variantImage.formats.small,
+                          url: getFullLinkResource(
+                            variantImage.formats.small.url
+                          ),
+                        }
+                      : undefined,
+                  }
+                : null,
             }
-          } catch (error) {
-            console.error("Error fetching order items:", error)
           }
-          return []
-        })(),
-
-        // Fetch customer_cards với filter theo orderIds sử dụng $in operator
-        (async () => {
-          try {
-            const cardsParams = new URLSearchParams()
-            cardsParams.set("populate", "*")
-            // Filter theo orderIds sử dụng $in để join hợp lý
-            orderIds.forEach((orderId: number, index: number) => {
-              cardsParams.set(
-                `filters[order][id][$in][${index}]`,
-                orderId.toString()
-              )
-            })
-
-            const cardsResponse = await fetch(
-              `${BASE_URL}/content-manager/collection-types/api::order-customer-card.order-customer-card?${cardsParams.toString()}`,
-              {
-                method: "GET",
-                headers: {
-                  "Content-Type": "application/json",
-                  Authorization: `Bearer ${adminToken}`,
-                },
-                cache: "no-store",
-              }
-            )
-
-            if (cardsResponse.ok) {
-              const cardsData = await cardsResponse.json()
-              return cardsData.results || cardsData.data || []
-            }
-          } catch (error) {
-            console.error("Error fetching order customer cards:", error)
-          }
-          return []
-        })(),
-      ])
-
-      // Map order_items và customer_cards vào từng order
-      const enrichedOrders = ordersData.map((order: any) => {
-        const orderItems = (allOrderItems || []).filter((item: any) => {
-          const itemOrderId = item.order?.id || item.order
-          return itemOrderId === order.id
-        })
-        const orderCards = (allOrderCards || []).filter((card: any) => {
-          const cardOrderId = card.order?.id || card.order
-          return cardOrderId === order.id
-        })
-
-        return {
-          ...order,
-          order_items:
-            orderItems.length > 0 ? orderItems : order.order_items || [],
-          order_customer_cards:
-            orderCards.length > 0
-              ? orderCards
-              : order.order_customer_cards || [],
+          return item
         }
-      })
+      )
 
-      // Transform data để xử lý ảnh bằng getFullLinkResource
-      const transformedData = enrichedOrders.map((order: any) => {
-        // Transform order_items - xử lý variant_image
-        const transformedOrderItems = (order.order_items || []).map(
-          (item: any) => {
-            if (item.variant?.variant_image) {
-              const variantImage = item.variant.variant_image
-              item.variant.variant_image = {
-                ...variantImage,
-                url: variantImage.url
-                  ? getFullLinkResource(variantImage.url)
-                  : variantImage.url,
-                formats: variantImage.formats
-                  ? {
-                      ...variantImage.formats,
-                      thumbnail: variantImage.formats.thumbnail
-                        ? {
-                            ...variantImage.formats.thumbnail,
-                            url: getFullLinkResource(
-                              variantImage.formats.thumbnail.url
-                            ),
-                          }
-                        : undefined,
-                      small: variantImage.formats.small
-                        ? {
-                            ...variantImage.formats.small,
-                            url: getFullLinkResource(
-                              variantImage.formats.small.url
-                            ),
-                          }
-                        : undefined,
-                    }
-                  : null,
-              }
+      // Transform order_customer_cards - xử lý customer_card.image
+      const transformedOrderCards = (order.order_customer_cards || []).map(
+        (card: any) => {
+          if (card.customer_card?.image) {
+            const cardImage = card.customer_card.image
+            card.customer_card.image = {
+              ...cardImage,
+              url: cardImage.url
+                ? getFullLinkResource(cardImage.url)
+                : cardImage.url,
+              formats: cardImage.formats
+                ? {
+                    ...cardImage.formats,
+                    thumbnail: cardImage.formats.thumbnail
+                      ? {
+                          ...cardImage.formats.thumbnail,
+                          url: getFullLinkResource(
+                            cardImage.formats.thumbnail.url
+                          ),
+                        }
+                      : undefined,
+                    small: cardImage.formats.small
+                      ? {
+                          ...cardImage.formats.small,
+                          url: getFullLinkResource(cardImage.formats.small.url),
+                        }
+                      : undefined,
+                  }
+                : null,
             }
-            return item
           }
-        )
-
-        // Transform order_customer_cards - xử lý customer_card.image
-        const transformedOrderCards = (order.order_customer_cards || []).map(
-          (card: any) => {
-            if (card.customer_card?.image) {
-              const cardImage = card.customer_card.image
-              card.customer_card.image = {
-                ...cardImage,
-                url: cardImage.url
-                  ? getFullLinkResource(cardImage.url)
-                  : cardImage.url,
-                formats: cardImage.formats
-                  ? {
-                      ...cardImage.formats,
-                      thumbnail: cardImage.formats.thumbnail
-                        ? {
-                            ...cardImage.formats.thumbnail,
-                            url: getFullLinkResource(
-                              cardImage.formats.thumbnail.url
-                            ),
-                          }
-                        : undefined,
-                      small: cardImage.formats.small
-                        ? {
-                            ...cardImage.formats.small,
-                            url: getFullLinkResource(
-                              cardImage.formats.small.url
-                            ),
-                          }
-                        : undefined,
-                    }
-                  : null,
-              }
-            }
-            return card
-          }
-        )
-
-        return {
-          ...order,
-          order_items: transformedOrderItems,
-          order_customer_cards: transformedOrderCards,
+          return card
         }
-      })
+      )
 
-      return NextResponse.json({
-        data: transformedData,
-        meta: {
-          pagination: paginationMeta || {
-            page: parseInt(page),
-            pageSize: parseInt(pageSize),
-            pageCount: 1,
-            total: transformedData.length,
-          },
-        },
-      })
-    }
+      return {
+        ...order,
+        order_items: transformedOrderItems,
+        order_customer_cards: transformedOrderCards,
+      }
+    })
 
     return NextResponse.json({
-      data: [],
+      data: transformedData,
       meta: {
         pagination: paginationMeta || {
           page: parseInt(page),
           pageSize: parseInt(pageSize),
-          pageCount: 0,
-          total: 0,
+          pageCount: 1,
+          total: transformedData.length,
         },
       },
     })

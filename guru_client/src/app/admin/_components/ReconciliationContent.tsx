@@ -24,6 +24,7 @@ import {
   Select,
   FormControl,
   InputLabel,
+  Snackbar,
 } from "@mui/material"
 import { DatePicker } from "@mui/x-date-pickers/DatePicker"
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider"
@@ -35,6 +36,7 @@ import ChevronRightIcon from "@mui/icons-material/ChevronRight"
 import LogoutIcon from "@mui/icons-material/Logout"
 import ReceiptIcon from "@mui/icons-material/Receipt"
 import PrintIcon from "@mui/icons-material/Print"
+import ContentCopyIcon from "@mui/icons-material/ContentCopy"
 import {
   getCardBgClasses,
   getCardBadgeClasses,
@@ -246,6 +248,10 @@ export default function ReconciliationContent() {
   const [statusFilter, setStatusFilter] = useState<OrderStatus | "all">("all")
   const [dateFrom, setDateFrom] = useState<Dayjs | null>(null)
   const [dateTo, setDateTo] = useState<Dayjs | null>(null)
+
+  // Snackbar state for copy notification
+  const [snackbarOpen, setSnackbarOpen] = useState(false)
+  const [snackbarMessage, setSnackbarMessage] = useState("")
 
   // Function để update URL query params
   const updateURLParams = (updates: {
@@ -498,6 +504,18 @@ export default function ReconciliationContent() {
       dateTo: null,
       page: 1,
     })
+  }
+
+  const handleCopy = async (text: string, label: string) => {
+    try {
+      await navigator.clipboard.writeText(text)
+      setSnackbarMessage(`Đã copy ${label}`)
+      setSnackbarOpen(true)
+    } catch (error) {
+      console.error("Failed to copy:", error)
+      setSnackbarMessage("Không thể copy")
+      setSnackbarOpen(true)
+    }
   }
 
   const fetchOrderDetail = async (
@@ -1140,8 +1158,18 @@ export default function ReconciliationContent() {
                           Mã đơn:
                         </p>
                         <span className="text-xs !uppercase sm:text-sm font-semibold text-pink-700">
-                          #{order.documentId}
+                          {order.documentId}
                         </span>
+                        <IconButton
+                          size="small"
+                          onClick={() =>
+                            handleCopy(order.documentId, "mã đơn hàng")
+                          }
+                          className="!p-1 !h-6 !w-6"
+                          title="Copy mã đơn hàng"
+                        >
+                          <ContentCopyIcon className="!h-3 !w-3 text-gray-500 hover:text-gray-700" />
+                        </IconButton>
                         <span
                           className={`inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium ${statusInfo.bgColor} ${statusInfo.textColor} border ${statusInfo.borderColor}`}
                         >
@@ -1157,10 +1185,27 @@ export default function ReconciliationContent() {
                             <span className="font-semibold">Khách hàng:</span>{" "}
                             {order.customer.full_name || "N/A"}
                           </p>
-                          <p>
-                            <span className="font-semibold">SĐT:</span>{" "}
-                            {order.customer.phone_number || "N/A"}
-                          </p>
+                          <div className="flex items-center gap-2">
+                            <p>
+                              <span className="font-semibold">SĐT:</span>{" "}
+                              {order.customer.phone_number || "N/A"}
+                            </p>
+                            {order.customer.phone_number && (
+                              <IconButton
+                                size="small"
+                                onClick={() =>
+                                  handleCopy(
+                                    order.customer.phone_number || "",
+                                    "số điện thoại"
+                                  )
+                                }
+                                className="!p-1 !h-5 !w-5"
+                                title="Copy số điện thoại"
+                              >
+                                <ContentCopyIcon className="!h-3 !w-3 text-gray-500 hover:text-gray-700" />
+                              </IconButton>
+                            )}
+                          </div>
                           {order.customer.address && (
                             <p>
                               <span className="font-semibold">Địa chỉ:</span>{" "}
@@ -1566,22 +1611,40 @@ export default function ReconciliationContent() {
                   Chi tiết đơn hàng
                 </h2>
                 <div className="overflow-x-auto">
-                  <table className="w-full border-collapse border border-gray-300" style={{ tableLayout: "auto" }}>
+                  <table
+                    className="w-full border-collapse border border-gray-300"
+                    style={{ tableLayout: "auto" }}
+                  >
                     <thead>
                       <tr className="bg-gray-100">
-                        <th className="border border-gray-300 p-2 text-left" style={{ width: "5%" }}>
+                        <th
+                          className="border border-gray-300 p-2 text-left"
+                          style={{ width: "5%" }}
+                        >
                           STT
                         </th>
-                        <th className="border border-gray-300 p-2 text-left" style={{ width: "45%" }}>
+                        <th
+                          className="border border-gray-300 p-2 text-left"
+                          style={{ width: "45%" }}
+                        >
                           Tên sản phẩm
                         </th>
-                        <th className="border border-gray-300 p-2 text-center" style={{ width: "10%" }}>
+                        <th
+                          className="border border-gray-300 p-2 text-center"
+                          style={{ width: "10%" }}
+                        >
                           Số lượng
                         </th>
-                        <th className="border border-gray-300 p-2 text-right" style={{ width: "20%" }}>
+                        <th
+                          className="border border-gray-300 p-2 text-right"
+                          style={{ width: "20%" }}
+                        >
                           Đơn giá
                         </th>
-                        <th className="border border-gray-300 p-2 text-right" style={{ width: "20%" }}>
+                        <th
+                          className="border border-gray-300 p-2 text-right"
+                          style={{ width: "20%" }}
+                        >
                           Thành tiền
                         </th>
                       </tr>
@@ -1614,10 +1677,16 @@ export default function ReconciliationContent() {
                               <td className="border border-gray-300 p-2 text-center">
                                 {quantity}
                               </td>
-                              <td className="border border-gray-300 p-2 text-right" style={{ whiteSpace: "nowrap" }}>
+                              <td
+                                className="border border-gray-300 p-2 text-right"
+                                style={{ whiteSpace: "nowrap" }}
+                              >
                                 {formatBigNumber(unitPrice, true)}
                               </td>
-                              <td className="border border-gray-300 p-2 text-right" style={{ whiteSpace: "nowrap" }}>
+                              <td
+                                className="border border-gray-300 p-2 text-right"
+                                style={{ whiteSpace: "nowrap" }}
+                              >
                                 {formatBigNumber(total, true)}
                               </td>
                             </tr>
@@ -1632,10 +1701,15 @@ export default function ReconciliationContent() {
               {/* Order Summary */}
               <div className="mb-6">
                 <div className="flex justify-end">
-                  <div className="space-y-2" style={{ minWidth: "300px", maxWidth: "400px" }}>
+                  <div
+                    className="space-y-2"
+                    style={{ minWidth: "300px", maxWidth: "400px" }}
+                  >
                     <div className="flex justify-between text-sm">
                       <span>Tiền hàng:</span>
-                      <span style={{ whiteSpace: "nowrap", marginLeft: "10px" }}>
+                      <span
+                        style={{ whiteSpace: "nowrap", marginLeft: "10px" }}
+                      >
                         {formatBigNumber(
                           (selectedOrderForInvoice.order_items || []).reduce(
                             (sum, item) => {
@@ -1656,7 +1730,9 @@ export default function ReconciliationContent() {
                     </div>
                     <div className="flex justify-between text-sm">
                       <span>Phí vận chuyển:</span>
-                      <span style={{ whiteSpace: "nowrap", marginLeft: "10px" }}>
+                      <span
+                        style={{ whiteSpace: "nowrap", marginLeft: "10px" }}
+                      >
                         {toNumber(selectedOrderForInvoice.shipping_fee) === 0
                           ? "Miễn phí"
                           : formatBigNumber(
@@ -1667,7 +1743,10 @@ export default function ReconciliationContent() {
                     </div>
                     <div className="flex justify-between text-lg font-bold border-t pt-2">
                       <span>Tổng cộng:</span>
-                      <span className="text-pink-700" style={{ whiteSpace: "nowrap", marginLeft: "10px" }}>
+                      <span
+                        className="text-pink-700"
+                        style={{ whiteSpace: "nowrap", marginLeft: "10px" }}
+                      >
                         {formatBigNumber(
                           (selectedOrderForInvoice.order_items || []).reduce(
                             (sum, item) => {
@@ -1698,6 +1777,15 @@ export default function ReconciliationContent() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Snackbar for copy notification */}
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={2000}
+        onClose={() => setSnackbarOpen(false)}
+        message={snackbarMessage}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      />
     </div>
   )
 }
