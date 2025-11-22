@@ -1,19 +1,28 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
-import { Tabs, Tab, Box, Button, TextField, Alert, CircularProgress } from "@mui/material"
+import {
+  Tabs,
+  Tab,
+  Box,
+  Button,
+  TextField,
+  Alert,
+  CircularProgress,
+} from "@mui/material"
 import LogoutIcon from "@mui/icons-material/Logout"
 import ReconciliationContent from "./_components/ReconciliationContent"
 import CustomersContent from "./_components/CustomersContent"
 
 type TabValue = "orders" | "customers"
 
-export default function AdminPage() {
+function AdminPageContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
-  const initialTab = (searchParams.get("tab") as TabValue) || "orders"
-  const [currentTab, setCurrentTab] = useState<TabValue>(initialTab)
+  // Chỉ đọc từ URL, không dùng state
+  const currentTab = (searchParams.get("tab") as TabValue) || "orders"
+
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [isLoadingAuth, setIsLoadingAuth] = useState(true)
   const [email, setEmail] = useState("")
@@ -27,9 +36,10 @@ export default function AdminPage() {
 
   const checkAuth = async () => {
     try {
-      const response = await fetch("/api/admin/orders?page=1&pageSize=1")
+      const response = await fetch("/api/admin/check-auth")
       if (response.ok) {
-        setIsAuthenticated(true)
+        const data = await response.json()
+        setIsAuthenticated(data.authenticated === true)
       } else {
         setIsAuthenticated(false)
       }
@@ -80,9 +90,11 @@ export default function AdminPage() {
     }
   }
 
-  const handleTabChange = (_event: React.SyntheticEvent, newValue: TabValue) => {
-    setCurrentTab(newValue)
-    // Reset filters khi chuyển tab - chỉ giữ lại tab param
+  const handleTabChange = (
+    _event: React.SyntheticEvent,
+    newValue: TabValue
+  ) => {
+    // Chỉ update URL, components sẽ tự lắng nghe từ URL
     router.push(`/admin?tab=${newValue}`, { scroll: false })
   }
 
@@ -181,14 +193,25 @@ export default function AdminPage() {
       </div>
 
       <Box sx={{ mt: 3 }}>
-        {currentTab === "orders" && (
-          <ReconciliationContent key="orders" />
-        )}
-        {currentTab === "customers" && (
-          <CustomersContent key="customers" />
-        )}
+        {currentTab === "orders" && <ReconciliationContent key="orders" />}
+        {currentTab === "customers" && <CustomersContent key="customers" />}
       </Box>
     </div>
   )
 }
 
+export default function AdminPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="container mx-auto px-3 sm:px-4 py-6 sm:py-8">
+          <div className="text-center py-12 sm:py-16">
+            <CircularProgress />
+          </div>
+        </div>
+      }
+    >
+      <AdminPageContent />
+    </Suspense>
+  )
+}

@@ -429,6 +429,10 @@ export default function ReconciliationContent() {
   useEffect(() => {
     if (!isAuthenticated) return
 
+    // Chỉ fetch khi tab là "orders" hoặc không có tab (default là orders)
+    const currentTab = searchParams.get("tab") || "orders"
+    if (currentTab !== "orders") return
+
     // Lấy các filter params hiện tại (bỏ qua tab param)
     const currentFilters = JSON.stringify({
       phoneNumber: searchParams.get("phoneNumber") || "",
@@ -1408,6 +1412,10 @@ export default function ReconciliationContent() {
           dangerouslySetInnerHTML={{
             __html: `
             @media print {
+              @page {
+                size: A3 landscape;
+                margin: 5mm;
+              }
               body * {
                 visibility: hidden;
               }
@@ -1419,8 +1427,25 @@ export default function ReconciliationContent() {
                 position: absolute;
                 left: 0;
                 top: 0;
-                width: 297mm;
-                padding: 10mm;
+                width: 100%;
+                max-width: 100%;
+                padding: 5mm;
+                box-sizing: border-box;
+                overflow: visible;
+              }
+              .invoice-content table {
+                width: 100%;
+                table-layout: auto;
+                font-size: 12px;
+              }
+              .invoice-content th,
+              .invoice-content td {
+                padding: 4px 6px;
+                word-wrap: break-word;
+                overflow-wrap: break-word;
+              }
+              .invoice-content .text-right {
+                white-space: nowrap;
               }
               .MuiDialog-root {
                 position: relative;
@@ -1428,14 +1453,15 @@ export default function ReconciliationContent() {
               .MuiDialog-paper {
                 margin: 0 !important;
                 max-width: none !important;
-                width: 297mm !important;
-                height: 420mm !important;
+                width: 100% !important;
+                height: 100% !important;
               }
               .MuiDialogTitle-root {
                 display: none !important;
               }
               .MuiDialogContent-root {
                 padding: 0 !important;
+                overflow: visible !important;
               }
             }
           `,
@@ -1486,10 +1512,14 @@ export default function ReconciliationContent() {
               style={{
                 padding: "20px",
                 fontFamily: "Arial, sans-serif",
+                position: "relative",
               }}
             >
               {/* Invoice Header */}
               <div className="text-center mb-6">
+                <h2 className="text-xl font-semibold mb-1 text-gray-700">
+                  Mỹ phẩm Divi
+                </h2>
                 <h1 className="text-2xl font-bold mb-2">HÓA ĐƠN BÁN HÀNG</h1>
                 <p className="text-sm text-gray-600">
                   Mã đơn:{" "}
@@ -1535,75 +1565,77 @@ export default function ReconciliationContent() {
                 <h2 className="text-lg font-semibold mb-3">
                   Chi tiết đơn hàng
                 </h2>
-                <table className="w-full border-collapse border border-gray-300">
-                  <thead>
-                    <tr className="bg-gray-100">
-                      <th className="border border-gray-300 p-2 text-left">
-                        STT
-                      </th>
-                      <th className="border border-gray-300 p-2 text-left">
-                        Tên sản phẩm
-                      </th>
-                      <th className="border border-gray-300 p-2 text-center">
-                        Số lượng
-                      </th>
-                      <th className="border border-gray-300 p-2 text-right">
-                        Đơn giá
-                      </th>
-                      <th className="border border-gray-300 p-2 text-right">
-                        Thành tiền
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {(selectedOrderForInvoice.order_items || []).map(
-                      (item, index) => {
-                        const variant = item.variant
-                        const product = variant?.product || item.product
-                        const productName = product?.name || "N/A"
-                        const unitPrice = toNumber(
-                          variant?.sale_price ?? product?.sale_price ?? 0
-                        )
-                        const quantity = toNumber(item.quantity || 0)
-                        const total = unitPrice * quantity
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse border border-gray-300" style={{ tableLayout: "auto" }}>
+                    <thead>
+                      <tr className="bg-gray-100">
+                        <th className="border border-gray-300 p-2 text-left" style={{ width: "5%" }}>
+                          STT
+                        </th>
+                        <th className="border border-gray-300 p-2 text-left" style={{ width: "45%" }}>
+                          Tên sản phẩm
+                        </th>
+                        <th className="border border-gray-300 p-2 text-center" style={{ width: "10%" }}>
+                          Số lượng
+                        </th>
+                        <th className="border border-gray-300 p-2 text-right" style={{ width: "20%" }}>
+                          Đơn giá
+                        </th>
+                        <th className="border border-gray-300 p-2 text-right" style={{ width: "20%" }}>
+                          Thành tiền
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {(selectedOrderForInvoice.order_items || []).map(
+                        (item, index) => {
+                          const variant = item.variant
+                          const product = variant?.product || item.product
+                          const productName = product?.name || "N/A"
+                          const unitPrice = toNumber(
+                            variant?.sale_price ?? product?.sale_price ?? 0
+                          )
+                          const quantity = toNumber(item.quantity || 0)
+                          const total = unitPrice * quantity
 
-                        return (
-                          <tr key={item.id}>
-                            <td className="border border-gray-300 p-2">
-                              {index + 1}
-                            </td>
-                            <td className="border border-gray-300 p-2">
-                              {productName}
-                              {variant?.variant_value && (
-                                <span className="text-gray-600 ml-2">
-                                  ({variant.variant_value})
-                                </span>
-                              )}
-                            </td>
-                            <td className="border border-gray-300 p-2 text-center">
-                              {quantity}
-                            </td>
-                            <td className="border border-gray-300 p-2 text-right">
-                              {formatBigNumber(unitPrice, true)}
-                            </td>
-                            <td className="border border-gray-300 p-2 text-right">
-                              {formatBigNumber(total, true)}
-                            </td>
-                          </tr>
-                        )
-                      }
-                    )}
-                  </tbody>
-                </table>
+                          return (
+                            <tr key={item.id}>
+                              <td className="border border-gray-300 p-2">
+                                {index + 1}
+                              </td>
+                              <td className="border border-gray-300 p-2">
+                                {productName}
+                                {variant?.variant_value && (
+                                  <span className="text-gray-600 ml-2">
+                                    ({variant.variant_value})
+                                  </span>
+                                )}
+                              </td>
+                              <td className="border border-gray-300 p-2 text-center">
+                                {quantity}
+                              </td>
+                              <td className="border border-gray-300 p-2 text-right" style={{ whiteSpace: "nowrap" }}>
+                                {formatBigNumber(unitPrice, true)}
+                              </td>
+                              <td className="border border-gray-300 p-2 text-right" style={{ whiteSpace: "nowrap" }}>
+                                {formatBigNumber(total, true)}
+                              </td>
+                            </tr>
+                          )
+                        }
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               </div>
 
               {/* Order Summary */}
               <div className="mb-6">
                 <div className="flex justify-end">
-                  <div className="w-80 space-y-2">
+                  <div className="space-y-2" style={{ minWidth: "300px", maxWidth: "400px" }}>
                     <div className="flex justify-between text-sm">
                       <span>Tiền hàng:</span>
-                      <span>
+                      <span style={{ whiteSpace: "nowrap", marginLeft: "10px" }}>
                         {formatBigNumber(
                           (selectedOrderForInvoice.order_items || []).reduce(
                             (sum, item) => {
@@ -1624,7 +1656,7 @@ export default function ReconciliationContent() {
                     </div>
                     <div className="flex justify-between text-sm">
                       <span>Phí vận chuyển:</span>
-                      <span>
+                      <span style={{ whiteSpace: "nowrap", marginLeft: "10px" }}>
                         {toNumber(selectedOrderForInvoice.shipping_fee) === 0
                           ? "Miễn phí"
                           : formatBigNumber(
@@ -1635,7 +1667,7 @@ export default function ReconciliationContent() {
                     </div>
                     <div className="flex justify-between text-lg font-bold border-t pt-2">
                       <span>Tổng cộng:</span>
-                      <span className="text-pink-700">
+                      <span className="text-pink-700" style={{ whiteSpace: "nowrap", marginLeft: "10px" }}>
                         {formatBigNumber(
                           (selectedOrderForInvoice.order_items || []).reduce(
                             (sum, item) => {

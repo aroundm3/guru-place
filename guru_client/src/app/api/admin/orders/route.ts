@@ -106,14 +106,21 @@ export async function GET(request: NextRequest) {
     if (ordersData && ordersData.length > 0) {
       const orderIds = ordersData.map((order: any) => order.id)
 
-      // Fetch tất cả order_items và customer_cards một lần với populate đầy đủ
+      // Fetch order_items và customer_cards với filter trực tiếp theo orderIds (join hợp lý)
+      // Sử dụng $in operator để filter ngay trong query, không fetch tất cả rồi filter
       const [allOrderItems, allOrderCards] = await Promise.all([
-        // Fetch order_items với populate đầy đủ
+        // Fetch order_items với filter theo orderIds sử dụng $in operator
         (async () => {
           try {
             const itemsParams = new URLSearchParams()
             itemsParams.set("populate", "*")
-            itemsParams.set("pageSize", "1000")
+            // Filter theo orderIds sử dụng $in để join hợp lý
+            orderIds.forEach((orderId: number, index: number) => {
+              itemsParams.set(
+                `filters[order][id][$in][${index}]`,
+                orderId.toString()
+              )
+            })
 
             const itemsResponse = await fetch(
               `${BASE_URL}/content-manager/collection-types/api::order-item.order-item?${itemsParams.toString()}`,
@@ -129,12 +136,7 @@ export async function GET(request: NextRequest) {
 
             if (itemsResponse.ok) {
               const itemsData = await itemsResponse.json()
-              const items = itemsData.results || itemsData.data || []
-              // Filter theo orderIds
-              return items.filter((item: any) => {
-                const itemOrderId = item.order?.id || item.order
-                return orderIds.includes(itemOrderId)
-              })
+              return itemsData.results || itemsData.data || []
             }
           } catch (error) {
             console.error("Error fetching order items:", error)
@@ -142,12 +144,18 @@ export async function GET(request: NextRequest) {
           return []
         })(),
 
-        // Fetch customer_cards với populate đầy đủ
+        // Fetch customer_cards với filter theo orderIds sử dụng $in operator
         (async () => {
           try {
             const cardsParams = new URLSearchParams()
             cardsParams.set("populate", "*")
-            cardsParams.set("pageSize", "1000")
+            // Filter theo orderIds sử dụng $in để join hợp lý
+            orderIds.forEach((orderId: number, index: number) => {
+              cardsParams.set(
+                `filters[order][id][$in][${index}]`,
+                orderId.toString()
+              )
+            })
 
             const cardsResponse = await fetch(
               `${BASE_URL}/content-manager/collection-types/api::order-customer-card.order-customer-card?${cardsParams.toString()}`,
@@ -163,12 +171,7 @@ export async function GET(request: NextRequest) {
 
             if (cardsResponse.ok) {
               const cardsData = await cardsResponse.json()
-              const cards = cardsData.results || cardsData.data || []
-              // Filter theo orderIds
-              return cards.filter((card: any) => {
-                const cardOrderId = card.order?.id || card.order
-                return orderIds.includes(cardOrderId)
-              })
+              return cardsData.results || cardsData.data || []
             }
           } catch (error) {
             console.error("Error fetching order customer cards:", error)

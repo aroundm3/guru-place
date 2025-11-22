@@ -23,7 +23,7 @@ import ChevronRightIcon from "@mui/icons-material/ChevronRight"
 import LogoutIcon from "@mui/icons-material/Logout"
 import VisibilityIcon from "@mui/icons-material/Visibility"
 import SwapHorizIcon from "@mui/icons-material/SwapHoriz"
-import { formatBigNumber } from "@lib/util/format-big-number"
+
 import {
   getCardBgClasses,
   getCardBadgeClasses,
@@ -31,7 +31,7 @@ import {
   getCardTextClasses,
 } from "@lib/util/card-colors"
 
-const PAGE_SIZE = 20
+const PAGE_SIZE = 10
 
 dayjs.locale("vi")
 
@@ -211,6 +211,10 @@ export default function CustomersContent() {
   // Fetch customers khi authenticated hoặc khi filter params thay đổi
   useEffect(() => {
     if (!isAuthenticated) return
+
+    // Chỉ fetch khi tab là "customers"
+    const currentTab = searchParams.get("tab")
+    if (currentTab !== "customers") return
 
     // Lấy các filter params hiện tại (bỏ qua tab param)
     const currentFilters = JSON.stringify({
