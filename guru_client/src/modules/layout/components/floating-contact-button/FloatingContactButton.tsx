@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Fab, Tooltip } from "@mui/material"
 import ContactPhoneIcon from "@mui/icons-material/ContactPhone"
@@ -19,8 +19,30 @@ export default function FloatingContactButton({
   metadata,
 }: FloatingContactButtonProps) {
   const [isOpen, setIsOpen] = useState(false)
+  const containerRef = useRef<HTMLDivElement>(null)
 
   const toggleOpen = () => setIsOpen(!isOpen)
+
+  // Close when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        isOpen &&
+        containerRef.current &&
+        !containerRef.current.contains(event.target as Node)
+      ) {
+        setIsOpen(false)
+      }
+    }
+
+    if (isOpen) {
+      document.addEventListener("mousedown", handleClickOutside)
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside)
+    }
+  }, [isOpen])
 
   // Listen for custom event to open floating contact
   useEffect(() => {
@@ -107,7 +129,10 @@ export default function FloatingContactButton({
   }
 
   return (
-    <div className="fixed bottom-6 right-6 z-[1000] flex flex-col items-end gap-3">
+    <div
+      ref={containerRef}
+      className="fixed bottom-6 right-6 z-40 flex flex-col items-end gap-3"
+    >
       {/* Contact items */}
       <AnimatePresence>
         {isOpen && (

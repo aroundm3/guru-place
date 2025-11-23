@@ -20,6 +20,12 @@ import AdjustIcon from "@mui/icons-material/Adjust"
 import PhoneIcon from "@mui/icons-material/Phone"
 import ShoppingBagRoundedIcon from "@mui/icons-material/ShoppingBagRounded"
 import AddCardIcon from "@mui/icons-material/AddCard"
+import ContactPhoneIcon from "@mui/icons-material/ContactPhone"
+import EmailIcon from "@mui/icons-material/Email"
+import FacebookIcon from "@mui/icons-material/Facebook"
+import ZaloIcon from "@modules/layout/components/icons/ZaloIcon"
+import { StoreMetadata } from "types/global"
+import ServiceMenuDialog from "@modules/home/components/highlight-service/ServiceMenuDialog"
 
 const SideMenu = ({ regions }: { regions: HttpTypes.StoreRegion[] | null }) => {
   const [isOpenSideBar, setIsOpenSideBar] = useState(false)
@@ -30,10 +36,27 @@ const SideMenu = ({ regions }: { regions: HttpTypes.StoreRegion[] | null }) => {
   const [isExpandCate, setIsExpandCate] = useState(false)
   const [isExpandBand, setIsExpandBrand] = useState(false)
   const [isProductCollection, setIsProductCollection] = useState(false)
+  const [isExpandContact, setIsExpandContact] = useState(false)
+  const [metadata, setMetadata] = useState<StoreMetadata | null>(null)
+  const [openServiceMenuDialog, setOpenServiceMenuDialog] = useState(false)
 
   const closeSideBar = () => {
     setIsOpenSideBar(false)
   }
+
+  // Fetch metadata
+  useEffect(() => {
+    const fetchMetadata = async () => {
+      try {
+        const response = await fetch("/api/store-metadata")
+        const data = await response.json()
+        setMetadata(data.data)
+      } catch (error) {
+        console.error("Failed to fetch store metadata:", error)
+      }
+    }
+    fetchMetadata()
+  }, [])
 
   // Listen for custom event to open sidebar and expand category
   useEffect(() => {
@@ -42,9 +65,15 @@ const SideMenu = ({ regions }: { regions: HttpTypes.StoreRegion[] | null }) => {
       setIsExpandCate(true)
     }
 
-    window.addEventListener("openSidebarWithCategory", handleOpenSidebarWithCategory)
+    window.addEventListener(
+      "openSidebarWithCategory",
+      handleOpenSidebarWithCategory
+    )
     return () => {
-      window.removeEventListener("openSidebarWithCategory", handleOpenSidebarWithCategory)
+      window.removeEventListener(
+        "openSidebarWithCategory",
+        handleOpenSidebarWithCategory
+      )
     }
   }, [])
 
@@ -297,7 +326,13 @@ const SideMenu = ({ regions }: { regions: HttpTypes.StoreRegion[] | null }) => {
             </Link>
           </div>
           <div className="flex mt-4 flex-col space-y-4 w-full min-w-[250px] cursor-pointer">
-            <div className="mr-4 flex sm:space-x-1 space-x-0.5 text-gray-700 items-center">
+            <div
+              className="mr-4 flex sm:space-x-1 space-x-0.5 text-gray-700 items-center"
+              onClick={() => {
+                closeSideBar()
+                setOpenServiceMenuDialog(true)
+              }}
+            >
               <DateRangeRoundedIcon className="sm:!h-5 !h-4" />
               <h6 className="my-auto sm:text-lg text-base font-semibold">
                 Dịch vụ gội đầu Divi
@@ -306,14 +341,92 @@ const SideMenu = ({ regions }: { regions: HttpTypes.StoreRegion[] | null }) => {
           </div>
 
           <div className="flex mt-4 flex-col space-y-4 w-full min-w-[250px] cursor-pointer">
-            <div className="mr-4 flex sm:space-x-1 space-x-0.5 text-gray-700 items-center">
-              <PhoneIcon className="sm:!h-5 !h-4" />
-              <h6 className="my-auto sm:text-lg text-base font-semibold">
-                Liên hệ hỗ trợ
-              </h6>
+            <div
+              className="mr-4 flex justify-between text-gray-700 items-center"
+              onClick={() => setIsExpandContact((prevValue) => !prevValue)}
+            >
+              <div className="flex sm:space-x-1 space-x-0.5">
+                <PhoneIcon className="sm:!h-5 !h-4 my-auto" />
+                <h6 className="my-auto sm:text-lg text-base font-semibold">
+                  Liên hệ hỗ trợ
+                </h6>
+              </div>
+              <KeyboardArrowDownRoundedIcon
+                className={`${
+                  isExpandContact ? "rotate-180" : ""
+                } duration-300`}
+              />
             </div>
+            <Collapse in={isExpandContact}>
+              <div className="flex-col space-y-3 content-end flex pl-3 pb-4">
+                {metadata?.phone_number && (
+                  <a
+                    href={`tel:${metadata.phone_number}`}
+                    className="flex text-gray-500 hover:text-gray-700 duration-300 cursor-pointer items-center gap-2"
+                    onClick={closeSideBar}
+                  >
+                    <ContactPhoneIcon className="!h-4 !w-4 ml-1" />
+                    <span className="sm:text-sm text-xs font-semibold">
+                      {metadata.phone_number}
+                    </span>
+                  </a>
+                )}
+                {metadata?.email_contact && (
+                  <a
+                    href={`mailto:${metadata.email_contact}`}
+                    className="flex text-gray-500 hover:text-gray-700 duration-300 cursor-pointer items-center gap-2"
+                    onClick={closeSideBar}
+                  >
+                    <EmailIcon className="!h-4 !w-4 ml-1" />
+                    <span className="sm:text-sm text-xs font-semibold">
+                      {metadata.email_contact}
+                    </span>
+                  </a>
+                )}
+                {metadata?.facebook_link && (
+                  <a
+                    href={
+                      metadata.facebook_link.startsWith("http://") ||
+                      metadata.facebook_link.startsWith("https://")
+                        ? metadata.facebook_link
+                        : `https://${metadata.facebook_link}`
+                    }
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex text-gray-500 hover:text-gray-700 duration-300 cursor-pointer items-center gap-2"
+                    onClick={closeSideBar}
+                  >
+                    <FacebookIcon className="!h-4 !w-4 ml-1" />
+                    <span className="sm:text-sm text-xs font-semibold">
+                      Facebook
+                    </span>
+                  </a>
+                )}
+                {metadata?.zalo_link && (
+                  <a
+                    href={
+                      metadata.zalo_link.startsWith("http://") ||
+                      metadata.zalo_link.startsWith("https://")
+                        ? metadata.zalo_link
+                        : `https://${metadata.zalo_link}`
+                    }
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex text-gray-500 hover:text-gray-700 duration-300 cursor-pointer items-center gap-2"
+                    onClick={closeSideBar}
+                  >
+                    <div className="!h-4 !w-4">
+                      <ZaloIcon className="!h-4 !w-4" />
+                    </div>
+                    <span className="sm:text-sm text-xs font-semibold">
+                      Zalo
+                    </span>
+                  </a>
+                )}
+              </div>
+            </Collapse>
           </div>
-          <Link
+          {/* <Link
             href={`/about-me`}
             className="flex mt-4 flex-col space-y-4 w-full min-w-[250px] cursor-pointer"
             onClick={closeSideBar}
@@ -324,9 +437,14 @@ const SideMenu = ({ regions }: { regions: HttpTypes.StoreRegion[] | null }) => {
                 Về chúng tôi
               </h6>
             </div>
-          </Link>
+          </Link> */}
         </div>
       </Drawer>
+      <ServiceMenuDialog
+        open={openServiceMenuDialog}
+        onClose={() => setOpenServiceMenuDialog(false)}
+        serviceMenuHtml={metadata?.service_menu}
+      />
     </Fragment>
   )
 }
