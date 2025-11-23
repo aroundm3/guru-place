@@ -38,10 +38,10 @@
     "google_map_link": {
       "type": "text"
     },
-    "express_shipping": {
-      "type": "blocks"
-    },
     "service_menu": {
+      "type": "richtext"
+    },
+    "shipping_express": {
       "type": "richtext"
     }
   }

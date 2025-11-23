@@ -1,7 +1,7 @@
 "use client"
 
 import { Popover } from "@headlessui/react"
-import { Fragment, useState } from "react"
+import { Fragment, useState, useEffect } from "react"
 import { HttpTypes } from "@medusajs/types"
 
 import { Collapse, Drawer } from "@mui/material"
@@ -34,6 +34,19 @@ const SideMenu = ({ regions }: { regions: HttpTypes.StoreRegion[] | null }) => {
   const closeSideBar = () => {
     setIsOpenSideBar(false)
   }
+
+  // Listen for custom event to open sidebar and expand category
+  useEffect(() => {
+    const handleOpenSidebarWithCategory = () => {
+      setIsOpenSideBar(true)
+      setIsExpandCate(true)
+    }
+
+    window.addEventListener("openSidebarWithCategory", handleOpenSidebarWithCategory)
+    return () => {
+      window.removeEventListener("openSidebarWithCategory", handleOpenSidebarWithCategory)
+    }
+  }, [])
 
   return (
     <Fragment>

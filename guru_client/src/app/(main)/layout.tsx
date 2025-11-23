@@ -11,6 +11,7 @@ import { CustomerCardProvider } from "@lib/context/customer-card-context"
 import { CustomerProvider } from "@lib/context/customer-context"
 import CustomerModal from "@modules/layout/components/customer-modal"
 import LoadingBar from "@modules/common/components/loading-bar"
+import FloatingContactButton from "@modules/layout/components/floating-contact-button/FloatingContactButton"
 
 export const metadata: Metadata = {
   metadataBase: new URL(getBaseURL()),
@@ -27,6 +28,7 @@ const fallbackMetadata: StoreMetadata = {
   zalo_link: "",
   description: "",
   about_me: [],
+  service_menu: "",
 }
 
 export default async function PageLayout(props: { children: React.ReactNode }) {
@@ -102,6 +104,7 @@ export default async function PageLayout(props: { children: React.ReactNode }) {
 
         <Footer metada={metada} />
         <CustomerModal />
+        <FloatingContactButton metadata={metada} />
       </CustomerProvider>
     </CustomerCardProvider>
   )

@@ -134,4 +134,6 @@ export interface StoreMetadata {
   zalo_link: string
   description: string
   about_me: RichTextBlock[]
+  service_menu?: string // Rich text HTML string
+  shipping_express?: string // Rich text HTML string for shipping express
 }
