@@ -16,12 +16,12 @@ export default async function Categories({
   }
 
   return (
-    <div className="flex flex-col space-y-4 sm:w-1/4 w-full">
-      <div className="mr-4 flex sm:space-x-1 space-x-0.5 text-gray-700 items-center">
-        <CategoryRoundedIcon className="sm:!h-5 !h-4" />
-        <h6 className="my-auto sm:text-xl text-lg font-semibold">Danh mục</h6>
+    <div className="flex flex-col space-y-4 lg:w-1/4 w-full">
+      <div className="mr-4 flex lg:space-x-1 space-x-0.5 text-gray-700 items-center">
+        <CategoryRoundedIcon className="lg:!h-5 !h-4" />
+        <h6 className="my-auto lg:text-xl text-lg font-semibold">Danh mục</h6>
       </div>
-      <div className="flex-col space-y-2 content-end sm:flex hidden pl-2">
+      <div className="flex-col space-y-2 content-end lg:flex hidden pl-2">
         {categories.map((category) => {
           return <CategoryItem category={category} key={category.documentId} />
         })}

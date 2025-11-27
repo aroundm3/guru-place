@@ -380,11 +380,11 @@ export default function CustomersContent() {
   return (
     <div>
       {/* Filter Section */}
-      <div className="bg-white border border-gray-200 rounded-lg p-4 sm:p-6 mb-6">
+      <div className="bg-white border border-gray-200 rounded-lg p-4 lg:p-6 mb-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">
           Tìm kiếm & Lọc
         </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
           <TextField
             label="Số điện thoại"
             value={phoneNumber}
@@ -430,7 +430,7 @@ export default function CustomersContent() {
           {[1, 2, 3].map((index) => (
             <div
               key={index}
-              className="border border-stone-200 rounded-2xl bg-white shadow-sm p-4 sm:p-6"
+              className="border border-stone-200 rounded-2xl bg-white shadow-sm p-4 lg:p-6"
             >
               <Skeleton variant="text" width="60%" height={32} />
               <Skeleton variant="text" width="40%" height={24} />
@@ -441,8 +441,8 @@ export default function CustomersContent() {
       ) : (
         <>
           {customers.length === 0 && !error && (
-            <div className="text-center py-12 sm:py-16 border border-dashed rounded-2xl bg-white">
-              <p className="text-sm sm:text-base text-gray-600">
+            <div className="text-center py-12 lg:py-16 border border-dashed rounded-2xl bg-white">
+              <p className="text-sm lg:text-base text-gray-600">
                 Không tìm thấy khách hàng nào.
               </p>
             </div>
@@ -462,15 +462,15 @@ export default function CustomersContent() {
               return (
                 <div
                   key={customer.id}
-                  className="border border-stone-200 rounded-2xl bg-white shadow-sm transition-shadow hover:shadow-md p-4 sm:p-6"
+                  className="border border-stone-200 rounded-2xl bg-white shadow-sm transition-shadow hover:shadow-md p-4 lg:p-6"
                 >
-                  <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6 justify-between">
+                  <div className="flex flex-col lg:flex-row lg:items-center gap-3 lg:gap-6 justify-between">
                     <div className="flex-1 min-w-0 space-y-1.5">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <p className="text-xs sm:text-sm text-gray-500 uppercase tracking-wide">
+                        <p className="text-xs lg:text-sm text-gray-500 uppercase tracking-wide">
                           ID:
                         </p>
-                        <span className="text-xs uppercase sm:text-sm font-semibold text-pink-700">
+                        <span className="text-xs uppercase lg:text-sm font-semibold text-pink-700">
                           {customer.documentId}
                         </span>
                         <IconButton
@@ -484,10 +484,10 @@ export default function CustomersContent() {
                           <ContentCopyIcon className="!h-3 !w-3 text-gray-500 hover:text-gray-700" />
                         </IconButton>
                       </div>
-                      <p className="text-sm sm:text-base font-semibold text-gray-900">
+                      <p className="text-sm lg:text-base font-semibold text-gray-900">
                         {customer.full_name || "N/A"}
                       </p>
-                      <div className="text-xs sm:text-sm text-gray-600 space-y-1">
+                      <div className="text-xs lg:text-sm text-gray-600 space-y-1">
                         <div className="flex items-center gap-2">
                           <p>
                             <span className="font-semibold">SĐT:</span>{" "}
@@ -533,7 +533,7 @@ export default function CustomersContent() {
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2 flex-shrink-0 mt-3 sm:mt-0">
+                    <div className="flex items-center gap-2 flex-shrink-0 mt-3 lg:mt-0">
                       <Button
                         variant="outlined"
                         size="small"
@@ -551,7 +551,7 @@ export default function CustomersContent() {
           </div>
 
           {customers.length > 0 && (
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mt-6 border-t pt-4">
+            <div className="flex flex-col lg:flex-row items-center justify-between gap-3 mt-6 border-t pt-4">
               <span className="text-sm text-gray-500">
                 Trang {pagination.page} / {pagination.pageCount} (Tổng:{" "}
                 {pagination.total} khách hàng)
@@ -614,7 +614,7 @@ export default function CustomersContent() {
               <h3 className="text-lg font-semibold text-gray-900 mb-4">
                 Thẻ tích điểm đã nhận được
               </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 lg:grid-cols-2 lg:grid-cols-3 gap-4">
                 {customerCards.map((item, index) => {
                   const card = item.card
                   const quantity = item.quantity

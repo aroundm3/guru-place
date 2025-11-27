@@ -6,7 +6,7 @@ export default function CategoryPickerMobile({
   categories: Category[]
 }) {
   return (
-    <div className="flex flex-col space-y-2 sm:hidden">
+    <div className="flex flex-col space-y-2 lg:hidden">
       <div className="overflow-x-scroll no-scrollbar">
         <div className="flex space-x-2 w-max">
           {categories.map((category) => {

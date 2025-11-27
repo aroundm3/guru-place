@@ -45,7 +45,7 @@ export default function SearchButton() {
   return (
     <Fragment>
       <div
-        className="sm:flex hidden justify-center items-center cursor-pointer"
+        className="lg:flex hidden justify-center items-center cursor-pointer"
         onClick={() => setIsShowSearchList(true)}
       >
         <div className="relative">
@@ -77,7 +77,7 @@ export default function SearchButton() {
         </div>
       </div>
       <SearchIcon
-        className="cursor-pointer sm:!hidden !block"
+        className="cursor-pointer lg:!hidden !block"
         onClick={() => setIsShowSearchList(!isShowSearchList)}
       />
       <Dialog
@@ -100,7 +100,7 @@ export default function SearchButton() {
           },
         }}
       >
-        <div className="sm:w-[400px] w-screen mx-auto p-4 flex space-x-2 items-center sticky top-0">
+        <div className="lg:w-[400px] w-screen mx-auto p-4 flex space-x-2 items-center sticky top-0">
           <div className="relative w-full">
             <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
               <SearchIcon className="h-4 w-4 text-white" />
@@ -127,24 +127,24 @@ export default function SearchButton() {
           </IconButton>
         </div>
 
-        <div className="grid sm:grid-cols-3 grid-cols-1 gap-4 mt-6 sm:px-0 px-4">
+        <div className="grid lg:grid-cols-3 grid-cols-1 gap-4 mt-6 lg:px-0 px-4">
           {isLoading ? (
             <Fragment>
-              <div className="flex sm:flex-col flex-row gap-2 bg-white rounded-lg p-2">
+              <div className="flex lg:flex-col flex-row gap-2 bg-white rounded-lg p-2">
                 <div
-                  className={`!aspect-square !rounded-lg sm:!h-[172px] !h-[50px] animate-pulse bg-stone-200`}
+                  className={`!aspect-square !rounded-lg lg:!h-[172px] !h-[50px] animate-pulse bg-stone-200`}
                 />
                 <div>
-                  <Skeleton className="h-[10px] sm:w-full w-40 rounded-lg" />
+                  <Skeleton className="h-[10px] lg:w-full w-40 rounded-lg" />
                   <Skeleton className="w-20 h-[10px] rounded-lg" />
                 </div>
               </div>
-              <div className="flex sm:flex-col flex-row gap-2 bg-white rounded-lg p-2">
+              <div className="flex lg:flex-col flex-row gap-2 bg-white rounded-lg p-2">
                 <div
-                  className={`!aspect-square !rounded-lg sm:!h-[172px] !h-[50px] animate-pulse bg-stone-200`}
+                  className={`!aspect-square !rounded-lg lg:!h-[172px] !h-[50px] animate-pulse bg-stone-200`}
                 />
                 <div>
-                  <Skeleton className="h-[10px] sm:w-full w-40 rounded-lg" />
+                  <Skeleton className="h-[10px] lg:w-full w-40 rounded-lg" />
                   <Skeleton className="w-20 h-[10px] rounded-lg" />
                 </div>
               </div>
@@ -156,12 +156,12 @@ export default function SearchButton() {
                   href={`/product/${product.slug}`}
                   onClick={() => setIsShowSearchList(false)}
                   key={product.documentId}
-                  className="flex sm:flex-col flex-row gap-2 bg-white rounded-lg p-3 cursor-pointer"
+                  className="flex lg:flex-col flex-row gap-2 bg-white rounded-lg p-3 cursor-pointer"
                 >
                   <Image
                     src={product.images[0].default}
                     alt={product.name}
-                    className={`!inline-block !aspect-square !rounded-lg !object-cover sm:w-[172px] sm:h-[172px] w-[50px] h-[50px]`}
+                    className={`!inline-block !aspect-square !rounded-lg !object-cover lg:w-[172px] lg:h-[172px] w-[50px] h-[50px]`}
                     width={0}
                     height={0}
                     loading="eager"
@@ -169,10 +169,10 @@ export default function SearchButton() {
                     sizes="10vh"
                   />
                   <div>
-                    <span className="text-stone-800 text-sm font-semibold sm:line-clamp-3 line-clamp-2 whitespace-pre-line truncate">
+                    <span className="text-stone-800 text-sm font-semibold lg:line-clamp-3 line-clamp-2 whitespace-pre-line truncate">
                       {product.name}
                     </span>
-                    <div className="flex justify-between space-x-2 sm:mt-2">
+                    <div className="flex justify-between space-x-2 lg:mt-2">
                       <div className="flex flex-col my-auto">
                         <span className="text-sm font-bold text-pink-600">
                           {formatBigNumber(product.sale_price, true)}

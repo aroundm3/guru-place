@@ -80,25 +80,25 @@ export const CustomerCardModal = ({
 
         {/* Title dưới ảnh */}
         <div
-          className={`p-4 sm:p-6 border-b ${getCardBorderClasses(cardColor)}`}
+          className={`p-4 lg:p-6 border-b ${getCardBorderClasses(cardColor)}`}
         >
           <h2
             className={`${getCardTextClasses(
               cardColor
-            )} text-2xl sm:text-4xl font-bold`}
+            )} text-2xl lg:text-4xl font-bold`}
           >
             {card.title}
           </h2>
         </div>
 
         {/* Nội dung phía dưới */}
-        <div className="p-4 sm:p-6 space-y-4">
+        <div className="p-4 lg:p-6 space-y-4">
           {/* Description */}
           {card.description && (
             <Typography
               variant="body1"
               color="text.secondary"
-              className="text-sm sm:text-base font-semibold"
+              className="text-sm lg:text-base font-semibold"
             >
               {card.description}
             </Typography>

@@ -51,7 +51,7 @@ export default function CategoryItem({
     >
       <div className="flex space-x-2">
         <span
-          className="sm:text-base text-base font-semibold"
+          className="lg:text-base text-base font-semibold"
           onClick={handleCategoryClick}
         >
           {category.name}

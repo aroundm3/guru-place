@@ -457,17 +457,19 @@ const CartDropdown = () => {
                           productData.images?.[0]?.default ||
                           "/logo.png"
                         variantName = variant.variant_value
-                      }
                     }
+                  }
 
-                    return (
-                      <div
-                        className="flex space-x-4"
-                        key={`${productData.documentId}-${
-                          item.variantId || "default"
-                        }-${index}`}
-                        data-testid="cart-item"
-                      >
+                  const isService = productData?.isService === true
+
+                  return (
+                    <div
+                      className="flex space-x-4"
+                      key={`${productData.documentId}-${
+                        item.variantId || "default"
+                      }-${index}`}
+                      data-testid="cart-item"
+                    >
                         <Link
                           href={`/product/${productData.slug}`}
                           className="w-24"
@@ -501,7 +503,8 @@ const CartDropdown = () => {
                                     data-testid="cart-item-variant"
                                     className="text-sm text-ui-fg-subtle"
                                   >
-                                    Phân loại: {variantName}
+                                    {isService ? "Loại dịch vụ:" : "Phân loại:"}{" "}
+                                    {variantName}
                                   </div>
                                 )}
                               </div>
@@ -525,38 +528,46 @@ const CartDropdown = () => {
                               </div>
                             </div>
                           </div>
-                          <div className="flex items-center gap-2 mt-1">
-                            <span
-                              data-testid="cart-item-quantity"
-                              data-value={item.quantity}
-                              className="text-sm font-semibold text-ui-fg-subtle"
-                            >
-                              Số lượng:
-                            </span>
-                            <div className="flex items-center space-x-1">
-                              <IconButton
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  handleUpdateQuantity(index, item.quantity - 1)
-                                }}
-                                className="!my-auto px-2 py-1 bg-neutral-100 hover:bg-neutral-50 duration-300 border border-stone-300 rounded"
+                          {!isService && (
+                            <div className="flex items-center gap-2 mt-1">
+                              <span
+                                data-testid="cart-item-quantity"
+                                data-value={item.quantity}
+                                className="text-sm font-semibold text-ui-fg-subtle"
                               >
-                                <RemoveRoundedIcon className="!w-5 !h-5" />
-                              </IconButton>
-                              <span className="!my-auto text-sm font-semibold px-4 min-w-10 flex items-center justify-center">
-                                {item.quantity}
+                                Số lượng:
                               </span>
-                              <IconButton
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  handleUpdateQuantity(index, item.quantity + 1)
-                                }}
-                                className="!my-autopx-2 py-1 bg-neutral-100 hover:bg-neutral-50 duration-300 border border-stone-300 rounded"
-                              >
-                                <AddRoundedIcon className="!w-5 !h-5" />
-                              </IconButton>
+                              <div className="flex items-center space-x-1">
+                                <IconButton
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    handleUpdateQuantity(
+                                      index,
+                                      item.quantity - 1
+                                    )
+                                  }}
+                                  className="!my-auto px-2 py-1 bg-neutral-100 hover:bg-neutral-50 duration-300 border border-stone-300 rounded"
+                                >
+                                  <RemoveRoundedIcon className="!w-5 !h-5" />
+                                </IconButton>
+                                <span className="!my-auto text-sm font-semibold px-4 min-w-10 flex items-center justify-center">
+                                  {item.quantity}
+                                </span>
+                                <IconButton
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    handleUpdateQuantity(
+                                      index,
+                                      item.quantity + 1
+                                    )
+                                  }}
+                                  className="!my-autopx-2 py-1 bg-neutral-100 hover:bg-neutral-50 duration-300 border border-stone-300 rounded"
+                                >
+                                  <AddRoundedIcon className="!w-5 !h-5" />
+                                </IconButton>
+                              </div>
                             </div>
-                          </div>
+                          )}
                           <button
                             onClick={() => handleRemoveItem(index)}
                             className="mt-1 text-right text-xs text-red-500 font-semibold hover:text-red-700"

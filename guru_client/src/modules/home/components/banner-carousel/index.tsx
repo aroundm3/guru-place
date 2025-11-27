@@ -41,7 +41,7 @@ const BannerCarousel = ({ banners }: { banners: Banner[] }) => {
     <div className="relative w-full mx-auto overflow-hidden">
       <motion.div
         ref={carouselRef}
-        className="flex select-none relative w-full sm:h-96 h-64"
+        className="flex select-none relative w-full lg:h-[560px] md:h-[440px] h-[280px]"
         animate={{ x: `-${currentIndex * 100}%` }}
         transition={{ type: "spring", stiffness: 200, damping: 30 }}
         drag="x"

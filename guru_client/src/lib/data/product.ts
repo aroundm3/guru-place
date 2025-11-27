@@ -78,6 +78,7 @@ export async function getListProducts(filter: {
   blockProductId?: string
   pageSizeCustom?: number
   hasCustomerCards?: boolean
+  isService?: boolean
 }): Promise<{ data: Product[]; pageCount: number }> {
   try {
     // Build filter query for customer_cards
@@ -86,6 +87,12 @@ export async function getListProducts(filter: {
         ? filter.hasCustomerCards
           ? `&filters[variants][customer_cards][$notNull]=true`
           : `&filters[variants][customer_cards][$null]=true`
+        : ""
+
+    // Build filter query for isService
+    const isServiceFilter =
+      filter.isService !== undefined
+        ? `&filters[isService][$eq]=${filter.isService}`
         : ""
 
     const data = await fetcher(
@@ -109,7 +116,7 @@ export async function getListProducts(filter: {
         filter.blockProductId
           ? `&filters[product_list_blocks][documentId]=${filter.blockProductId}`
           : ""
-      }${customerCardsFilter}&[populate]=variants`,
+      }${customerCardsFilter}${isServiceFilter}&[populate]=variants`,
       {
         next: { revalidate: 10 },
       }

@@ -150,23 +150,23 @@ export default function ProductBlockClient({ block }: ProductBlockClientProps) {
       }}
     >
       {/* Title ở trên cùng với background blur */}
-      <div className="px-4 sm:px-6 pt-4 sm:pt-6 pb-3 sm:pb-4 relative">
+      <div className="px-4 lg:px-6 pt-4 lg:pt-6 pb-3 lg:pb-4 relative">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-100px" }}
           transition={{ duration: 0.6, ease: "easeOut" }}
-          className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0"
+          className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2 lg:gap-0"
         >
           <span
-            className="font-bold text-lg sm:text-xl transition-colors duration-300 text-pink-700"
+            className="font-bold text-lg lg:text-xl transition-colors duration-300 text-pink-700"
             // style={{ color: textColor }}
           >
             {block.title}
           </span>
           <Link
             href={`/collection_${block.documentId}`}
-            className="inline-flex items-center text-pink-600 hover:text-pink-700 sm:text-base text-sm font-semibold group transition-colors duration-300"
+            className="inline-flex items-center text-pink-600 hover:text-pink-700 lg:text-base text-sm font-semibold group transition-colors duration-300"
             onMouseEnter={(e) => {
               e.currentTarget.style.opacity = "0.8"
             }}
@@ -195,9 +195,9 @@ export default function ProductBlockClient({ block }: ProductBlockClientProps) {
       </div>
 
       {/* Content: Banner + Products */}
-      <div className="flex items-center space-x-4 px-4 sm:px-6 pb-4 sm:pb-6">
+      <div className="flex items-center space-x-4 px-4 lg:px-6 pb-4 lg:pb-6">
         {!isMobile && (
-          <div className="sm:w-2/5 w-1/2 flex-shrink-0 relative">
+          <div className="lg:w-2/5 w-1/2 flex-shrink-0 relative">
             {block.banner.default ? (
               <img
                 src={block.banner.default}
@@ -227,7 +227,7 @@ export default function ProductBlockClient({ block }: ProductBlockClientProps) {
                       behavior: "smooth",
                     })
                 }}
-                className="hidden sm:block absolute left-2 top-1/2 -translate-y-1/2 z-10 p-1 rounded-full shadow-md bg-white text-pink-700 opacity-30 hover:opacity-100 hover:bg-gray-100 transition-all duration-200"
+                className="hidden lg:block absolute left-2 top-1/2 -translate-y-1/2 z-10 p-1 rounded-full shadow-md bg-white text-pink-700 opacity-30 hover:opacity-100 hover:bg-gray-100 transition-all duration-200"
                 aria-label="Prev"
               >
                 <svg
@@ -252,7 +252,7 @@ export default function ProductBlockClient({ block }: ProductBlockClientProps) {
                       behavior: "smooth",
                     })
                 }}
-                className="hidden sm:block absolute right-2 top-1/2 -translate-y-1/2 z-10 p-1 rounded-full shadow-md bg-white text-pink-700 opacity-30 hover:opacity-100 hover:bg-gray-100 transition-all duration-200"
+                className="hidden lg:block absolute right-2 top-1/2 -translate-y-1/2 z-10 p-1 rounded-full shadow-md bg-white text-pink-700 opacity-30 hover:opacity-100 hover:bg-gray-100 transition-all duration-200"
                 aria-label="Next"
               >
                 <svg

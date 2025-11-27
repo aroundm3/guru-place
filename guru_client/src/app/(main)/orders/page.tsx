@@ -400,11 +400,11 @@ export default function OrdersPage() {
             <Link
               key={item.id}
               href={productSlug ? `/product/${productSlug}` : "#"}
-              className="flex flex-col pb-2 sm:pb-4 cursor-pointer"
+              className="flex flex-col pb-2 lg:pb-4 cursor-pointer"
               style={{ borderBottom: "1px solid #e0e0e0" }}
             >
-              <div className="flex sm:space-x-6 space-x-4 w-full">
-                <div className="relative w-20 sm:w-24 h-20 sm:h-24 flex-shrink-0 rounded-lg overflow-hidden bg-stone-50">
+              <div className="flex lg:space-x-6 space-x-4 w-full">
+                <div className="relative w-20 lg:w-24 h-20 lg:h-24 flex-shrink-0 rounded-lg overflow-hidden bg-stone-50">
                   <img
                     src={imageSrc}
                     alt={productName}
@@ -412,16 +412,16 @@ export default function OrdersPage() {
                   />
                 </div>
                 <div className="flex flex-col space-y-1 w-full">
-                  <h4 className="font-semibold text-sm sm:text-base text-gray-900 line-clamp-2">
+                  <h4 className="font-semibold text-sm lg:text-base text-gray-900 line-clamp-2">
                     {productName}
                   </h4>
                   <div className="w-full space-x-2 flex justify-between">
                     {variantName && (
-                      <span className="text-sm sm:text-base text-gray-500">
+                      <span className="text-sm lg:text-base text-gray-500">
                         • {variantName}
                       </span>
                     )}
-                    <span className="text-sm sm:text-base text-gray-500 font-semibold">
+                    <span className="text-sm lg:text-base text-gray-500 font-semibold">
                       x{quantity}
                     </span>
                   </div>
@@ -433,7 +433,7 @@ export default function OrdersPage() {
                   <p className="text-xs uppercase tracking-wide text-gray-400">
                     Đơn giá
                   </p>
-                  <p className="text-sm sm:text-base font-semibold text-pink-700">
+                  <p className="text-sm lg:text-base font-semibold text-pink-700">
                     {formatBigNumber(price, true)}
                   </p>
                 </div>
@@ -461,7 +461,7 @@ export default function OrdersPage() {
         <h4 className="text-base font-semibold text-gray-900">
           Thẻ tích điểm nhận được
         </h4>
-        <div className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="hidden lg:grid lg:grid-cols-2 lg:grid-cols-3 gap-4">
           {cards.map((card) => {
             const baseCard = card.customer_card as any
             const color = getCardColor(baseCard)
@@ -541,7 +541,7 @@ export default function OrdersPage() {
             )
           })}
         </div>
-        <div className="sm:hidden flex gap-3 overflow-x-auto pb-2 -mx-3 px-3 pt-2">
+        <div className="lg:hidden flex gap-3 overflow-x-auto pb-2 -mx-3 px-3 pt-2">
           {cards.map((card) => {
             const baseCard = card.customer_card as any
             const color = getCardColor(baseCard)
@@ -658,9 +658,9 @@ export default function OrdersPage() {
   }
 
   return (
-    <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-8 max-w-6xl">
-      <div className="mb-4 sm:mb-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
+    <div className="container mx-auto px-3 lg:px-4 py-4 lg:py-8 max-w-6xl">
+      <div className="mb-4 lg:mb-6 flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+        <h1 className="text-xl lg:text-2xl font-bold text-gray-900">
           Đơn hàng của tôi
         </h1>
         <p className="text-sm text-gray-500">
@@ -684,7 +684,7 @@ export default function OrdersPage() {
                       setPagination((prev) => ({ ...prev, page: 1 }))
                     }
                   }}
-                  className={`px-3 sm:px-4 py-1.5 rounded-full text-sm font-semibold border transition-all ${
+                  className={`px-3 lg:px-4 py-1.5 rounded-full text-sm font-semibold border transition-all ${
                     isActive
                       ? "bg-pink-600 text-white border-pink-600 shadow-sm"
                       : "bg-white text-gray-600 border-gray-200 hover:border-gray-300"
@@ -717,7 +717,7 @@ export default function OrdersPage() {
               key={index}
               className="border border-stone-200 rounded-2xl bg-white shadow-sm"
             >
-              <div className="flex flex-row items-center gap-3 sm:gap-6 justify-between p-4 sm:p-6">
+              <div className="flex flex-row items-center gap-3 lg:gap-6 justify-between p-4 lg:p-6">
                 <div className="flex-1 min-w-0 space-y-1.5">
                   <div className="flex items-center gap-2 flex-wrap">
                     <Skeleton variant="text" width={60} height={16} />
@@ -736,7 +736,7 @@ export default function OrdersPage() {
                   </div>
                   <Skeleton variant="text" width={180} height={20} />
                 </div>
-                <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
+                <div className="flex items-center gap-2 lg:gap-4 flex-shrink-0">
                   <Skeleton variant="circular" width={32} height={32} />
                 </div>
               </div>
@@ -746,8 +746,8 @@ export default function OrdersPage() {
       )}
 
       {!loading && customer && orders.length === 0 && !error && (
-        <div className="text-center py-12 sm:py-16 border border-dashed rounded-2xl bg-white">
-          <p className="text-sm sm:text-base text-gray-600 mb-3">
+        <div className="text-center py-12 lg:py-16 border border-dashed rounded-2xl bg-white">
+          <p className="text-sm lg:text-base text-gray-600 mb-3">
             Bạn chưa có đơn hàng nào.
           </p>
         </div>
@@ -795,18 +795,18 @@ export default function OrdersPage() {
                 //     prev === order.id ? null : order.id
                 //   )
                 // }
-                className="cursor-pointer flex flex-row items-center gap-3 sm:gap-6 justify-between p-4 sm:p-6"
+                className="cursor-pointer flex flex-row items-center gap-3 lg:gap-6 justify-between p-4 lg:p-6"
               >
                 <div className="flex-1 min-w-0 space-y-1.5">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <p className="text-xs sm:text-sm text-gray-500 uppercase tracking-wide">
+                    <p className="text-xs lg:text-sm text-gray-500 uppercase tracking-wide">
                       Mã đơn:
                     </p>
                     <button
                       onClick={() => handleCopyOrderId(order.documentId)}
                       className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-pink-50 hover:bg-pink-100 transition-colors group"
                     >
-                      <span className="text-xs sm:text-sm font-semibold uppercase text-pink-700">
+                      <span className="text-xs lg:text-sm font-semibold uppercase text-pink-700">
                         {order.documentId}
                       </span>
                       <ContentCopyIcon className="!w-4 !h-4 text-pink-600 opacity-70 group-hover:opacity-100 transition-opacity" />
@@ -817,11 +817,11 @@ export default function OrdersPage() {
                       {statusInfo.text}
                     </span>
                   </div>
-                  <p className="text-sm sm:text-base text-gray-600 truncate">
+                  <p className="text-sm lg:text-base text-gray-600 truncate">
                     Ngày đặt: {createdDate}
                   </p>
                 </div>
-                <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
+                <div className="flex items-center gap-2 lg:gap-4 flex-shrink-0">
                   <IconButton
                     onClick={() =>
                       setExpandedOrderId((prev) =>
@@ -839,13 +839,13 @@ export default function OrdersPage() {
               </div>
 
               <Collapse in={isExpanded} timeout="auto" unmountOnExit>
-                <div className="px-4 sm:px-6 pb-4 sm:pb-6 space-y-6">
+                <div className="px-4 lg:px-6 pb-4 lg:pb-6 space-y-6">
                   {renderOrderItems(order)}
                   {renderOrderCards(order)}
                   {renderOrderSummary(order)}
                 </div>
               </Collapse>
-              <div className="flex justify-between items-center pt-2 border-t p-3 sm:p-4">
+              <div className="flex justify-between items-center pt-2 border-t p-3 lg:p-4">
                 <span className="font-semibold text-gray-900">
                   Tổng ({totalItems} sản phẩm)
                 </span>
@@ -872,7 +872,7 @@ export default function OrdersPage() {
       </div>
 
       {customer && orders.length > 0 && (
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mt-6 border-t pt-4">
+        <div className="flex flex-col lg:flex-row items-center justify-between gap-3 mt-6 border-t pt-4">
           <span className="text-sm text-gray-500">
             Trang {pagination.page} / {pagination.pageCount}
           </span>

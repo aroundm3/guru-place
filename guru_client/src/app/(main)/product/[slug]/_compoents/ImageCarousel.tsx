@@ -281,7 +281,7 @@ export default function ImageCarousel({
                 <div
                   onClick={() => handleIndexClick(idx)}
                   key={idx}
-                  className={`sm:h-16 cursor-pointer h-12 aspect-square p-1 bg-white border rounded ${
+                  className={`lg:h-16 cursor-pointer h-12 aspect-square p-1 bg-white border rounded ${
                     currentIndex === idx
                       ? "border-pink-600"
                       : "border-stone-400"

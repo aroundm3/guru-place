@@ -396,10 +396,10 @@ export default function CartClientView() {
 
   // Skeleton component cho cart items
   const CartItemSkeleton = () => (
-    <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 p-3 sm:p-4 border border-gray-200 rounded-lg bg-white animate-pulse">
-      <div className="flex gap-3 sm:gap-4 flex-1 min-w-0">
+    <div className="flex flex-col lg:flex-row gap-3 lg:gap-4 p-3 lg:p-4 border border-gray-200 rounded-lg bg-white animate-pulse">
+      <div className="flex gap-3 lg:gap-4 flex-1 min-w-0">
         <div className="w-5 h-5 bg-gray-200 rounded mt-1 flex-shrink-0" />
-        <div className="w-20 h-20 sm:w-24 sm:h-24 bg-gray-200 rounded flex-shrink-0" />
+        <div className="w-20 h-20 lg:w-24 lg:h-24 bg-gray-200 rounded flex-shrink-0" />
         <div className="flex-1 min-w-0 space-y-2">
           <div className="h-5 bg-gray-200 rounded w-3/4" />
           <div className="h-4 bg-gray-200 rounded w-1/2" />
@@ -408,7 +408,7 @@ export default function CartClientView() {
           </div>
         </div>
       </div>
-      <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-start gap-2 sm:gap-3">
+      <div className="flex lg:flex-col items-center lg:items-end justify-between lg:justify-start gap-2 lg:gap-3">
         <div className="flex flex-col items-end gap-1">
           <div className="h-5 bg-gray-200 rounded w-20" />
           <div className="h-4 bg-gray-200 rounded w-16" />
@@ -421,13 +421,13 @@ export default function CartClientView() {
   // Hiển thị skeleton khi đang load
   if (isLoadingCart) {
     return (
-      <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-8 max-w-6xl">
-        <h1 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6">Giỏ hàng</h1>
-        <div className="mb-3 sm:mb-4">
+      <div className="container mx-auto px-3 lg:px-4 py-4 lg:py-8 max-w-6xl">
+        <h1 className="text-xl lg:text-2xl font-bold mb-4 lg:mb-6">Giỏ hàng</h1>
+        <div className="mb-3 lg:mb-4">
           <div className="h-6 bg-gray-200 rounded w-32 animate-pulse" />
         </div>
-        <div className="h-px bg-gray-200 mb-4 sm:mb-6" />
-        <div className="space-y-3 sm:space-y-4">
+        <div className="h-px bg-gray-200 mb-4 lg:mb-6" />
+        <div className="space-y-3 lg:space-y-4">
           {[1, 2, 3].map((i) => (
             <CartItemSkeleton key={i} />
           ))}
@@ -439,16 +439,16 @@ export default function CartClientView() {
   // Hiển thị empty state khi cart trống
   if (cart.length === 0) {
     return (
-      <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-8 max-w-6xl">
-        <h1 className="text-xl sm:text-2xl font-bold mb-4">Giỏ hàng</h1>
-        <div className="text-center py-12 sm:py-16">
-          <p className="text-sm sm:text-base text-gray-600 mb-6">
+      <div className="container mx-auto px-3 lg:px-4 py-4 lg:py-8 max-w-6xl">
+        <h1 className="text-xl lg:text-2xl font-bold mb-4">Giỏ hàng</h1>
+        <div className="text-center py-12 lg:py-16">
+          <p className="text-sm lg:text-base text-gray-600 mb-6">
             Giỏ hàng của bạn đang trống.
           </p>
           <Link href="/products">
             <Button
               variant="contained"
-              className="!bg-pink-700 !text-white !px-6 !py-2.5 !text-sm sm:!text-base !font-semibold"
+              className="!bg-pink-700 !text-white !px-6 !py-2.5 !text-sm lg:!text-base !font-semibold"
             >
               Xem sản phẩm
             </Button>
@@ -459,11 +459,11 @@ export default function CartClientView() {
   }
 
   return (
-    <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-8 max-w-6xl">
-      <h1 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6">Giỏ hàng</h1>
+    <div className="container mx-auto px-3 lg:px-4 py-4 lg:py-8 max-w-6xl">
+      <h1 className="text-xl lg:text-2xl font-bold mb-4 lg:mb-6">Giỏ hàng</h1>
 
       {/* Select All */}
-      <div className="mb-3 sm:mb-4 flex items-center gap-2">
+      <div className="mb-3 lg:mb-4 flex items-center gap-2">
         <Checkbox
           checked={selectedItems.size === cart.length && cart.length > 0}
           indeterminate={
@@ -480,15 +480,15 @@ export default function CartClientView() {
             },
           }}
         />
-        <span className="text-xs sm:text-sm font-medium">
+        <span className="text-xs lg:text-sm font-medium">
           Chọn tất cả ({selectedCount}/{cart.length})
         </span>
       </div>
 
-      <Divider className="mb-4 sm:mb-6" />
+      <Divider className="mb-4 lg:mb-6" />
 
       {/* Cart Items List */}
-      <div className="space-y-3 sm:space-y-4 mb-6 sm:mb-8">
+      <div className="space-y-3 lg:space-y-4 mb-6 lg:mb-8">
         {cart.map((item, index) => {
           const productData = item.product?.productData
           if (!productData) return null
@@ -518,17 +518,18 @@ export default function CartClientView() {
 
           const isSelected = selectedItems.has(index)
           const itemTotal = price * item.quantity
+          const isService = productData.isService === true
 
           return (
             <div
               key={`${productData.documentId}-${
                 item.variantId || "default"
               }-${index}`}
-              className={`flex flex-col sm:flex-row gap-3 sm:gap-4 p-3 sm:p-4 border rounded-lg transition-all ${
+              className={`flex flex-col lg:flex-row gap-3 lg:gap-4 p-3 lg:p-4 border rounded-lg transition-all ${
                 isSelected ? "border-pink-700" : "border-gray-200"
               } bg-white`}
             >
-              <div className="flex gap-2 sm:gap-3 flex-1 min-w-0">
+              <div className="flex gap-2 lg:gap-3 flex-1 min-w-0">
                 <Checkbox
                   checked={isSelected}
                   onChange={() => toggleItemSelection(index)}
@@ -542,7 +543,7 @@ export default function CartClientView() {
                 />
                 <Link
                   href={`/product/${productData.slug}`}
-                  className="relative w-20 h-20 sm:w-24 sm:h-24 flex-shrink-0"
+                  className="relative w-20 h-20 lg:w-24 lg:h-24 flex-shrink-0"
                 >
                   <Image
                     src={image}
@@ -555,7 +556,7 @@ export default function CartClientView() {
                 <div className="flex-1 min-w-0">
                   <Link href={`/product/${productData.slug}`}>
                     <h3
-                      className="font-semibold text-base sm:text-lg mb-1 truncate hover:text-pink-700 transition-colors cursor-pointer"
+                      className="font-semibold text-base lg:text-lg mb-1 truncate hover:text-pink-700 transition-colors cursor-pointer"
                       title={productData.name}
                     >
                       {productData.name}
@@ -563,66 +564,70 @@ export default function CartClientView() {
                   </Link>
                   {variantName && (
                     <p
-                      className="text-xs sm:text-sm text-gray-600 mb-1 truncate"
+                      className="text-xs lg:text-sm text-gray-600 mb-1 truncate"
                       title={variantName}
                     >
-                      Phân loại: {variantName}
+                      {isService ? "Loại dịch vụ:" : "Phân loại:"} {variantName}
                     </p>
                   )}
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className="text-xs sm:text-sm font-semibold text-gray-600">
-                      Số lượng:
-                    </span>
-                    <div className="flex items-center space-x-1">
-                      <IconButton
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          updateQuantity(index, item.quantity - 1)
-                        }}
-                        disabled={item.quantity <= 1}
-                        className="px-2 py-1 bg-neutral-100 hover:bg-neutral-50 duration-300 border border-stone-300 rounded disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        <RemoveRoundedIcon className="!w-4 !h-4" />
-                      </IconButton>
-                      <span className="text-sm font-semibold px-4 min-w-10 flex items-center justify-center">
-                        {item.quantity}
+                  {!isService && (
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="text-xs lg:text-sm font-semibold text-gray-600">
+                        Số lượng:
                       </span>
-                      <IconButton
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          const maxQty = variant
-                            ? Number(variant.quantity) || 0
-                            : Number(productData.quantity) || 0
-                          updateQuantity(
-                            index,
-                            Math.min(item.quantity + 1, maxQty)
-                          )
-                        }}
-                        disabled={
-                          item.quantity >=
-                          Number(
-                            variant ? variant.quantity : productData.quantity
-                          )
-                        }
-                        className="px-2 py-1 bg-neutral-100 hover:bg-neutral-50 duration-300 border border-stone-300 rounded disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        <AddRoundedIcon className="!w-4 !h-4" />
-                      </IconButton>
+                      <div className="flex items-center space-x-1">
+                        <IconButton
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            updateQuantity(index, item.quantity - 1)
+                          }}
+                          disabled={item.quantity <= 1}
+                          className="px-2 py-1 bg-neutral-100 hover:bg-neutral-50 duration-300 border border-stone-300 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <RemoveRoundedIcon className="!w-4 !h-4" />
+                        </IconButton>
+                        <span className="text-sm font-semibold px-4 min-w-10 flex items-center justify-center">
+                          {item.quantity}
+                        </span>
+                        <IconButton
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            const maxQty = variant
+                              ? Number(variant.quantity) || 0
+                              : Number(productData.quantity) || 0
+                            updateQuantity(
+                              index,
+                              Math.min(item.quantity + 1, maxQty)
+                            )
+                          }}
+                          disabled={
+                            item.quantity >=
+                            Number(
+                              variant ? variant.quantity : productData.quantity
+                            )
+                          }
+                          className="px-2 py-1 bg-neutral-100 hover:bg-neutral-50 duration-300 border border-stone-300 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <AddRoundedIcon className="!w-4 !h-4" />
+                        </IconButton>
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               </div>
-              <div className="flex items-center justify-between sm:justify-end sm:flex-col sm:text-right flex-shrink-0 sm:min-w-[100px] gap-2">
-                <div className="flex flex-col items-end sm:items-end">
+              <div className="flex items-center justify-between lg:justify-end lg:flex-col lg:text-right flex-shrink-0 lg:min-w-[100px] gap-2">
+                <div className="flex flex-col items-end lg:items-end">
                   {basePrice > price && (
-                    <div className="text-xs sm:text-sm text-gray-400 line-through">
+                    <div className="text-xs lg:text-sm text-gray-400 line-through">
                       {formatBigNumber(basePrice * item.quantity, true)}
                     </div>
                   )}
-                  <div className="text-xs sm:text-sm text-gray-500 mt-1">
-                    {formatBigNumber(price, true)} × {item.quantity}
-                  </div>
-                  <div className="text-base sm:text-lg font-semibold text-pink-700">
+                  {!isService && (
+                    <div className="text-xs lg:text-sm text-gray-500 mt-1">
+                      {formatBigNumber(price, true)} × {item.quantity}
+                    </div>
+                  )}
+                  <div className="text-base lg:text-lg font-semibold text-pink-700">
                     {formatBigNumber(itemTotal, true)}
                   </div>
                 </div>
@@ -644,15 +649,15 @@ export default function CartClientView() {
       </div>
 
       {/* Summary */}
-      <div className="border-t pt-4 sm:pt-6">
+      <div className="border-t pt-4 lg:pt-6">
         {/* Customer Cards - Desktop: dàn ngang, Mobile: tối giản */}
         {selectedCustomerCards.length > 0 && (
-          <div className="mb-4 sm:mb-6">
-            <h3 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4">
+          <div className="mb-4 lg:mb-6">
+            <h3 className="text-base lg:text-lg font-semibold mb-3 lg:mb-4">
               Thẻ tích điểm nhận được
             </h3>
             {/* Desktop: Grid layout dàn ngang */}
-            <div className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+            <div className="hidden lg:grid lg:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
               {selectedCustomerCards.map((card) => {
                 const cardColor = getCardColor(card)
                 return (
@@ -700,13 +705,13 @@ export default function CartClientView() {
                     </div>
                     {/* Nội dung - chỉ hiển thị khi discount > 0 */}
                     {card.discount > 0 && (
-                      <div className="p-3 sm:p-4">
+                      <div className="p-3 lg:p-4">
                         <div className="flex items-center justify-between">
-                          <span className="text-xs sm:text-sm text-gray-600">
+                          <span className="text-xs lg:text-sm text-gray-600">
                             Số tiền tích được
                           </span>
                           <span
-                            className={`text-sm sm:text-base font-bold ${getCardTextClasses(
+                            className={`text-sm lg:text-base font-bold ${getCardTextClasses(
                               cardColor
                             )}`}
                           >
@@ -720,7 +725,7 @@ export default function CartClientView() {
               })}
             </div>
             {/* Mobile: Horizontal scroll, click để mở modal */}
-            <div className="sm:hidden flex gap-3 overflow-x-auto pb-2 -mx-3 px-3 pt-2">
+            <div className="lg:hidden flex gap-3 overflow-x-auto pb-2 -mx-3 px-3 pt-2">
               {selectedCustomerCards.map((card) => {
                 const cardColor = getCardColor(card)
                 return (
@@ -784,19 +789,19 @@ export default function CartClientView() {
           </div>
         )}
         <Divider className="my-6" />
-        <div className="max-w-md sm:ml-auto space-y-3 sm:space-y-4">
-          <div className="flex justify-between text-base sm:text-lg">
+        <div className="max-w-md lg:ml-auto space-y-3 lg:space-y-4">
+          <div className="flex justify-between text-base lg:text-lg">
             <span className="font-semibold">Tổng cộng:</span>
-            <span className="font-bold text-pink-700 text-lg sm:text-xl">
+            <span className="font-bold text-pink-700 text-lg lg:text-xl">
               {formatBigNumber(subtotal, true)}
             </span>
           </div>
-          <div className="text-sm sm:text-base font-semibold text-gray-600">
+          <div className="text-sm lg:text-base font-semibold text-gray-600">
             {selectedCount} sản phẩm được chọn
           </div>
           <Button
             variant="contained"
-            className="!bg-pink-700 !text-white !w-full !py-2.5 sm:!py-3 !text-sm sm:!text-base !font-semibold"
+            className="!bg-pink-700 !text-white !w-full !py-2.5 lg:!py-3 !text-sm lg:!text-base !font-semibold"
             disabled={selectedCount === 0 || isCheckoutLoading}
             onClick={handleCheckout}
             startIcon={

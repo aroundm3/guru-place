@@ -160,22 +160,24 @@ export default async function Home(props: { params: { slug: string } }) {
             {"Tất cả"}
           </Link>
         </div>
-        <div className="flex sm:flex-row flex-col sm:gap-10 gap-6">
-          <div className="sm:w-1/2 w-full">
+        <div className="flex lg:flex-row flex-col lg:gap-10 gap-6">
+          <div className="lg:w-1/2 w-full">
             <ImageCarousel
               images={productDetail.images.map((image) => image.default)}
               thumbImages={productDetail.images.map((image) => image.thumbnail)}
               productTitle={productDetail.name}
             />
           </div>
-          <div className="flex flex-col space-y-2 justify-between sm:w-1/2 w-full">
+          <div className="flex flex-col space-y-2 justify-between lg:w-1/2 w-full">
             <div className="flex flex-col space-y-2">
-              <h6 className="sm:text-2xl text-xl font-bold">
+              <h6 className="lg:text-2xl text-xl font-bold">
                 {productDetail.name}
               </h6>
-              <p className="sm:text-sm text-xs !leading-6">
-                {productDetail.short_description}
-              </p>
+              {!productDetail.isService && (
+                <p className="lg:text-sm text-xs !leading-6">
+                  {productDetail.short_description}
+                </p>
+              )}
               <div className="flex flex-wrap gap-2">
                 {productDetail.isTopSelling && (
                   <div className="px-2 py-0.5 cursor-pointer border border-orange-700 bg-orange-100 rounded">
@@ -205,12 +207,17 @@ export default async function Home(props: { params: { slug: string } }) {
             </div>
           </div>
         </div>
-        <Divider />
-        <div className="flex flex-col space-y-6">
-          <p className="sm: text-lg text=md font-semibold">Mô tả</p>
-          <RichTextBlockRender blocks={productDetail.detail_description} />
-        </div>
-        <Divider />
+        {productDetail.isService && <Divider />}
+        {!productDetail.isService && (
+          <>
+            <Divider />
+            <div className="flex flex-col space-y-6">
+              <p className="lg: text-lg text=md font-semibold">Mô tả</p>
+              <RichTextBlockRender blocks={productDetail.detail_description} />
+            </div>
+            <Divider />
+          </>
+        )}
       </div>
       <BlockProduct />
     </Fragment>

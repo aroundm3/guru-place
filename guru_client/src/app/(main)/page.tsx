@@ -24,14 +24,14 @@ export default async function Home(props: {
 
   return (
     <>
-      <div className="lg:max-w-5xl max-w-4xl mx-auto flex sm:flex-row flex-col gap-10">
+      <div className="lg:max-w-5xl max-w-4xl mx-auto flex lg:flex-row flex-col gap-10">
         <BannerCarousel banners={banners} />
       </div>
 
       {/* <Hero /> */}
       <HighlightService />
       <BlockProduct />
-      {/* <div className="lg:max-w-5xl max-w-4xl mx-auto lg:py-6 py-4 lg:px-0 px-4 flex sm:flex-row flex-col gap-10">
+      {/* <div className="lg:max-w-5xl max-w-4xl mx-auto lg:py-6 py-4 lg:px-0 px-4 flex lg:flex-row flex-col gap-10">
         <Categories />
       </div> */}
     </>

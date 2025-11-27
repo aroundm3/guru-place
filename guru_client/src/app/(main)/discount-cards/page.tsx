@@ -27,7 +27,7 @@ type CardWithQuantity = {
 }
 
 type GroupedCards = {
-  color: "pink" | "blue" | "neutral"
+  color: "pink" | "blue" | "yellow"
   cards: CardWithQuantity[]
   totalQuantity: number
 }
@@ -99,7 +99,7 @@ export default function DiscountCardPage() {
           const grouped: GroupedCards[] = [
             { color: "pink", cards: [], totalQuantity: 0 },
             { color: "blue", cards: [], totalQuantity: 0 },
-            { color: "neutral", cards: [], totalQuantity: 0 },
+            { color: "yellow", cards: [], totalQuantity: 0 },
           ]
 
           cards.forEach((cardWithQty) => {
@@ -152,9 +152,9 @@ export default function DiscountCardPage() {
 
   if (cardsLoading) {
     return (
-      <div className="container mx-auto px-3 sm:px-4 py-6 sm:py-8">
-        <div className="text-center py-12 sm:py-16">
-          <p className="text-sm sm:text-base text-gray-600">Đang tải...</p>
+      <div className="container mx-auto px-3 lg:px-4 py-6 lg:py-8">
+        <div className="text-center py-12 lg:py-16">
+          <p className="text-sm lg:text-base text-gray-600">Đang tải...</p>
         </div>
       </div>
     )
@@ -162,10 +162,10 @@ export default function DiscountCardPage() {
 
   if (activeCards.length === 0) {
     return (
-      <div className="container mx-auto px-3 sm:px-4 py-6 sm:py-8">
-        <h1 className="text-xl sm:text-2xl font-bold mb-4">Thẻ tích điểm</h1>
-        <div className="text-center py-12 sm:py-16">
-          <p className="text-sm sm:text-base text-gray-600">
+      <div className="container mx-auto px-3 lg:px-4 py-6 lg:py-8">
+        <h1 className="text-xl lg:text-2xl font-bold mb-4">Thẻ tích điểm</h1>
+        <div className="text-center py-12 lg:py-16">
+          <p className="text-sm lg:text-base text-gray-600">
             Hiện tại không có tích điểm nào.
           </p>
         </div>
@@ -174,15 +174,15 @@ export default function DiscountCardPage() {
   }
 
   return (
-    <div className="container mx-auto px-3 sm:px-4 py-6 sm:py-8 max-w-7xl">
-      <h1 className="text-2xl uppercase sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-4 sm:mb-6 lg:mb-8 tracking-tight">
+    <div className="container mx-auto px-3 lg:px-4 py-6 lg:py-8 max-w-7xl">
+      <h1 className="text-2xl uppercase lg:text-3xl lg:text-4xl font-bold text-gray-900 mb-4 lg:mb-6 lg:mb-8 tracking-tight">
         Thẻ tích điểm
       </h1>
 
       <CustomerInfoEdit />
 
       {/* Tabs để chuyển đổi giữa thẻ hệ thống và thẻ của bạn */}
-      <div className="flex gap-2 mb-4 sm:mb-6 border-b border-gray-200">
+      <div className="flex gap-2 mb-4 lg:mb-6 border-b border-gray-200">
         <button
           onClick={() => setActiveTab("system")}
           className={`px-4 py-2 text-base font-semibold transition-colors ${
@@ -210,18 +210,18 @@ export default function DiscountCardPage() {
         >
           Thẻ tích điểm của bạn
           {groupedCards.length > 0 && (
-            <span className="ml-2 px-2 py-0.5 bg-pink-100 text-pink-700 rounded-full text-xs sm:text-sm">
+            <span className="ml-2 px-2 py-0.5 bg-pink-100 text-pink-700 rounded-full text-xs lg:text-sm">
               {groupedCards.reduce((sum, g) => sum + g.totalQuantity, 0)}
             </span>
           )}
         </button>
       </div>
 
-      <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 lg:gap-8">
+      <div className="flex flex-col lg:flex-row gap-4 lg:gap-6 lg:gap-8">
         {/* Tabs bên trái */}
         <div className="lg:w-1/3 flex-shrink-0">
-          <div className="bg-white border border-gray-200 rounded-lg p-3 sm:p-4 lg:sticky lg:top-24">
-            <h2 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">
+          <div className="bg-white border border-gray-200 rounded-lg p-3 lg:p-4 lg:sticky lg:top-24">
+            <h2 className="text-base lg:text-lg font-semibold text-gray-900 mb-3 lg:mb-4">
               Danh sách thẻ
             </h2>
             {activeTab === "system" ? (
@@ -236,13 +236,13 @@ export default function DiscountCardPage() {
                       onClick={() => setSelectedCardIndex(index)}
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
-                      className={`w-full text-left p-2.5 sm:p-3 rounded-lg transition-all duration-200 ${
+                      className={`w-full text-left p-2.5 lg:p-3 rounded-lg transition-all duration-200 ${
                         isSelected
                           ? cardColor === "pink"
                             ? "bg-pink-600 text-white font-medium shadow-sm"
                             : cardColor === "blue"
                             ? "bg-blue-600 text-white font-medium shadow-sm"
-                            : "bg-neutral-900 text-white font-medium shadow-sm"
+                            : "bg-yellow-600 text-white font-medium shadow-sm"
                           : `${getCardBgClasses(
                               cardColor
                             )} border ${getCardBorderClasses(
@@ -252,13 +252,13 @@ export default function DiscountCardPage() {
                     >
                       <div className="flex items-center gap-2">
                         <CardGiftcardRoundedIcon
-                          className={`!h-4 !w-4 sm:!h-5 sm:!w-5 flex-shrink-0 ${
+                          className={`!h-4 !w-4 lg:!h-5 lg:!w-5 flex-shrink-0 ${
                             isSelected
                               ? "text-white"
                               : getCardIconClasses(cardColor)
                           }`}
                         />
-                        <span className="text-xs sm:text-sm lg:text-base truncate">
+                        <span className="text-xs lg:text-sm lg:text-base truncate">
                           {card.title}
                         </span>
                       </div>
@@ -322,13 +322,13 @@ export default function DiscountCardPage() {
                             }
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
-                            className={`w-full text-left p-2.5 sm:p-3 rounded-lg transition-all duration-200 ${
+                            className={`w-full text-left p-2.5 lg:p-3 rounded-lg transition-all duration-200 ${
                               isSelected
                                 ? cardColor === "pink"
                                   ? "bg-pink-600 text-white font-medium shadow-sm"
                                   : cardColor === "blue"
                                   ? "bg-blue-600 text-white font-medium shadow-sm"
-                                  : "bg-neutral-900 text-white font-medium shadow-sm"
+                                  : "bg-yellow-600 text-white font-medium shadow-sm"
                                 : `${getCardBgClasses(
                                     cardColor
                                   )} border ${getCardBorderClasses(
@@ -339,13 +339,13 @@ export default function DiscountCardPage() {
                             <div className="flex items-center justify-between gap-2">
                               <div className="flex items-center gap-2 flex-1 min-w-0">
                                 <CardGiftcardRoundedIcon
-                                  className={`!h-4 !w-4 sm:!h-5 sm:!w-5 flex-shrink-0 ${
+                                  className={`!h-4 !w-4 lg:!h-5 lg:!w-5 flex-shrink-0 ${
                                     isSelected
                                       ? "text-white"
                                       : getCardIconClasses(cardColor)
                                   }`}
                                 />
-                                <span className="text-xs sm:text-sm lg:text-base truncate">
+                                <span className="text-xs lg:text-sm lg:text-base truncate">
                                   {cardWithQty.card.title}
                                 </span>
                               </div>
@@ -397,7 +397,7 @@ export default function DiscountCardPage() {
 
               if (!displayCard) {
                 return (
-                  <div className="bg-white border border-gray-200 rounded-lg p-4 sm:p-6 lg:p-8 text-center py-12">
+                  <div className="bg-white border border-gray-200 rounded-lg p-4 lg:p-6 lg:p-8 text-center py-12">
                     <p className="text-sm text-gray-500">
                       {activeTab === "system"
                         ? "Vui lòng chọn một thẻ tích điểm"
@@ -415,14 +415,14 @@ export default function DiscountCardPage() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -20 }}
                   transition={{ duration: 0.3, ease: "easeOut" }}
-                  className="bg-white border border-gray-200 rounded-lg p-4 sm:p-6 lg:p-8"
+                  className="bg-white border border-gray-200 rounded-lg p-4 lg:p-6 lg:p-8"
                 >
                   {/* Ảnh */}
                   <motion.div
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ duration: 0.4, delay: 0.1 }}
-                    className="relative w-full mb-4 sm:mb-6 rounded-lg overflow-hidden"
+                    className="relative w-full mb-4 lg:mb-6 rounded-lg overflow-hidden"
                   >
                     <Image
                       src={displayCard.image?.default || "/logo.png"}
@@ -435,12 +435,12 @@ export default function DiscountCardPage() {
                   </motion.div>
 
                   {/* Title và Quantity */}
-                  <div className="flex items-center justify-between mb-3 sm:mb-4">
+                  <div className="flex items-center justify-between mb-3 lg:mb-4">
                     <motion.h2
                       initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ duration: 0.3, delay: 0.2 }}
-                      className={`text-2xl sm:text-3xl lg:text-4xl font-bold ${getCardTextClasses(
+                      className={`text-2xl lg:text-3xl lg:text-4xl font-bold ${getCardTextClasses(
                         cardColor
                       )} tracking-tight`}
                     >
@@ -462,7 +462,7 @@ export default function DiscountCardPage() {
                     )}
                   </div>
 
-                  <Divider className="my-3 sm:my-4" />
+                  <Divider className="my-3 lg:my-4" />
 
                   {/* Discount Info - chỉ hiển thị khi discount > 0 */}
                   {displayCard.discount > 0 && (
@@ -470,22 +470,22 @@ export default function DiscountCardPage() {
                       initial={{ opacity: 0, scale: 0.95 }}
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ duration: 0.3, delay: 0.3 }}
-                      className={`mb-4 sm:mb-6 p-4 sm:p-5 ${getCardBgClasses(
+                      className={`mb-4 lg:mb-6 p-4 lg:p-5 ${getCardBgClasses(
                         cardColor
                       )} rounded-lg border ${getCardBorderClasses(cardColor)}`}
                     >
-                      <div className="flex items-center gap-3 sm:gap-4">
+                      <div className="flex items-center gap-3 lg:gap-4">
                         <CardGiftcardRoundedIcon
-                          className={`!h-6 !w-6 sm:!h-7 sm:!w-7 ${getCardIconClasses(
+                          className={`!h-6 !w-6 lg:!h-7 lg:!w-7 ${getCardIconClasses(
                             cardColor
                           )} flex-shrink-0`}
                         />
                         <div>
-                          <p className="text-xs sm:text-sm text-gray-600 font-medium uppercase tracking-wide mb-1">
+                          <p className="text-xs lg:text-sm text-gray-600 font-medium uppercase tracking-wide mb-1">
                             Giảm giá
                           </p>
                           <p
-                            className={`text-2xl sm:text-3xl font-bold ${getCardTextClasses(
+                            className={`text-2xl lg:text-3xl font-bold ${getCardTextClasses(
                               cardColor
                             )}`}
                           >
@@ -502,12 +502,12 @@ export default function DiscountCardPage() {
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       transition={{ duration: 0.3, delay: 0.4 }}
-                      className="mb-4 sm:mb-6"
+                      className="mb-4 lg:mb-6"
                     >
-                      <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2.5">
+                      <h3 className="text-base lg:text-lg font-semibold text-gray-900 mb-2.5">
                         Mô tả
                       </h3>
-                      <p className="text-sm sm:text-base text-gray-700 leading-relaxed whitespace-pre-line">
+                      <p className="text-sm lg:text-base text-gray-700 leading-relaxed whitespace-pre-line">
                         {displayCard.description}
                       </p>
                     </motion.div>
@@ -520,10 +520,10 @@ export default function DiscountCardPage() {
                       animate={{ opacity: 1 }}
                       transition={{ duration: 0.3, delay: 0.5 }}
                     >
-                      <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">
+                      <h3 className="text-base lg:text-lg font-semibold text-gray-900 mb-3 lg:mb-4">
                         Sản phẩm áp dụng ({displayCard.products.length})
                       </h3>
-                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+                      <div className="grid grid-cols-2 lg:grid-cols-3 lg:grid-cols-4 gap-3 lg:gap-4">
                         {displayCard.products.map((product, idx) => (
                           <motion.div
                             key={product.documentId}
@@ -546,7 +546,7 @@ export default function DiscountCardPage() {
                               />
                             </div>
                             <div className="p-2.5">
-                              <p className="text-xs sm:text-sm font-medium text-gray-900 truncate">
+                              <p className="text-xs lg:text-sm font-medium text-gray-900 truncate">
                                 {product.name}
                               </p>
                             </div>
@@ -568,20 +568,20 @@ export default function DiscountCardPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.2 }}
-          className="mt-8 sm:mt-12 lg:mt-16"
+          className="mt-8 lg:mt-12 lg:mt-16"
         >
-          <div className="flex justify-between items-center mb-4 sm:mb-6">
-            <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 tracking-tight">
+          <div className="flex justify-between items-center mb-4 lg:mb-6">
+            <h2 className="text-xl lg:text-2xl lg:text-3xl font-bold text-gray-900 tracking-tight">
               Sản phẩm trong chương trình tích điểm
             </h2>
           </div>
-          <div className="grid lg:grid-cols-4 sm:grid-cols-3 grid-cols-2 sm:gap-6 gap-4">
+          <div className="grid lg:grid-cols-4 lg:grid-cols-3 grid-cols-2 lg:gap-6 gap-4">
             {productsWithGifts.map((product) => (
               <Product key={product.documentId} data={product} />
             ))}
           </div>
           {pageCount > 1 && (
-            <div className="w-full flex justify-center mt-6 sm:mt-8">
+            <div className="w-full flex justify-center mt-6 lg:mt-8">
               <Link href="/has_gift">
                 <span className="text-sm font-semibold cursor-pointer hover:text-pink-600 duration-300">
                   Xem thêm
@@ -593,14 +593,14 @@ export default function DiscountCardPage() {
       )}
 
       {productsLoading && (
-        <div className="mt-8 sm:mt-12 lg:mt-16">
-          <div className="flex justify-between items-center mb-4 sm:mb-6">
-            <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 tracking-tight">
+        <div className="mt-8 lg:mt-12 lg:mt-16">
+          <div className="flex justify-between items-center mb-4 lg:mb-6">
+            <h2 className="text-xl lg:text-2xl lg:text-3xl font-bold text-gray-900 tracking-tight">
               Sản phẩm trong chương trình tích điểm
             </h2>
           </div>
           <div className="text-center py-8">
-            <p className="text-sm sm:text-base text-gray-600">Đang tải...</p>
+            <p className="text-sm lg:text-base text-gray-600">Đang tải...</p>
           </div>
         </div>
       )}

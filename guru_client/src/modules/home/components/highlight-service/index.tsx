@@ -30,7 +30,7 @@ export default async function HighlightService() {
           serviceMenuHtml={serviceMenuHtml}
           shippingExpressHtml={shippingExpressHtml}
         />
-        <div className="lg:px-0 px-4 flex flex-col sm:gap-y-10 gap-y-6 mt-8">
+        <div className="lg:px-0 px-4 flex flex-col lg:gap-y-10 gap-y-6 mt-8">
           <Categories isShowList />
           <Brands brands={brands} />
         </div>

@@ -44,8 +44,8 @@ export default function Brands({ brands }: { brands: Brand[] }) {
 
   return (
     <div className="relative flex flex-col pt-3 pb-4 border-stone-200 shadow-lg rounded-lg border">
-      <div className="mr-4 flex sm:space-x-1 space-x-0.5 px-4 text-gray-700 items-center">
-        <h6 className="my-auto sm:text-xl text-lg font-semibold text-pink-700">
+      <div className="mr-4 flex lg:space-x-1 space-x-0.5 px-4 text-gray-700 items-center">
+        <h6 className="my-auto lg:text-xl text-lg font-semibold text-pink-700">
           Thương hiệu nổi bật
         </h6>
       </div>
@@ -95,9 +95,9 @@ export default function Brands({ brands }: { brands: Brand[] }) {
           className="w-full overflow-x-scroll no-scrollbar px-4"
           ref={scrollRef}
         >
-          <div className="flex w-max flex-nowrap sm:gap-x-4 gap-y-3 flex-col sm:flex-row">
+          <div className="flex w-max flex-nowrap lg:gap-x-4 gap-y-3 flex-col lg:flex-row">
             {brandChunks.map((chunk, chunkIdx) => (
-              <div key={chunkIdx} className="flex flex-row sm:gap-x-4 gap-x-3">
+              <div key={chunkIdx} className="flex flex-row lg:gap-x-4 gap-x-3">
                 {chunk.map((brand) => (
                   <Link
                     href={`brand_${brand.slug}`}
@@ -110,7 +110,7 @@ export default function Brands({ brands }: { brands: Brand[] }) {
                         alt={brand.name}
                         height={0}
                         width={0}
-                        className="sm:h-20 h-16 sm:w-28 w-24 object-scale-down my-auto rounded-t-lg"
+                        className="lg:h-20 h-16 lg:w-28 w-24 object-scale-down my-auto rounded-t-lg"
                         loading="eager"
                         sizes="80vw"
                       />

@@ -100,6 +100,7 @@ export interface Product {
   brand: Brand
   isTopSelling: boolean
   isFreeShip: boolean
+  isService?: boolean
 }
 
 export interface ProductListBlock {

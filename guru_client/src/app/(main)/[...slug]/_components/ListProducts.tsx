@@ -65,7 +65,7 @@ export default function ListProducts({
   }
 
   return listProductDisplay.length ? (
-    <div className="flex flex-col sm:gap-6 gap-4">
+    <div className="flex flex-col lg:gap-6 gap-4">
       <div className="grid lg:grid-cols-4 sm:grid-cols-3 grid-cols-2 sm:gap-6 gap-4 h-fit">
         {listProductDisplay.map((product) => {
           return <ProductCart key={product.documentId} data={product} />

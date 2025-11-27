@@ -6,7 +6,7 @@ export default function ProductLoading() {
         <div className="h-12 bg-gray-200 rounded-lg" />
         
         {/* Product detail skeleton */}
-        <div className="flex sm:flex-row flex-col sm:gap-10 gap-6">
+        <div className="flex lg:flex-row flex-col lg:gap-10 gap-6">
           {/* Image skeleton */}
           <div className="flex-1">
             <div className="h-96 bg-gray-200 rounded-lg" />

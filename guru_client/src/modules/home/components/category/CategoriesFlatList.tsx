@@ -57,8 +57,8 @@ export default function CategoriesFlatList({
 
   return (
     <div className="relative flex flex-col pt-3 pb-4 border-stone-200 shadow-lg rounded-lg border">
-      <div className="mr-4 flex sm:space-x-1 space-x-0.5 px-4 text-gray-700 items-center">
-        <h6 className="my-auto sm:text-xl text-lg font-semibold text-pink-700">
+      <div className="mr-4 flex lg:space-x-1 space-x-0.5 px-4 text-gray-700 items-center">
+        <h6 className="my-auto lg:text-xl text-lg font-semibold text-pink-700">
           Danh mục
         </h6>
       </div>
@@ -108,9 +108,9 @@ export default function CategoriesFlatList({
           className="w-full overflow-x-scroll no-scrollbar px-4"
           ref={scrollRef}
         >
-          <div className="flex w-max flex-nowrap sm:gap-x-4 gap-y-3 flex-col sm:flex-row">
+          <div className="flex w-max flex-nowrap lg:gap-x-4 gap-y-3 flex-col lg:flex-row">
             {categoryChunks.map((chunk, chunkIdx) => (
-              <div key={chunkIdx} className="flex flex-row sm:gap-x-4 gap-x-3">
+              <div key={chunkIdx} className="flex flex-row lg:gap-x-4 gap-x-3">
                 {chunk.map((category) => (
                   <Link
                     href={`category_${category.slug}`}
@@ -123,12 +123,12 @@ export default function CategoriesFlatList({
                         alt={category.name}
                         height={0}
                         width={0}
-                        className="sm:w-24 w-20 sm:h-24 h-20 object-scale-down my-auto rounded-t-lg aspect-square"
+                        className="lg:w-24 w-20 lg:h-24 h-20 object-scale-down my-auto rounded-t-lg aspect-square"
                         loading="eager"
                         sizes="80vw"
                       />
                     </div>
-                    <div className="text-center sm:w-32 w-28 py-2 mx-auto my-auto">
+                    <div className="text-center lg:w-32 w-28 py-2 mx-auto my-auto">
                       <span className="text-xs font-semibold">
                         {category.name}
                       </span>

@@ -1,6 +1,6 @@
 import { Drawer } from "@mui/material"
 import Link from "next/link"
-import { Brand, Category, ProductListBlock } from "types/global"
+import { Brand, Category, ProductListBlock, Product } from "types/global"
 import { Popover } from "@headlessui/react"
 
 import PlayArrowRoundedIcon from "@mui/icons-material/PlayArrowRounded"
@@ -18,6 +18,8 @@ interface FilterMobileProps {
   currentCategory?: Category
   currentBrand?: Brand
   currentBlockProduct?: ProductListBlock
+  serviceProducts?: Product[]
+  isLoadingServices?: boolean
 }
 
 export default function FilterMobile({
@@ -30,6 +32,8 @@ export default function FilterMobile({
   currentBrand,
   brands,
   currentBlockProduct,
+  serviceProducts = [],
+  isLoadingServices = false,
 }: FilterMobileProps) {
   const pathname = usePathname()
   const isHasGift = pathname?.includes("/has_gift")
@@ -215,6 +219,39 @@ export default function FilterMobile({
                 </div>
               )
             })}
+          </div>
+        </div>
+        <div className="flex flex-col space-y-2 mt-4">
+          <p className="flex space-x-2 text-xs font-sm uppercase font-semibold text-gray-400 cursor-pointer">
+            Dịch vụ
+          </p>
+          <div className="ml-1 flex flex-col space-y-2">
+            {isLoadingServices ? (
+              <div className="text-sm text-gray-500 pl-4">Đang tải...</div>
+            ) : serviceProducts && serviceProducts.length > 0 ? (
+              serviceProducts.map((service: Product) => {
+                return (
+                  <div
+                    key={service.documentId}
+                    className="flex flex-col space-y-2 text-gray-600 hover:text-gray-700 duration-300 cursor-pointer"
+                  >
+                    <div className="flex space-x-2 items-center">
+                      <Link
+                        href={`/product/${service.slug}`}
+                        onClick={onClose}
+                        className="text-sm font-normal pl-4"
+                      >
+                        <span>{service.name}</span>
+                      </Link>
+                    </div>
+                  </div>
+                )
+              })
+            ) : (
+              <div className="text-sm text-gray-500 pl-4">
+                Không có dịch vụ nào
+              </div>
+            )}
           </div>
         </div>
       </div>

@@ -28,7 +28,7 @@ export default async function Footer({ metada }: FooterProps) {
               DIVI Cosmetics
             </Link>
           </div>
-          <div className="text-small-regular gap-10 md:gap-x-16 grid grid-cols-2 sm:grid-cols-3">
+          <div className="text-small-regular gap-10 md:gap-x-16 grid grid-cols-2 lg:grid-cols-3">
             {categories && categories?.length > 0 && (
               <div className="flex flex-col gap-y-3">
                 <span className="txt-small-plus txt-ui-fg-base">Danh mục</span>

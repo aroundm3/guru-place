@@ -1,7 +1,7 @@
 "use client"
 
 import { Fragment, useEffect, useState } from "react"
-import { Brand, Category, ProductListBlock } from "types/global"
+import { Brand, Category, ProductListBlock, Product } from "types/global"
 import { Button } from "@mui/material"
 import useGetListBrandByCategory from "../_hooks/useGetListBrandByCategory"
 import Link from "next/link"
@@ -9,6 +9,7 @@ import PlayArrowRoundedIcon from "@mui/icons-material/PlayArrowRounded"
 import SortRoundedIcon from "@mui/icons-material/SortRounded"
 import FilterMobile from "./FilterMobile"
 import { usePathname } from "next/navigation"
+import useGetListProducts from "@modules/layout/components/search-button/_hooks/useGetListProducts"
 
 interface FilterProps {
   brands: Brand[]
@@ -36,6 +37,16 @@ export default function Filter({
     useGetListBrandByCategory(currentCategorySelect)
   const [isOpenFilterMobile, setIsOpenFilterMobile] = useState(false)
 
+  // Fetch danh sách dịch vụ (isService: true)
+  const { listProduct: serviceProducts, isLoading: isLoadingServices } =
+    useGetListProducts(
+      {
+        isService: true,
+        pageSizeCustom: 1000,
+      },
+      false
+    )
+
   useEffect(() => {
     if (currentCategory) {
       setCurrentCategorySelect(currentCategory.documentId)
@@ -58,8 +69,10 @@ export default function Filter({
         onClose={() => setIsOpenFilterMobile(false)}
         brands={brands}
         currentBlockProduct={currentBlockProduct}
+        serviceProducts={serviceProducts || []}
+        isLoadingServices={isLoadingServices}
       />
-      <div className="flex justify-end w-full sm:hidden">
+      <div className="flex justify-end w-full lg:hidden">
         <Button
           variant="text"
           className="!flex !space-x-1 !text-gray-600 !px-2 !justify-center"
@@ -71,11 +84,11 @@ export default function Filter({
           <SortRoundedIcon className="!h-5 my-auto" />
         </Button>
       </div>
-      <div className="bg-[#fffdf8] border border-stone-300 sm:min-w-[250px] sm:flex hidden flex-col p-4 rounded h-fit pb-10 sticky top-24">
+      <div className="bg-[#fffdf8] border border-stone-300 lg:min-w-[250px] lg:flex hidden flex-col p-4 rounded h-fit pb-10 sticky top-24">
         <span className="text-md font-semibold text-stone-600">
           Bộ lọc sản phẩm
         </span>
-        <div className="sm:flex hidden flex-col space-y-3 mt-8">
+        <div className="lg:flex hidden flex-col space-y-3 mt-8">
           <p className="flex space-x-2 text-sm font-semibold text-stone-500 cursor-pointer">
             Ưu đãi
           </p>
@@ -141,7 +154,7 @@ export default function Filter({
             })}
           </div>
         </div>
-        <div className="sm:flex hidden flex-col space-y-3 mt-8">
+        <div className="lg:flex hidden flex-col space-y-3 mt-8">
           <p className="flex space-x-2 text-sm font-semibold text-stone-500 cursor-pointer">
             Danh mục
           </p>
@@ -174,7 +187,7 @@ export default function Filter({
             })}
           </div>
         </div>
-        <div className="sm:flex hidden flex-col space-y-3 mt-8">
+        <div className="lg:flex hidden flex-col space-y-3 mt-8">
           <p className="flex space-x-2 text-sm font-semibold text-stone-500 cursor-pointer">
             Bộ sản phẩm
           </p>
@@ -205,6 +218,38 @@ export default function Filter({
                 </div>
               )
             })}
+          </div>
+        </div>
+        <div className="lg:flex hidden flex-col space-y-3 mt-8">
+          <p className="flex space-x-2 text-sm font-semibold text-stone-500 cursor-pointer">
+            Dịch vụ
+          </p>
+          <div className="ml-1 flex flex-col space-y-2">
+            {isLoadingServices ? (
+              <div className="text-sm text-gray-500 pl-4">Đang tải...</div>
+            ) : serviceProducts && serviceProducts.length > 0 ? (
+              serviceProducts.map((service: Product) => {
+                return (
+                  <div
+                    key={service.documentId}
+                    className="flex flex-col space-y-2 text-gray-600 hover:text-gray-700 duration-300 cursor-pointer"
+                  >
+                    <div className="flex space-x-2 items-center">
+                      <Link
+                        href={`/product/${service.slug}`}
+                        className="text-sm font-normal pl-4"
+                      >
+                        <span>{service.name}</span>
+                      </Link>
+                    </div>
+                  </div>
+                )
+              })
+            ) : (
+              <div className="text-sm text-gray-500 pl-4">
+                Không có dịch vụ nào
+              </div>
+            )}
           </div>
         </div>
       </div>

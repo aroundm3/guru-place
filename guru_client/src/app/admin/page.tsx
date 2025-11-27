@@ -100,8 +100,8 @@ function AdminPageContent() {
 
   if (isLoadingAuth) {
     return (
-      <div className="container mx-auto px-3 sm:px-4 py-6 sm:py-8">
-        <div className="text-center py-12 sm:py-16">
+      <div className="container mx-auto px-3 lg:px-4 py-6 lg:py-8">
+        <div className="text-center py-12 lg:py-16">
           <CircularProgress />
         </div>
       </div>
@@ -110,8 +110,8 @@ function AdminPageContent() {
 
   if (!isAuthenticated) {
     return (
-      <div className="container mx-auto px-3 sm:px-4 py-6 sm:py-8 max-w-md">
-        <div className="bg-white border border-gray-200 rounded-lg p-6 sm:p-8 shadow-sm">
+      <div className="container mx-auto px-3 lg:px-4 py-6 lg:py-8 max-w-md">
+        <div className="bg-white border border-gray-200 rounded-lg p-6 lg:p-8 shadow-sm">
           <h1 className="text-2xl font-bold text-gray-900 mb-6 text-center">
             Đăng nhập Admin
           </h1>
@@ -157,9 +157,9 @@ function AdminPageContent() {
   }
 
   return (
-    <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-8 max-w-7xl">
-      <div className="mb-4 sm:mb-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
+    <div className="container mx-auto px-3 lg:px-4 py-4 lg:py-8 max-w-7xl">
+      <div className="mb-4 lg:mb-6 flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+        <h1 className="text-xl lg:text-2xl font-bold text-gray-900">
           Quản trị hệ thống
         </h1>
         <Button
@@ -204,8 +204,8 @@ export default function AdminPage() {
   return (
     <Suspense
       fallback={
-        <div className="container mx-auto px-3 sm:px-4 py-6 sm:py-8">
-          <div className="text-center py-12 sm:py-16">
+        <div className="container mx-auto px-3 lg:px-4 py-6 lg:py-8">
+          <div className="text-center py-12 lg:py-16">
             <CircularProgress />
           </div>
         </div>

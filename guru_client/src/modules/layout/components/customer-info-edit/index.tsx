@@ -201,21 +201,21 @@ export default function CustomerInfoEdit() {
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -20 }}
                   transition={{ duration: 0.3 }}
-                  className="p-4 sm:p-6"
+                  className="p-4 lg:p-6"
                 >
-                  <Typography className="text-gray-900 !font-semibold !mb-6 sm:!mb-8 text-center tracking-tight !text-base sm:!text-2xl">
+                  <Typography className="text-gray-900 !font-semibold !mb-6 lg:!mb-8 text-center tracking-tight !text-base lg:!text-2xl">
                     Nhập thông tin
                   </Typography>
                   <Typography
                     variant="body1"
-                    className="text-gray-600 !mb-3 sm:!mb-4 text-left !text-xs sm:!text-base"
+                    className="text-gray-600 !mb-3 lg:!mb-4 text-left !text-xs lg:!text-base"
                   >
                     Vui lòng nhập số điện thoại để chỉnh sửa thông tin
                   </Typography>
 
                   <form
                     onSubmit={handlePhoneSubmit}
-                    className="space-y-4 sm:space-y-5"
+                    className="space-y-4 lg:space-y-5"
                   >
                     <TextField
                       fullWidth
@@ -238,13 +238,13 @@ export default function CustomerInfoEdit() {
                       }}
                     />
 
-                    <div className="flex space-x-3 sm:space-x-4">
+                    <div className="flex space-x-3 lg:space-x-4">
                       <Button
                         onClick={handleClose}
                         variant="outlined"
                         fullWidth
                         disabled={loading}
-                        className="!normal-case !font-semibold !py-2 sm:!py-2.5 !text-xs sm:!text-sm !text-neutral-900 !border-neutral-900"
+                        className="!normal-case !font-semibold !py-2 lg:!py-2.5 !text-xs lg:!text-sm !text-neutral-900 !border-neutral-900"
                       >
                         Hủy
                       </Button>
@@ -253,7 +253,7 @@ export default function CustomerInfoEdit() {
                         variant="contained"
                         fullWidth
                         disabled={loading}
-                        className="!bg-neutral-900 !text-white !normal-case !font-semibold !py-2 sm:!py-2.5 !text-xs sm:!text-sm"
+                        className="!bg-neutral-900 !text-white !normal-case !font-semibold !py-2 lg:!py-2.5 !text-xs lg:!text-sm"
                       >
                         {loading ? "Đang kiểm tra..." : "Tiếp tục"}
                       </Button>
@@ -270,21 +270,21 @@ export default function CustomerInfoEdit() {
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -20 }}
                   transition={{ duration: 0.3 }}
-                  className="p-4 sm:p-6"
+                  className="p-4 lg:p-6"
                 >
-                  <Typography className="text-gray-900 !font-semibold !mb-6 sm:!mb-8 text-center tracking-tight !text-base sm:!text-2xl">
+                  <Typography className="text-gray-900 !font-semibold !mb-6 lg:!mb-8 text-center tracking-tight !text-base lg:!text-2xl">
                     Chỉnh sửa thông tin
                   </Typography>
                   <Typography
                     variant="body1"
-                    className="text-gray-600 !mb-3 sm:!mb-4 text-left !text-xs sm:!text-base"
+                    className="text-gray-600 !mb-3 lg:!mb-4 text-left !text-xs lg:!text-base"
                   >
                     Vui lòng điền thông tin để cập nhật
                   </Typography>
 
                   <form
                     onSubmit={handleUpdateSubmit}
-                    className="space-y-4 sm:space-y-5"
+                    className="space-y-4 lg:space-y-5"
                   >
                     <TextField
                       fullWidth
@@ -383,7 +383,7 @@ export default function CustomerInfoEdit() {
                     {error && (
                       <Typography
                         variant="body2"
-                        className="!text-xs sm:!text-sm text-red-600"
+                        className="!text-xs lg:!text-sm text-red-600"
                       >
                         {error}
                       </Typography>
@@ -395,7 +395,7 @@ export default function CustomerInfoEdit() {
                         fullWidth
                         onClick={() => setStep("phone")}
                         disabled={loading}
-                        className="!normal-case !font-semibold !py-2 sm:!py-2.5 !text-xs sm:!text-sm !text-neutral-900 !border-neutral-900"
+                        className="!normal-case !font-semibold !py-2 lg:!py-2.5 !text-xs lg:!text-sm !text-neutral-900 !border-neutral-900"
                       >
                         Quay lại
                       </Button>
@@ -404,7 +404,7 @@ export default function CustomerInfoEdit() {
                         variant="contained"
                         fullWidth
                         disabled={loading}
-                        className="!bg-neutral-900 !text-white !normal-case !font-semibold !py-2 sm:!py-2.5 !text-xs sm:!text-sm"
+                        className="!bg-neutral-900 !text-white !normal-case !font-semibold !py-2 lg:!py-2.5 !text-xs lg:!text-sm"
                       >
                         {loading ? "Đang cập nhật..." : "Cập nhật"}
                       </Button>

@@ -43,6 +43,7 @@ export default function Options({ productData }: OptionsProps) {
   const { getCardById } = useCustomerCards()
   const [currentPicked, setCurrentPicked] = useState<Variant | undefined>()
   const [quantityPicked, setQuantityPicked] = useState(1)
+  const isService = productData.isService === true
   const [isBottomSheetOpen, setIsBottomSheetOpen] = useState(false)
   const [showWarning, setShowWarning] = useState({
     isOpen: false,
@@ -96,9 +97,12 @@ export default function Options({ productData }: OptionsProps) {
 
     if (!productData) return
 
+    // Nếu là dịch vụ, mặc định quantity = 1
+    const finalQuantity = isService ? 1 : quantityPicked
+
     const cartItem = {
       variantId: currentPicked?.documentId || null,
-      quantity: quantityPicked,
+      quantity: finalQuantity,
       product: {
         productData,
       },
@@ -122,8 +126,13 @@ export default function Options({ productData }: OptionsProps) {
       })
 
       if (existingIndex > -1) {
-        // Nếu đã có thì cộng dồn số lượng
-        cart[existingIndex].quantity += cartItem.quantity
+        // Nếu là dịch vụ, không cộng dồn số lượng (giữ nguyên 1)
+        if (isService) {
+          // Không làm gì cả, giữ nguyên số lượng = 1
+        } else {
+          // Nếu không phải dịch vụ thì cộng dồn số lượng như bình thường
+          cart[existingIndex].quantity += cartItem.quantity
+        }
       } else {
         // Nếu chưa có thì thêm mới
         cart.push(cartItem)
@@ -167,9 +176,11 @@ export default function Options({ productData }: OptionsProps) {
       />
       <div className="flex flex-col space-y-2">
         {/* Desktop: Hiển thị đầy đủ options */}
-        <div className="hidden sm:flex flex-col space-y-4">
+        <div className="hidden lg:flex flex-col space-y-4">
           {productData?.variants?.length > 1 && (
-            <p className="text-sm font-medium text-neutral-600">Phân loại: </p>
+            <p className="text-sm font-medium text-neutral-600">
+              {isService ? "Loại dịch vụ:" : "Phân loại:"}
+            </p>
           )}
           {variants.length ? (
             <div className="flex flex-wrap gap-2">
@@ -215,10 +226,10 @@ export default function Options({ productData }: OptionsProps) {
           ) : (
             ""
           )}
-          <div className="flex sm:flex-row flex-col justify-between sm:gap-4 gap-2">
+          <div className="flex lg:flex-row flex-col justify-between lg:gap-4 gap-2">
             {currentPicked ? (
               <div className="flex flex-col my-auto">
-                <span className="sm:text-2xl text-xl font-bold text-pink-600">
+                <span className="lg:text-2xl text-xl font-bold text-pink-600">
                   {formatBigNumber(currentPicked.sale_price, true)}
                 </span>
                 {currentPicked.base_price > currentPicked.sale_price ? (
@@ -231,7 +242,7 @@ export default function Options({ productData }: OptionsProps) {
               </div>
             ) : (
               <div className="flex flex-col my-auto">
-                <span className="sm:text-2xl text-xl font-bold text-pink-600">
+                <span className="lg:text-2xl text-xl font-bold text-pink-600">
                   {formatBigNumber(productData.sale_price, true)}
                 </span>
                 {Number(productData.base_price) >
@@ -245,37 +256,40 @@ export default function Options({ productData }: OptionsProps) {
               </div>
             )}
 
-            {currentPicked ? (
-              <div className="flex items-end flex-col gap-1">
-                <span className="text-sm font-normal text-neutral-600">
-                  Sẵn:{" "}
-                  <span className="text-base font-semibold">
-                    {formatBigNumber(Number(currentPicked.quantity ?? 0))}
+            {!isService &&
+              (currentPicked ? (
+                <div className="flex items-end flex-col gap-1">
+                  <span className="text-sm font-normal text-neutral-600">
+                    Sẵn:{" "}
+                    <span className="text-base font-semibold">
+                      {formatBigNumber(Number(currentPicked.quantity ?? 0))}
+                    </span>
                   </span>
-                </span>
-                <span className="text-sm font-normal text-neutral-600">
-                  Đã bán:{" "}
-                  <span className="text-base font-semibold">
-                    {formatBigNumber(Number(currentPicked.sold_quantity ?? 0))}
+                  <span className="text-sm font-normal text-neutral-600">
+                    Đã bán:{" "}
+                    <span className="text-base font-semibold">
+                      {formatBigNumber(
+                        Number(currentPicked.sold_quantity ?? 0)
+                      )}
+                    </span>
                   </span>
-                </span>
-              </div>
-            ) : (
-              <div className="flex items-end flex-col gap-1">
-                <span className="text-sm font-normal text-neutral-600">
-                  Sẵn:{" "}
-                  <span className="text-base font-semibold">
-                    {formatBigNumber(Number(productData.quantity ?? 0))}
+                </div>
+              ) : (
+                <div className="flex items-end flex-col gap-1">
+                  <span className="text-sm font-normal text-neutral-600">
+                    Sẵn:{" "}
+                    <span className="text-base font-semibold">
+                      {formatBigNumber(Number(productData.quantity ?? 0))}
+                    </span>
                   </span>
-                </span>
-                <span className="text-sm font-normal text-neutral-600">
-                  Đã bán:{" "}
-                  <span className="text-base font-semibold">
-                    {formatBigNumber(Number(productData.sold_quantity ?? 0))}
+                  <span className="text-sm font-normal text-neutral-600">
+                    Đã bán:{" "}
+                    <span className="text-base font-semibold">
+                      {formatBigNumber(Number(productData.sold_quantity ?? 0))}
+                    </span>
                   </span>
-                </span>
-              </div>
-            )}
+                </div>
+              ))}
           </div>
           {/* Message tích điểm khi chọn variant có customer_cards (Desktop) */}
           <Collapse in={!!minDiscountCard}>
@@ -304,12 +318,12 @@ export default function Options({ productData }: OptionsProps) {
                           cardColor
                         )} flex-shrink-0`}
                       />
-                      <p className="text-xs sm:text-sm font-semibold text-neutral-900">
+                      <p className="text-xs lg:text-sm font-semibold text-neutral-900">
                         Phần quà khi mua sản phẩm này
                       </p>
                     </div>
                     <p
-                      className={`text-sm sm:text-base font-bold ${getCardTextClasses(
+                      className={`text-sm lg:text-base font-bold ${getCardTextClasses(
                         cardColor
                       )} mb-2`}
                     >
@@ -327,50 +341,52 @@ export default function Options({ productData }: OptionsProps) {
                 )
               })()}
           </Collapse>
-          <div className="flex flex-col space-y-1">
-            <span className="text-xs font-semibold text-gray-400">
-              Chọn số lượng
-            </span>
-            <div className="flex space-x-1">
-              <IconButton
-                onClick={() => {
-                  if (quantityPicked === 1) {
-                    return
-                  }
+          {!isService && (
+            <div className="flex flex-col space-y-1">
+              <span className="text-xs font-semibold text-gray-400">
+                Chọn số lượng
+              </span>
+              <div className="flex space-x-1">
+                <IconButton
+                  onClick={() => {
+                    if (quantityPicked === 1) {
+                      return
+                    }
 
-                  setQuantityPicked(quantityPicked - 1)
-                }}
-                disabled={quantityPicked === 1}
-                className="px-2 py-1 bg-neutral-100 cursor-pointer hover:bg-neutral-50 duration-300 border border-stone-300 rounded disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <RemoveRoundedIcon className="!w-5" />
-              </IconButton>
-              <div className="text-base font-semibold px-4 min-w-16 flex items-center justify-center cursor-pointer">
-                <span className="mx-auto my-auto">{quantityPicked}</span>
+                    setQuantityPicked(quantityPicked - 1)
+                  }}
+                  disabled={quantityPicked === 1}
+                  className="px-2 py-1 bg-neutral-100 cursor-pointer hover:bg-neutral-50 duration-300 border border-stone-300 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <RemoveRoundedIcon className="!w-5" />
+                </IconButton>
+                <div className="text-base font-semibold px-4 min-w-16 flex items-center justify-center cursor-pointer">
+                  <span className="mx-auto my-auto">{quantityPicked}</span>
+                </div>
+
+                <IconButton
+                  onClick={() => {
+                    const maxQuantity = currentPicked
+                      ? Number(currentPicked.quantity ?? 0)
+                      : Number(productData.quantity ?? 0)
+                    if (quantityPicked >= maxQuantity) {
+                      return
+                    }
+                    setQuantityPicked(quantityPicked + 1)
+                  }}
+                  disabled={
+                    (currentPicked &&
+                      quantityPicked >= Number(currentPicked.quantity ?? 0)) ||
+                    (!currentPicked &&
+                      quantityPicked >= Number(productData.quantity ?? 0))
+                  }
+                  className="px-2 py-1 bg-neutral-100 cursor-pointer hover:bg-neutral-50 duration-300 border border-stone-300 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <AddRoundedIcon className="!w-5" />
+                </IconButton>
               </div>
-
-              <IconButton
-                onClick={() => {
-                  const maxQuantity = currentPicked
-                    ? Number(currentPicked.quantity ?? 0)
-                    : Number(productData.quantity ?? 0)
-                  if (quantityPicked >= maxQuantity) {
-                    return
-                  }
-                  setQuantityPicked(quantityPicked + 1)
-                }}
-                disabled={
-                  (currentPicked &&
-                    quantityPicked >= Number(currentPicked.quantity ?? 0)) ||
-                  (!currentPicked &&
-                    quantityPicked >= Number(productData.quantity ?? 0))
-                }
-                className="px-2 py-1 bg-neutral-100 cursor-pointer hover:bg-neutral-50 duration-300 border border-stone-300 rounded disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <AddRoundedIcon className="!w-5" />
-              </IconButton>
             </div>
-          </div>
+          )}
 
           {(() => {
             const availableQuantity = currentPicked
@@ -385,14 +401,18 @@ export default function Options({ productData }: OptionsProps) {
                 onClick={handleAddToCart}
                 disabled={isOutOfStock}
               >
-                {isOutOfStock ? "Hết hàng" : "Thêm vào giỏ"}
+                {isOutOfStock
+                  ? "Hết hàng"
+                  : isService
+                  ? "Đặt dịch vụ"
+                  : "Thêm vào giỏ"}
               </Button>
             )
           })()}
         </div>
 
         {/* Mobile: Chỉ hiện nút thêm vào giỏ */}
-        <div className="sm:hidden">
+        <div className="lg:hidden">
           {(() => {
             const availableQuantity = currentPicked
               ? Number(currentPicked.quantity ?? 0)
@@ -406,7 +426,11 @@ export default function Options({ productData }: OptionsProps) {
                 onClick={handleAddToCart}
                 disabled={isOutOfStock}
               >
-                {isOutOfStock ? "Hết hàng" : "Thêm vào giỏ"}
+                {isOutOfStock
+                  ? "Hết hàng"
+                  : isService
+                  ? "Đặt dịch vụ"
+                  : "Thêm vào giỏ"}
               </Button>
             )
           })()}
@@ -449,30 +473,32 @@ export default function Options({ productData }: OptionsProps) {
                     ? formatBigNumber(currentPicked.sale_price, true)
                     : formatBigNumber(productData.sale_price, true)}
                 </span>
-                <div className="flex flex-col items-end gap-1">
-                  <span className="text-xs font-normal text-neutral-600">
-                    Sẵn:{" "}
-                    <span className="text-sm font-semibold">
-                      {formatBigNumber(
-                        Number(
-                          currentPicked?.quantity ?? productData.quantity ?? 0
-                        )
-                      )}
+                {!isService && (
+                  <div className="flex flex-col items-end gap-1">
+                    <span className="text-xs font-normal text-neutral-600">
+                      Sẵn:{" "}
+                      <span className="text-sm font-semibold">
+                        {formatBigNumber(
+                          Number(
+                            currentPicked?.quantity ?? productData.quantity ?? 0
+                          )
+                        )}
+                      </span>
                     </span>
-                  </span>
-                  <span className="text-xs font-normal text-neutral-600">
-                    Đã bán:{" "}
-                    <span className="text-sm font-semibold">
-                      {formatBigNumber(
-                        Number(
-                          currentPicked?.sold_quantity ??
-                            productData.sold_quantity ??
-                            0
-                        )
-                      )}
+                    <span className="text-xs font-normal text-neutral-600">
+                      Đã bán:{" "}
+                      <span className="text-sm font-semibold">
+                        {formatBigNumber(
+                          Number(
+                            currentPicked?.sold_quantity ??
+                              productData.sold_quantity ??
+                              0
+                          )
+                        )}
+                      </span>
                     </span>
-                  </span>
-                </div>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -481,7 +507,7 @@ export default function Options({ productData }: OptionsProps) {
             {productData?.variants?.length > 1 && (
               <div className="mb-4">
                 <p className="text-sm font-medium text-neutral-600 mb-2">
-                  Phân loại:
+                  {isService ? "Loại dịch vụ:" : "Phân loại:"}
                 </p>
                 <div className="flex flex-wrap gap-2">
                   {variants.map((variant) => {
@@ -555,12 +581,12 @@ export default function Options({ productData }: OptionsProps) {
                             cardColor
                           )} flex-shrink-0`}
                         />
-                        <p className="text-xs sm:text-sm font-semibold text-neutral-900">
+                        <p className="text-xs lg:text-sm font-semibold text-neutral-900">
                           Phần quà khi mua sản phẩm này
                         </p>
                       </div>
                       <p
-                        className={`text-sm sm:text-base font-bold ${getCardTextClasses(
+                        className={`text-sm lg:text-base font-bold ${getCardTextClasses(
                           cardColor
                         )} mb-2`}
                       >
@@ -580,50 +606,53 @@ export default function Options({ productData }: OptionsProps) {
             </Collapse>
 
             {/* Quantity Selection */}
-            <div className="flex flex-col space-y-1 ">
-              <span className="text-xs font-semibold text-gray-400">
-                Chọn số lượng
-              </span>
-              <div className="flex space-x-1">
-                <IconButton
-                  onClick={() => {
-                    if (quantityPicked === 1) {
-                      return
-                    }
+            {!isService && (
+              <div className="flex flex-col space-y-1 ">
+                <span className="text-xs font-semibold text-gray-400">
+                  Chọn số lượng
+                </span>
+                <div className="flex space-x-1">
+                  <IconButton
+                    onClick={() => {
+                      if (quantityPicked === 1) {
+                        return
+                      }
 
-                    setQuantityPicked(quantityPicked - 1)
-                  }}
-                  disabled={quantityPicked === 1}
-                  className="px-2 py-1 bg-neutral-100 cursor-pointer hover:bg-neutral-50 duration-300 border border-stone-300 rounded disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <RemoveRoundedIcon className="!w-5" />
-                </IconButton>
-                <div className="text-sm font-semibold px-4 min-w-16 flex items-center justify-center">
-                  <span className="mx-auto my-auto">{quantityPicked}</span>
+                      setQuantityPicked(quantityPicked - 1)
+                    }}
+                    disabled={quantityPicked === 1}
+                    className="px-2 py-1 bg-neutral-100 cursor-pointer hover:bg-neutral-50 duration-300 border border-stone-300 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <RemoveRoundedIcon className="!w-5" />
+                  </IconButton>
+                  <div className="text-sm font-semibold px-4 min-w-16 flex items-center justify-center">
+                    <span className="mx-auto my-auto">{quantityPicked}</span>
+                  </div>
+
+                  <IconButton
+                    onClick={() => {
+                      const maxQuantity = currentPicked
+                        ? Number(currentPicked.quantity ?? 0)
+                        : Number(productData.quantity ?? 0)
+                      if (quantityPicked >= maxQuantity) {
+                        return
+                      }
+                      setQuantityPicked(quantityPicked + 1)
+                    }}
+                    disabled={
+                      (currentPicked &&
+                        quantityPicked >=
+                          Number(currentPicked.quantity ?? 0)) ||
+                      (!currentPicked &&
+                        quantityPicked >= Number(productData.quantity ?? 0))
+                    }
+                    className="px-2 py-1 bg-neutral-100 cursor-pointer hover:bg-neutral-50 duration-300 border border-stone-300 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <AddRoundedIcon className="!w-5" />
+                  </IconButton>
                 </div>
-
-                <IconButton
-                  onClick={() => {
-                    const maxQuantity = currentPicked
-                      ? Number(currentPicked.quantity ?? 0)
-                      : Number(productData.quantity ?? 0)
-                    if (quantityPicked >= maxQuantity) {
-                      return
-                    }
-                    setQuantityPicked(quantityPicked + 1)
-                  }}
-                  disabled={
-                    (currentPicked &&
-                      quantityPicked >= Number(currentPicked.quantity ?? 0)) ||
-                    (!currentPicked &&
-                      quantityPicked >= Number(productData.quantity ?? 0))
-                  }
-                  className="px-2 py-1 bg-neutral-100 cursor-pointer hover:bg-neutral-50 duration-300 border border-stone-300 rounded disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <AddRoundedIcon className="!w-5" />
-                </IconButton>
               </div>
-            </div>
+            )}
 
             <Divider className="my-4" />
 
@@ -641,7 +670,11 @@ export default function Options({ productData }: OptionsProps) {
                   onClick={handleConfirmAddToCart}
                   disabled={isOutOfStock}
                 >
-                  {isOutOfStock ? "Hết hàng" : "Xác nhận thêm vào giỏ"}
+                  {isOutOfStock
+                    ? "Hết hàng"
+                    : isService
+                    ? "Xác nhận đặt dịch vụ"
+                    : "Xác nhận thêm vào giỏ"}
                 </Button>
               )
             })()}

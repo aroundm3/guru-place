@@ -10,7 +10,7 @@ export default async function BlockProduct() {
   })
 
   return (
-    <div className="lg:max-w-5xl sm:mt-10 mt-6 max-w-4xl lg:px-0 px-4 mx-auto flex flex-col sm:gap-10 gap-6">
+    <div className="lg:max-w-5xl lg:mt-10 mt-6 max-w-4xl lg:px-0 px-4 mx-auto flex flex-col lg:gap-10 gap-6">
       {listProducBlock.map((block) => {
         return block.products.length ? (
           <ProductBlockClient key={block.documentId} block={block} />
@@ -23,7 +23,7 @@ export default async function BlockProduct() {
         <div className="flex flex-col space-y-4">
           <Link
             href={`/products`}
-            className="font-semibold text-gray-700 sm:text-xl text-lg"
+            className="font-semibold text-gray-700 lg:text-xl text-lg"
           >
             Tất cả sản phẩm
           </Link>

@@ -1,8 +1,20 @@
 "use client"
 
-import { Dialog, DialogTitle, DialogContent, IconButton } from "@mui/material"
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  IconButton,
+  Button,
+  CircularProgress,
+} from "@mui/material"
 import CloseIcon from "@mui/icons-material/Close"
-import { getFullLinkResource } from "@lib/config"
+import Image from "next/image"
+import Link from "next/link"
+import { Product } from "types/global"
+import { formatBigNumber } from "@lib/util/format-big-number"
+import useGetListProducts from "@modules/layout/components/search-button/_hooks/useGetListProducts"
+import ArrowForwardRoundedIcon from "@mui/icons-material/ArrowForwardRounded"
 
 interface ServiceMenuDialogProps {
   open: boolean
@@ -15,162 +27,108 @@ export default function ServiceMenuDialog({
   onClose,
   serviceMenuHtml,
 }: ServiceMenuDialogProps) {
-  // Convert markdown to HTML
-  const markdownToHtml = (markdown: string) => {
-    if (!markdown) return ""
-
-    let html = markdown
-
-    // Convert markdown headings first (before other processing)
-    html = html.replace(/^### (.*$)/gim, "<h3>$1</h3>")
-    html = html.replace(/^## (.*$)/gim, "<h2>$1</h2>")
-    html = html.replace(/^# (.*$)/gim, "<h1>$1</h1>")
-
-    // Convert markdown images: ![alt](url) to <img alt="alt" src="url" />
-    // Use a placeholder to avoid conflicts with link processing
-    const imagePlaceholders: string[] = []
-    html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (match, alt, url) => {
-      // Process image URL - convert to full link if needed
-      let imageUrl = url
-      if (!url.startsWith("http://") && !url.startsWith("https://")) {
-        imageUrl = getFullLinkResource(url)
-      }
-      const placeholder = `__IMAGE_PLACEHOLDER_${imagePlaceholders.length}__`
-      imagePlaceholders.push(`<img src="${imageUrl}" alt="${alt || ""}" />`)
-      return placeholder
-    })
-
-    // Convert markdown links: [text](url) to <a href="url">text</a>
-    html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (match, text, url) => {
-      return `<a href="${url}" target="_blank" rel="noopener noreferrer">${text}</a>`
-    })
-
-    // Replace image placeholders back
-    imagePlaceholders.forEach((img, index) => {
-      html = html.replace(`__IMAGE_PLACEHOLDER_${index}__`, img)
-    })
-
-    // Convert markdown bold: **text** to <strong>text</strong>
-    html = html.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
-
-    // Convert markdown italic: *text* to <em>text</em>
-    // Only match single asterisks that are not part of double asterisks
-    html = html.replace(/(?<!\*)\*([^*\n]+?)\*(?!\*)/g, "<em>$1</em>")
-
-    // Split by double newlines to create paragraphs
-    const paragraphs = html.split(/\n\n+/)
-
-    html = paragraphs
-      .map((paragraph) => {
-        const trimmed = paragraph.trim()
-        if (!trimmed) return ""
-
-        // If already wrapped in HTML tags (like h1, h2, h3, img), return as is
-        if (/^<[hH][1-6]|<img/.test(trimmed)) {
-          return trimmed
-        }
-
-        // Wrap in <p> tag and convert single newlines to <br>
-        return `<p>${trimmed.replace(/\n/g, "<br />")}</p>`
-      })
-      .filter((p) => p)
-      .join("")
-
-    return html
-  }
+  // Fetch danh sách sản phẩm dịch vụ
+  const { listProduct: serviceProducts, isLoading } = useGetListProducts(
+    {
+      isService: true,
+      pageSizeCustom: 1000,
+    },
+    !open // Chỉ fetch khi dialog mở
+  )
 
   return (
     <Dialog
       open={open}
       onClose={onClose}
-      maxWidth="md"
+      maxWidth="lg"
       fullWidth
       PaperProps={{
         sx: {
           borderRadius: "12px",
+          maxHeight: "90vh",
         },
       }}
     >
-      <DialogTitle className="!flex !justify-between !items-center !font-semibold">
+      <DialogTitle className="!flex !justify-between !items-center !font-semibold !text-xl">
         <span>Dịch vụ gội đầu</span>
         <IconButton onClick={onClose} className="!p-1" aria-label="close">
           <CloseIcon />
         </IconButton>
       </DialogTitle>
-      <DialogContent dividers>
-        {serviceMenuHtml ? (
-          <div
-            className="rich-text-content"
-            dangerouslySetInnerHTML={{
-              __html: markdownToHtml(serviceMenuHtml),
-            }}
-            style={{
-              lineHeight: "1.6",
-            }}
-          />
+      <DialogContent dividers className="!p-6">
+        {isLoading ? (
+          <div className="flex justify-center items-center py-12">
+            <CircularProgress size={40} />
+          </div>
+        ) : serviceProducts && serviceProducts.length > 0 ? (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
+            {serviceProducts.map((service: Product) => {
+              const image = service.images?.[0]?.default || "/logo.png"
+              const price = service.sale_price || service.base_price || 0
+              const basePrice = service.base_price || 0
+              const hasDiscount = basePrice > price
+
+              return (
+                <div
+                  key={service.documentId}
+                  className="group relative bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-all duration-300 hover:border-pink-300"
+                >
+                  {/* Product Image */}
+                  <div className="relative w-full h-48 lg:h-56 bg-gray-100">
+                    <Image
+                      src={image}
+                      alt={service.name}
+                      fill
+                      className="object-cover group-hover:scale-105 transition-transform duration-300"
+                      sizes="(max-width: 768px) 100vw, 50vw"
+                    />
+                  </div>
+
+                  {/* Product Info */}
+                  <div className="p-4 lg:p-5">
+                    <h3 className="font-semibold text-base lg:text-lg mb-2 line-clamp-2 text-gray-900 group-hover:text-pink-700 transition-colors">
+                      {service.name}
+                    </h3>
+                    {service.short_description && (
+                      <p className="text-sm text-gray-600 mb-3 line-clamp-2">
+                        {service.short_description}
+                      </p>
+                    )}
+
+                    {/* Price */}
+                    <div className="flex items-center gap-2 mb-4">
+                      <span className="text-lg lg:text-xl font-bold text-pink-600">
+                        {formatBigNumber(price, true)}
+                      </span>
+                      {hasDiscount && (
+                        <span className="text-sm text-gray-400 line-through">
+                          {formatBigNumber(basePrice, true)}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Button */}
+                    <Link href={`/product/${service.slug}`} onClick={onClose}>
+                      <Button
+                        variant="contained"
+                        fullWidth
+                        className="!bg-pink-600 !text-white !normal-case !font-semibold hover:!bg-pink-700 !transition-colors"
+                        endIcon={<ArrowForwardRoundedIcon />}
+                      >
+                        Xem chi tiết
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
         ) : (
-          <p className="text-gray-500 text-center py-8">
-            Nội dung đang được cập nhật...
-          </p>
+          <div className="text-center py-12">
+            <p className="text-gray-500 text-lg">Hiện chưa có dịch vụ nào</p>
+          </div>
         )}
       </DialogContent>
-      <style jsx global>{`
-        .rich-text-content {
-          color: #374151;
-        }
-        .rich-text-content p {
-          margin-bottom: 1rem;
-          line-height: 1.6;
-        }
-        .rich-text-content h1,
-        .rich-text-content h2,
-        .rich-text-content h3,
-        .rich-text-content h4,
-        .rich-text-content h5,
-        .rich-text-content h6 {
-          font-weight: 600;
-          margin-top: 1.5rem;
-          margin-bottom: 1rem;
-          line-height: 1.4;
-        }
-        .rich-text-content h1 {
-          font-size: 1.5rem;
-        }
-        .rich-text-content h2 {
-          font-size: 1.25rem;
-        }
-        .rich-text-content h3 {
-          font-size: 1.125rem;
-        }
-        .rich-text-content img {
-          max-width: 100%;
-          height: auto;
-          border-radius: 8px;
-          margin: 1rem 0;
-          display: block;
-        }
-        .rich-text-content ul,
-        .rich-text-content ol {
-          margin: 1rem 0;
-          padding-left: 1.5rem;
-        }
-        .rich-text-content li {
-          margin-bottom: 0.5rem;
-        }
-        .rich-text-content a {
-          color: #ec4899;
-          text-decoration: underline;
-        }
-        .rich-text-content a:hover {
-          color: #be185d;
-        }
-        .rich-text-content strong {
-          font-weight: 600;
-        }
-        .rich-text-content em {
-          font-style: italic;
-        }
-      `}</style>
     </Dialog>
   )
 }

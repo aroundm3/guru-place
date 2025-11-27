@@ -394,7 +394,7 @@ export default async function Home(props: { params: { slug: string[] } }) {
           </Link>
         )}
       </div>
-      <div className="flex sm:flex-row flex-col sm:gap-8 gap-6">
+      <div className="flex lg:flex-row flex-col lg:gap-8 gap-6">
         <Filter
           categories={categories}
           brands={brands}

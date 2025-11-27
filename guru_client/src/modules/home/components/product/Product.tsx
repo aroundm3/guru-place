@@ -51,7 +51,7 @@ export default function Product({ data }: ProductProps) {
               </span>
             </div>
           )}
-          <span className="sm:text-base text-sm font-semibold text-gray-600 line-clamp-2 whitespace-pre-wrap truncate">
+          <span className="lg:text-base text-sm font-semibold text-gray-600 line-clamp-2 whitespace-pre-wrap truncate">
             {data.name}
           </span>
           <span className="text-xs font-normal text-gray-400 line-clamp-2 whitespace-pre-wrap truncate">

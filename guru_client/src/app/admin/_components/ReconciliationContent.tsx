@@ -46,6 +46,10 @@ import {
 } from "@lib/util/card-colors"
 import { CustomerCard } from "types/global"
 import { CustomerCardModal } from "@modules/product/components/customer-card-modal"
+import {
+  printToThermalPrinter,
+  generateThermalReceipt,
+} from "@lib/util/thermal-printer"
 
 const PAGE_SIZE = 10
 
@@ -240,6 +244,8 @@ export default function ReconciliationContent() {
   const [loadingInvoice, setLoadingInvoice] = useState<Record<number, boolean>>(
     {}
   )
+  const [printingBill, setPrintingBill] = useState(false)
+  const [printError, setPrintError] = useState<string | null>(null)
 
   // Filter state - sẽ được sync với URL query params
   const [phoneNumber, setPhoneNumber] = useState("")
@@ -734,11 +740,11 @@ export default function ReconciliationContent() {
               key={item.id}
               href={productSlug ? `/product/${productSlug}` : "#"}
               target="_blank"
-              className="flex flex-col pb-2 sm:pb-4 cursor-pointer"
+              className="flex flex-col pb-2 lg:pb-4 cursor-pointer"
               style={{ borderBottom: "1px solid #e0e0e0" }}
             >
-              <div className="flex sm:space-x-6 space-x-4 w-full">
-                <div className="relative w-20 sm:w-24 h-20 sm:h-24 flex-shrink-0 rounded-lg overflow-hidden bg-stone-50">
+              <div className="flex lg:space-x-6 space-x-4 w-full">
+                <div className="relative w-20 lg:w-24 h-20 lg:h-24 flex-shrink-0 rounded-lg overflow-hidden bg-stone-50">
                   <img
                     src={imageSrc}
                     alt={productName}
@@ -746,16 +752,16 @@ export default function ReconciliationContent() {
                   />
                 </div>
                 <div className="flex flex-col space-y-1 w-full">
-                  <h4 className="font-semibold text-sm sm:text-base text-gray-900 line-clamp-2">
+                  <h4 className="font-semibold text-sm lg:text-base text-gray-900 line-clamp-2">
                     {productName}
                   </h4>
                   <div className="w-full space-x-2 flex justify-between">
                     {variantName && (
-                      <span className="text-sm sm:text-base text-gray-500">
+                      <span className="text-sm lg:text-base text-gray-500">
                         • {variantName}
                       </span>
                     )}
-                    <span className="text-sm sm:text-base text-gray-500 font-semibold">
+                    <span className="text-sm lg:text-base text-gray-500 font-semibold">
                       x{quantity}
                     </span>
                   </div>
@@ -767,7 +773,7 @@ export default function ReconciliationContent() {
                   <p className="text-xs uppercase tracking-wide text-gray-400">
                     Đơn giá
                   </p>
-                  <p className="text-sm sm:text-base font-semibold text-pink-700">
+                  <p className="text-sm lg:text-base font-semibold text-pink-700">
                     {formatBigNumber(price, true)}
                   </p>
                 </div>
@@ -795,7 +801,7 @@ export default function ReconciliationContent() {
         <h4 className="text-base font-semibold text-gray-900">
           Thẻ tích điểm ghi nhận
         </h4>
-        <div className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="hidden lg:grid lg:grid-cols-3 gap-4">
           {cards.map((card) => {
             const baseCard = card.customer_card as any
             const color = getCardColor(baseCard)
@@ -872,7 +878,7 @@ export default function ReconciliationContent() {
             )
           })}
         </div>
-        <div className="sm:hidden flex gap-3 overflow-x-auto pb-2 -mx-3 px-3 pt-2">
+        <div className="lg:hidden flex gap-3 overflow-x-auto pb-2 -mx-3 px-3 pt-2">
           {cards.map((card) => {
             const baseCard = card.customer_card as any
             const color = getCardColor(baseCard)
@@ -989,11 +995,11 @@ export default function ReconciliationContent() {
   return (
     <div>
       {/* Filter Section */}
-      <div className="bg-white border border-gray-200 rounded-lg p-4 sm:p-6 mb-6">
+      <div className="bg-white border border-gray-200 rounded-lg p-4 lg:p-6 mb-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">
           Tìm kiếm & Lọc
         </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
           <TextField
             label="Số điện thoại"
             value={phoneNumber}
@@ -1016,7 +1022,7 @@ export default function ReconciliationContent() {
             placeholder="Nhập tên khách hàng"
           />
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
           <FormControl size="small" fullWidth>
             <InputLabel>Trạng thái đơn</InputLabel>
             <Select
@@ -1093,7 +1099,7 @@ export default function ReconciliationContent() {
               key={index}
               className="border border-stone-200 rounded-2xl bg-white shadow-sm"
             >
-              <div className="flex flex-row items-center gap-3 sm:gap-6 justify-between p-4 sm:p-6">
+              <div className="flex flex-row items-center gap-3 lg:gap-6 justify-between p-4 lg:p-6">
                 <div className="flex-1 min-w-0 space-y-1.5">
                   <Skeleton variant="text" width={60} height={16} />
                   <Skeleton variant="text" width={180} height={20} />
@@ -1106,8 +1112,8 @@ export default function ReconciliationContent() {
       ) : (
         <>
           {orders.length === 0 && !error && (
-            <div className="text-center py-12 sm:py-16 border border-dashed rounded-2xl bg-white">
-              <p className="text-sm sm:text-base text-gray-600">
+            <div className="text-center py-12 lg:py-16 border border-dashed rounded-2xl bg-white">
+              <p className="text-sm lg:text-base text-gray-600">
                 Không tìm thấy đơn hàng nào.
               </p>
             </div>
@@ -1151,13 +1157,13 @@ export default function ReconciliationContent() {
                   key={order.id}
                   className="border border-stone-200 rounded-2xl bg-white shadow-sm transition-shadow hover:shadow-md"
                 >
-                  <div className="cursor-pointer flex flex-row items-center gap-3 sm:gap-6 justify-between p-4 sm:p-6">
+                  <div className="cursor-pointer flex flex-row items-center gap-3 lg:gap-6 justify-between p-4 lg:p-6">
                     <div className="flex-1 min-w-0 space-y-1.5">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <p className="text-xs sm:text-sm text-gray-500 uppercase tracking-wide">
+                        <p className="text-xs lg:text-sm text-gray-500 uppercase tracking-wide">
                           Mã đơn:
                         </p>
-                        <span className="text-xs !uppercase sm:text-sm font-semibold text-pink-700">
+                        <span className="text-xs !uppercase lg:text-sm font-semibold text-pink-700">
                           {order.documentId}
                         </span>
                         <IconButton
@@ -1176,11 +1182,11 @@ export default function ReconciliationContent() {
                           {statusInfo.text}
                         </span>
                       </div>
-                      <p className="text-sm sm:text-base text-gray-600 truncate">
+                      <p className="text-sm lg:text-base text-gray-600 truncate">
                         Ngày đặt: {createdDate}
                       </p>
                       {order.customer && (
-                        <div className="text-xs sm:text-sm text-gray-600 space-y-1">
+                        <div className="text-xs lg:text-sm text-gray-600 space-y-1">
                           <p>
                             <span className="font-semibold">Khách hàng:</span>{" "}
                             {order.customer.full_name || "N/A"}
@@ -1215,7 +1221,7 @@ export default function ReconciliationContent() {
                         </div>
                       )}
                     </div>
-                    <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
+                    <div className="flex items-center gap-2 lg:gap-4 flex-shrink-0">
                       <IconButton
                         onClick={() => handleToggleExpand(order)}
                         disabled={loadingOrderDetails[order.id]}
@@ -1230,7 +1236,7 @@ export default function ReconciliationContent() {
                   </div>
 
                   <Collapse in={isExpanded} timeout="auto" unmountOnExit>
-                    <div className="px-4 sm:px-6 pb-4 sm:pb-6 space-y-6">
+                    <div className="px-4 lg:px-6 pb-4 lg:pb-6 space-y-6">
                       {loadingOrderDetails[order.id] ? (
                         <div className="flex justify-center py-8">
                           <CircularProgress size={24} />
@@ -1246,7 +1252,7 @@ export default function ReconciliationContent() {
                       )}
                     </div>
                   </Collapse>
-                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 pt-2 border-t p-3 sm:p-4">
+                  <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3 pt-2 border-t p-3 lg:p-4">
                     <span className="font-semibold text-gray-900">
                       Tổng ({totalItems} sản phẩm)
                     </span>
@@ -1356,7 +1362,7 @@ export default function ReconciliationContent() {
           </div>
 
           {orders.length > 0 && (
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mt-6 border-t pt-4">
+            <div className="flex flex-col lg:flex-row items-center justify-between gap-3 mt-6 border-t pt-4">
               <span className="text-sm text-gray-500">
                 Trang {pagination.page} / {pagination.pageCount} (Tổng:{" "}
                 {pagination.total} đơn hàng)
@@ -1458,8 +1464,8 @@ export default function ReconciliationContent() {
             __html: `
             @media print {
               @page {
-                size: A3 landscape;
-                margin: 5mm;
+                size: 58mm auto;
+                margin: 0;
               }
               body * {
                 visibility: hidden;
@@ -1472,22 +1478,30 @@ export default function ReconciliationContent() {
                 position: absolute;
                 left: 0;
                 top: 0;
-                width: 100%;
-                max-width: 100%;
-                padding: 5mm;
+                width: 58mm;
+                max-width: 58mm;
+                padding: 2mm;
                 box-sizing: border-box;
                 overflow: visible;
+                font-size: 10px;
+              }
+              .invoice-content h1 {
+                font-size: 14px;
+              }
+              .invoice-content h2 {
+                font-size: 12px;
               }
               .invoice-content table {
                 width: 100%;
-                table-layout: auto;
-                font-size: 12px;
+                table-layout: fixed;
+                font-size: 9px;
               }
               .invoice-content th,
               .invoice-content td {
-                padding: 4px 6px;
+                padding: 2px 3px;
                 word-wrap: break-word;
                 overflow-wrap: break-word;
+                font-size: 9px;
               }
               .invoice-content .text-right {
                 white-space: nowrap;
@@ -1536,20 +1550,58 @@ export default function ReconciliationContent() {
             <Button
               variant="contained"
               startIcon={<PrintIcon />}
+              onClick={async () => {
+                if (!selectedOrderForInvoice) return
+                setPrintingBill(true)
+                setPrintError(null)
+                try {
+                  await printToThermalPrinter(selectedOrderForInvoice)
+                } catch (error: any) {
+                  setPrintError(error.message || "Lỗi khi in hóa đơn")
+                  console.error("Print error:", error)
+                } finally {
+                  setPrintingBill(false)
+                }
+              }}
+              disabled={printingBill || !selectedOrderForInvoice}
+              className="!bg-pink-600 !text-white !normal-case !font-semibold hover:!bg-pink-700"
+            >
+              {printingBill ? "Đang in..." : "In máy in bill"}
+            </Button>
+            <Button
+              variant="contained"
+              startIcon={<PrintIcon />}
               onClick={() => window.print()}
               className="!bg-neutral-900 !text-white !normal-case !font-semibold"
             >
-              In hóa đơn
+              In thường
             </Button>
             <Button
               variant="outlined"
-              onClick={() => setOpenInvoiceDialog(false)}
+              onClick={() => {
+                setOpenInvoiceDialog(false)
+                setPrintError(null)
+              }}
               className="!normal-case !font-semibold"
             >
               Đóng
             </Button>
           </div>
         </DialogTitle>
+        {printError && (
+          <div className="px-6 pt-2">
+            <Alert severity="error" onClose={() => setPrintError(null)}>
+              {printError}
+            </Alert>
+          </div>
+        )}
+        {printError && (
+          <div className="px-6 pt-2">
+            <Alert severity="error" onClose={() => setPrintError(null)}>
+              {printError}
+            </Alert>
+          </div>
+        )}
         <DialogContent>
           {selectedOrderForInvoice && (
             <div
@@ -1566,7 +1618,7 @@ export default function ReconciliationContent() {
                   Mỹ phẩm Divi
                 </h2>
                 <h1 className="text-2xl font-bold mb-2">HÓA ĐƠN BÁN HÀNG</h1>
-                <p className="text-sm text-gray-600">
+                <p className="text-xs text-gray-600">
                   Mã đơn:{" "}
                   <strong className="!uppercase">
                     {selectedOrderForInvoice.documentId}
@@ -1610,91 +1662,40 @@ export default function ReconciliationContent() {
                 <h2 className="text-lg font-semibold mb-3">
                   Chi tiết đơn hàng
                 </h2>
-                <div className="overflow-x-auto">
-                  <table
-                    className="w-full border-collapse border border-gray-300"
-                    style={{ tableLayout: "auto" }}
-                  >
-                    <thead>
-                      <tr className="bg-gray-100">
-                        <th
-                          className="border border-gray-300 p-2 text-left"
-                          style={{ width: "5%" }}
-                        >
-                          STT
-                        </th>
-                        <th
-                          className="border border-gray-300 p-2 text-left"
-                          style={{ width: "45%" }}
-                        >
-                          Tên sản phẩm
-                        </th>
-                        <th
-                          className="border border-gray-300 p-2 text-center"
-                          style={{ width: "10%" }}
-                        >
-                          Số lượng
-                        </th>
-                        <th
-                          className="border border-gray-300 p-2 text-right"
-                          style={{ width: "20%" }}
-                        >
-                          Đơn giá
-                        </th>
-                        <th
-                          className="border border-gray-300 p-2 text-right"
-                          style={{ width: "20%" }}
-                        >
-                          Thành tiền
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {(selectedOrderForInvoice.order_items || []).map(
-                        (item, index) => {
-                          const variant = item.variant
-                          const product = variant?.product || item.product
-                          const productName = product?.name || "N/A"
-                          const unitPrice = toNumber(
-                            variant?.sale_price ?? product?.sale_price ?? 0
-                          )
-                          const quantity = toNumber(item.quantity || 0)
-                          const total = unitPrice * quantity
+                <div className="space-y-3">
+                  {(selectedOrderForInvoice.order_items || []).map(
+                    (item, index) => {
+                      const variant = item.variant
+                      const product = variant?.product || item.product
+                      const productName = product?.name || "N/A"
+                      const unitPrice = toNumber(
+                        variant?.sale_price ?? product?.sale_price ?? 0
+                      )
+                      const quantity = toNumber(item.quantity || 0)
+                      const total = unitPrice * quantity
 
-                          return (
-                            <tr key={item.id}>
-                              <td className="border border-gray-300 p-2">
-                                {index + 1}
-                              </td>
-                              <td className="border border-gray-300 p-2">
-                                {productName}
-                                {variant?.variant_value && (
-                                  <span className="text-gray-600 ml-2">
-                                    ({variant.variant_value})
-                                  </span>
-                                )}
-                              </td>
-                              <td className="border border-gray-300 p-2 text-center">
-                                {quantity}
-                              </td>
-                              <td
-                                className="border border-gray-300 p-2 text-right"
-                                style={{ whiteSpace: "nowrap" }}
-                              >
-                                {formatBigNumber(unitPrice, true)}
-                              </td>
-                              <td
-                                className="border border-gray-300 p-2 text-right"
-                                style={{ whiteSpace: "nowrap" }}
-                              >
-                                {formatBigNumber(total, true)}
-                              </td>
-                            </tr>
-                          )
-                        }
-                      )}
-                    </tbody>
-                  </table>
+                      return (
+                        <div key={item.id} className="border-b border-gray-200 pb-3">
+                          <div className="flex justify-between items-start mb-1">
+                            <div className="flex-1">
+                              <span className="font-medium">{productName}</span>
+                              {variant?.variant_value && (
+                                <span className="text-gray-600 ml-2">
+                                  ({variant.variant_value})
+                                </span>
+                              )}
+                            </div>
+                            <div className="text-right ml-4">
+                              {quantity} x {formatBigNumber(unitPrice, true)}
+                            </div>
+                          </div>
+                          <div className="text-right text-gray-600">
+                            Thành tiền: {formatBigNumber(total, true)}
+                          </div>
+                        </div>
+                      )
+                    }
+                  )}
                 </div>
               </div>
 
