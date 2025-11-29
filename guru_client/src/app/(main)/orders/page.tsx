@@ -110,7 +110,7 @@ const ORDER_STATUS_OPTIONS: { label: string; value: OrderStatusFilter }[] = [
   { label: "Chờ duyệt", value: "pending_approval" },
   { label: "Đang giao", value: "shipping" },
   { label: "Hoàn thành", value: "completed" },
-  { label: "Đã hủy", value: "cancelled" },
+  { label: "Hủy", value: "cancelled" },
   { label: "Đã hoàn tiền", value: "refunded" },
 ]
 
@@ -175,7 +175,7 @@ const getOrderStatusInfo = (status?: OrderStatus) => {
       }
     case "cancelled":
       return {
-        text: "Đã hủy",
+        text: "Hủy",
         bgColor: "bg-red-100",
         textColor: "text-red-800",
         borderColor: "border-red-300",
@@ -342,7 +342,7 @@ export default function OrdersPage() {
 
       setSnackbar({
         open: true,
-        message: "Đã hủy đơn hàng thành công!",
+        message: "Hủy đơn hàng thành công!",
       })
       setCancelDialogOpen(false)
       setOrderToCancel(null)

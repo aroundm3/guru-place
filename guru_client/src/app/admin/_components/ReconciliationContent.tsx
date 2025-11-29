@@ -47,6 +47,7 @@ import {
 } from "@lib/util/card-colors"
 import { CustomerCard, StoreMetadata } from "types/global"
 import { CustomerCardModal } from "@modules/product/components/customer-card-modal"
+import { useEmployees } from "@lib/context/employee-context"
 
 const PAGE_SIZE = 10
 
@@ -133,6 +134,7 @@ type OrderEntity = {
   order_items?: OrderItem[]
   order_customer_cards?: OrderCustomerCard[]
   customer?: Customer
+  employee?: string | null
 }
 
 interface PaginationState {
@@ -180,7 +182,7 @@ const getOrderStatusInfo = (status?: OrderStatus) => {
       }
     case "cancelled":
       return {
-        text: "Đã hủy",
+        text: "Hủy",
         bgColor: "bg-red-100",
         textColor: "text-red-800",
         borderColor: "border-red-300",
@@ -205,6 +207,7 @@ const getOrderStatusInfo = (status?: OrderStatus) => {
 export default function ReconciliationContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
+  const { employees } = useEmployees()
 
   const [isAuthenticated] = useState(true) // Always authenticated when this component is rendered
   const [orders, setOrders] = useState<OrderEntity[]>([])
@@ -251,8 +254,12 @@ export default function ReconciliationContent() {
   const [orderId, setOrderId] = useState("")
   const [customerName, setCustomerName] = useState("")
   const [statusFilter, setStatusFilter] = useState<OrderStatus | "all">("all")
-  const [dateFrom, setDateFrom] = useState<Dayjs | null>(null)
-  const [dateTo, setDateTo] = useState<Dayjs | null>(null)
+  const [employeeFilter, setEmployeeFilter] = useState<string>("all") // "all" | "unassigned" | employeeDocumentId
+  // Default: 90 ngày gần nhất
+  const [dateFrom, setDateFrom] = useState<Dayjs | null>(
+    dayjs().subtract(90, "day")
+  )
+  const [dateTo, setDateTo] = useState<Dayjs | null>(dayjs())
 
   // Snackbar state for copy notification
   const [snackbarOpen, setSnackbarOpen] = useState(false)
@@ -264,6 +271,7 @@ export default function ReconciliationContent() {
     orderId?: string
     customerName?: string
     status?: OrderStatus | "all"
+    employee?: string
     dateFrom?: Dayjs | null
     dateTo?: Dayjs | null
     page?: number
@@ -296,6 +304,13 @@ export default function ReconciliationContent() {
         params.set("status", updates.status)
       } else {
         params.delete("status")
+      }
+    }
+    if (updates.employee !== undefined) {
+      if (updates.employee && updates.employee !== "all") {
+        params.set("employee", updates.employee)
+      } else {
+        params.delete("employee")
       }
     }
     if (updates.dateFrom !== undefined) {
@@ -354,14 +369,29 @@ export default function ReconciliationContent() {
     }
     const dateFromParam = searchParams.get("dateFrom")
     const dateToParam = searchParams.get("dateTo")
+    const employeeParam = searchParams.get("employee") || "all"
     const pageParam = searchParams.get("page")
 
     setPhoneNumber(phoneNumberParam)
     setOrderId(orderIdParam)
     setCustomerName(customerNameParam)
     setStatusFilter(statusParam)
-    setDateFrom(dateFromParam ? dayjs(dateFromParam) : null)
-    setDateTo(dateToParam ? dayjs(dateToParam) : null)
+    setEmployeeFilter(employeeParam)
+
+    // Set date từ URL params, nếu không có thì dùng default (90 ngày gần nhất)
+    if (dateFromParam) {
+      setDateFrom(dayjs(dateFromParam))
+    } else {
+      // Default: 90 ngày trước
+      setDateFrom(dayjs().subtract(90, "day"))
+    }
+
+    if (dateToParam) {
+      setDateTo(dayjs(dateToParam))
+    } else {
+      // Default: hôm nay
+      setDateTo(dayjs())
+    }
 
     if (pageParam) {
       const page = parseInt(pageParam, 10)
@@ -370,6 +400,33 @@ export default function ReconciliationContent() {
       }
     }
   }, [searchParams])
+
+  // Set default date range (90 ngày gần nhất) khi mount lần đầu nếu không có trong URL
+  useEffect(() => {
+    if (hasSetDefaultDateRef.current) return
+
+    const dateFromParam = searchParams.get("dateFrom")
+    const dateToParam = searchParams.get("dateTo")
+
+    // Chỉ set default và update URL nếu không có params trong URL
+    if (!dateFromParam || !dateToParam) {
+      hasSetDefaultDateRef.current = true
+      const defaultDateFrom = dayjs().subtract(90, "day")
+      const defaultDateTo = dayjs()
+
+      setDateFrom(defaultDateFrom)
+      setDateTo(defaultDateTo)
+
+      // Update URL với default values
+      updateURLParams({
+        dateFrom: defaultDateFrom,
+        dateTo: defaultDateTo,
+      })
+    } else {
+      hasSetDefaultDateRef.current = true
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]) // Chạy khi searchParams thay đổi, nhưng chỉ set default 1 lần
 
   const fetchOrders = async (targetPage?: number) => {
     setLoading(true)
@@ -388,6 +445,7 @@ export default function ReconciliationContent() {
       }
       const currentDateFrom = searchParams.get("dateFrom")
       const currentDateTo = searchParams.get("dateTo")
+      const currentEmployeeFilter = searchParams.get("employee") || "all"
       const currentPage =
         targetPage || parseInt(searchParams.get("page") || "1", 10)
 
@@ -401,6 +459,9 @@ export default function ReconciliationContent() {
       if (currentCustomerName) params.set("customerName", currentCustomerName)
       if (currentStatusFilter && currentStatusFilter !== "all") {
         params.set("status", currentStatusFilter)
+      }
+      if (currentEmployeeFilter && currentEmployeeFilter !== "all") {
+        params.set("employee", currentEmployeeFilter)
       }
       if (currentDateFrom) {
         params.set("dateFrom", currentDateFrom)
@@ -451,6 +512,7 @@ export default function ReconciliationContent() {
   // Track previous filter values để tránh fetch không cần thiết
   const prevFiltersRef = useRef<string | null>(null)
   const hasMountedRef = useRef(false)
+  const hasSetDefaultDateRef = useRef(false)
 
   // Fetch orders khi authenticated hoặc khi filter params thay đổi
   useEffect(() => {
@@ -466,6 +528,7 @@ export default function ReconciliationContent() {
       orderId: searchParams.get("orderId") || "",
       customerName: searchParams.get("customerName") || "",
       status: searchParams.get("status") || "",
+      employee: searchParams.get("employee") || "",
       dateFrom: searchParams.get("dateFrom") || "",
       dateTo: searchParams.get("dateTo") || "",
       page: searchParams.get("page") || "1",
@@ -508,6 +571,7 @@ export default function ReconciliationContent() {
       orderId,
       customerName,
       status: statusFilter,
+      employee: employeeFilter,
       dateFrom,
       dateTo,
       page: 1,
@@ -521,6 +585,7 @@ export default function ReconciliationContent() {
       orderId: "",
       customerName: "",
       status: "all",
+      employee: "all",
       dateFrom: null,
       dateTo: null,
       page: 1,
@@ -690,6 +755,17 @@ export default function ReconciliationContent() {
     }
   }
 
+  // Tìm tên employee từ employee documentId
+  const getEmployeeName = (employeeDocumentId?: string | null): string => {
+    if (!employeeDocumentId) {
+      return "Chưa ai tiếp nhận"
+    }
+    const employee = employees.find(
+      (emp) => emp.documentId === employeeDocumentId
+    )
+    return employee?.name || "Chưa ai tiếp nhận"
+  }
+
   const handleStatusChange = (order: OrderEntity, newStatus: OrderStatus) => {
     // Nếu order hiện tại là "approved" và user chọn "shipping" (Đang giao),
     // thì không cần update vì đã gộp lại
@@ -722,6 +798,18 @@ export default function ReconciliationContent() {
     const order = orderToUpdateStatus
     const newStatus = newStatusToUpdate
 
+    // Lấy employee hiện tại từ localStorage
+    let employeeDocumentId: string | null = null
+    try {
+      const savedEmployee = localStorage.getItem("selectedEmployee")
+      if (savedEmployee) {
+        const employee = JSON.parse(savedEmployee)
+        employeeDocumentId = employee.documentId || null
+      }
+    } catch (err) {
+      console.error("Error parsing saved employee:", err)
+    }
+
     setUpdatingStatus((prev) => ({ ...prev, [order.id]: true }))
 
     try {
@@ -732,7 +820,10 @@ export default function ReconciliationContent() {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ status: newStatus }),
+          body: JSON.stringify({
+            status: newStatus,
+            employeeDocumentId: employeeDocumentId,
+          }),
         }
       )
 
@@ -741,18 +832,34 @@ export default function ReconciliationContent() {
         throw new Error(errorData?.error || "Failed to update order status")
       }
 
-      // Cập nhật order trong danh sách
+      // Lấy data từ response để có employee mới (nếu được gắn vào)
+      const responseData = await response.json()
+      const updatedOrder = responseData?.data
+
+      // Cập nhật order trong danh sách với cả order_status và employee
       setOrders((prevOrders) =>
-        prevOrders.map((o) =>
-          o.id === order.id ? { ...o, order_status: newStatus } : o
-        )
+        prevOrders.map((o) => {
+          if (o.id === order.id) {
+            return {
+              ...o,
+              order_status: newStatus,
+              employee: updatedOrder?.employee || o.employee,
+            }
+          }
+          return o
+        })
       )
 
       // Cập nhật order trong orderDetailsMap nếu có
       if (orderDetailsMap[order.id]) {
         setOrderDetailsMap((prev) => ({
           ...prev,
-          [order.id]: { ...orderDetailsMap[order.id], order_status: newStatus },
+          [order.id]: {
+            ...orderDetailsMap[order.id],
+            order_status: newStatus,
+            employee:
+              updatedOrder?.employee || orderDetailsMap[order.id].employee,
+          },
         }))
       }
 
@@ -781,7 +888,7 @@ export default function ReconciliationContent() {
       { value: "pending_approval", label: "Chờ duyệt" },
       { value: "shipping", label: "Đang giao" }, // Gộp approved và shipping
       { value: "completed", label: "Hoàn thành" },
-      { value: "cancelled", label: "Đã hủy" },
+      { value: "cancelled", label: "Hủy" },
       { value: "refunded", label: "Đã hoàn tiền" },
     ]
 
@@ -810,7 +917,7 @@ export default function ReconciliationContent() {
       approved: "Đang giao",
       shipping: "Đang giao",
       completed: "Hoàn thành",
-      cancelled: "Đã hủy",
+      cancelled: "Hủy",
       refunded: "Đã hoàn tiền",
     }
     return statusMap[status as OrderStatus] || "Chờ duyệt"
@@ -1150,10 +1257,28 @@ export default function ReconciliationContent() {
               <MenuItem value="pending_approval">Chờ duyệt</MenuItem>
               <MenuItem value="shipping">Đang giao</MenuItem>
               <MenuItem value="completed">Hoàn thành</MenuItem>
-              <MenuItem value="cancelled">Đã hủy</MenuItem>
+              <MenuItem value="cancelled">Hủy</MenuItem>
               <MenuItem value="refunded">Đã hoàn tiền</MenuItem>
             </Select>
           </FormControl>
+          <FormControl size="small" fullWidth>
+            <InputLabel>Nhân viên phụ trách</InputLabel>
+            <Select
+              value={employeeFilter}
+              label="Nhân viên phụ trách"
+              onChange={(e) => setEmployeeFilter(e.target.value)}
+            >
+              <MenuItem value="all">Tất cả</MenuItem>
+              <MenuItem value="unassigned">Chưa ai phụ trách</MenuItem>
+              {employees.map((employee) => (
+                <MenuItem key={employee.documentId} value={employee.documentId}>
+                  {employee.name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </div>
+        <div className="grid grid-cols-3 gap-4 mb-4">
           <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="vi">
             <DatePicker
               label="Từ ngày"
@@ -1181,7 +1306,7 @@ export default function ReconciliationContent() {
             />
           </LocalizationProvider>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 justify-end">
           <Button
             variant="contained"
             onClick={handleSearch}
@@ -1334,6 +1459,12 @@ export default function ReconciliationContent() {
                           )}
                         </div>
                       )}
+                      <p className="text-sm font-semibold lg:text-sm text-stone-500 italic">
+                        <span className="font-semibold">
+                          Nhân viên phụ trách:
+                        </span>{" "}
+                        {getEmployeeName(order.employee)}
+                      </p>
                     </div>
                     <div className="flex items-center gap-2 lg:gap-4 flex-shrink-0">
                       <IconButton

@@ -14,6 +14,8 @@ import {
 import LogoutIcon from "@mui/icons-material/Logout"
 import ReconciliationContent from "./_components/ReconciliationContent"
 import CustomersContent from "./_components/CustomersContent"
+import EmployeeSelector from "./_components/EmployeeSelector"
+import { EmployeeProvider, Employee } from "@lib/context/employee-context"
 
 type TabValue = "orders" | "customers"
 
@@ -29,10 +31,31 @@ function AdminPageContent() {
   const [password, setPassword] = useState("")
   const [loginError, setLoginError] = useState("")
   const [loginLoading, setLoginLoading] = useState(false)
+  const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(
+    null
+  )
+  const [isLoadingEmployee, setIsLoadingEmployee] = useState(true)
 
   useEffect(() => {
     checkAuth()
   }, [])
+
+  // Load employee from localStorage khi đã authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      const savedEmployee = localStorage.getItem("selectedEmployee")
+      if (savedEmployee) {
+        try {
+          const employee = JSON.parse(savedEmployee)
+          setSelectedEmployee(employee)
+        } catch (err) {
+          console.error("Error parsing saved employee:", err)
+          localStorage.removeItem("selectedEmployee")
+        }
+      }
+      setIsLoadingEmployee(false)
+    }
+  }, [isAuthenticated])
 
   const checkAuth = async () => {
     try {
@@ -74,6 +97,9 @@ function AdminPageContent() {
       setIsAuthenticated(true)
       setEmail("")
       setPassword("")
+      // Reset employee selection khi login lại
+      setSelectedEmployee(null)
+      setIsLoadingEmployee(true)
     } catch (err: any) {
       setLoginError(err.message || "Có lỗi xảy ra")
     } finally {
@@ -84,10 +110,17 @@ function AdminPageContent() {
   const handleLogout = async () => {
     try {
       await fetch("/api/admin/logout", { method: "POST" })
+      // Xóa employee khỏi localStorage khi logout
+      localStorage.removeItem("selectedEmployee")
       setIsAuthenticated(false)
+      setSelectedEmployee(null)
     } catch (err) {
       // Ignore error
     }
+  }
+
+  const handleEmployeeSelect = (employee: Employee) => {
+    setSelectedEmployee(employee)
   }
 
   const handleTabChange = (
@@ -156,47 +189,90 @@ function AdminPageContent() {
     )
   }
 
+  // Nếu đã authenticated nhưng chưa chọn employee
+  if (isLoadingEmployee) {
+    return (
+      <div className="container mx-auto px-3 lg:px-4 py-6 lg:py-8">
+        <div className="text-center py-12 lg:py-16">
+          <CircularProgress />
+        </div>
+      </div>
+    )
+  }
+
+  if (!selectedEmployee) {
+    return (
+      <EmployeeProvider>
+        <EmployeeSelector onSelect={handleEmployeeSelect} />
+      </EmployeeProvider>
+    )
+  }
+
   return (
-    <div className="container mx-auto px-3 lg:px-4 py-4 lg:py-8 max-w-7xl">
-      <div className="mb-4 lg:mb-6 flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
-        <h1 className="text-xl lg:text-2xl font-bold text-gray-900">
-          Quản trị hệ thống
-        </h1>
-        <Button
-          variant="outlined"
-          onClick={handleLogout}
-          startIcon={<LogoutIcon />}
-          className="!normal-case !font-semibold !text-neutral-900 !border-neutral-900"
-        >
-          Đăng xuất
-        </Button>
-      </div>
+    <EmployeeProvider>
+      <div className="container mx-auto px-3 lg:px-4 py-4 lg:py-8 max-w-7xl">
+        <div className="mb-4 lg:mb-6 flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex flex-col gap-1">
+            <h1 className="text-xl lg:text-2xl font-bold text-gray-900">
+              Quản trị hệ thống
+            </h1>
+            {selectedEmployee && (
+              <p className="text-sm text-gray-600">
+                Nhân viên:{" "}
+                <span className="font-semibold">{selectedEmployee.name}</span>
+              </p>
+            )}
+          </div>
+          <div className="flex gap-2">
+            {selectedEmployee && (
+              <Button
+                variant="outlined"
+                onClick={() => {
+                  localStorage.removeItem("selectedEmployee")
+                  setSelectedEmployee(null)
+                }}
+                className="!normal-case !font-semibold !text-neutral-900 !border-neutral-900"
+              >
+                Đổi nhân viên
+              </Button>
+            )}
+            <Button
+              variant="outlined"
+              onClick={handleLogout}
+              startIcon={<LogoutIcon />}
+              className="!normal-case !font-semibold !text-neutral-900 !border-neutral-900"
+            >
+              Đăng xuất
+            </Button>
+          </div>
+        </div>
 
-      <div className="mb-6">
-        <Tabs
-          value={currentTab}
-          onChange={handleTabChange}
-          aria-label="admin tabs"
-          className="border-b border-gray-200"
-        >
-          <Tab
-            label="Đối soát đơn hàng"
-            value="orders"
-            className="!normal-case !font-semibold"
-          />
-          <Tab
-            label="Danh sách khách hàng"
-            value="customers"
-            className="!normal-case !font-semibold"
-          />
-        </Tabs>
-      </div>
+        <div className="mb-6">
+          <Tabs
+            value={currentTab}
+            onChange={handleTabChange}
+            aria-label="admin tabs"
+            className="border-b border-gray-200"
+          >
+            <Tab
+              label="Đối soát đơn hàng"
+              value="orders"
+              className="!normal-case !font-semibold"
+            />
+            <Tab
+              label="Danh sách khách hàng"
+              value="customers"
+              className="!normal-case !font-semibold"
+            />
+          </Tabs>
+        </div>
 
-      <Box sx={{ mt: 3 }}>
-        {currentTab === "orders" && <ReconciliationContent key="orders" />}
-        {currentTab === "customers" && <CustomersContent key="customers" />}
-      </Box>
-    </div>
+        <Box sx={{ mt: 3 }}>
+          {currentTab === "orders" && <ReconciliationContent key="orders" />}
+          {currentTab === "customers" && <CustomersContent key="customers" />}
+        </Box>
+      </div>
+    </EmployeeProvider>
   )
 }
 

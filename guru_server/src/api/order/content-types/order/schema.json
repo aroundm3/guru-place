@@ -50,6 +50,10 @@
         "cancelled",
         "refunded"
       ]
+    },
+    "employee": {
+      "type": "string",
+      "unique": false
     }
   }
 }

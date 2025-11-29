@@ -380,7 +380,6 @@ export default function CustomerModal() {
                     label="Địa chỉ"
                     value={address}
                     onChange={(e) => setAddress(e.target.value)}
-                    required
                     multiline
                     rows={3}
                     disabled={loading}

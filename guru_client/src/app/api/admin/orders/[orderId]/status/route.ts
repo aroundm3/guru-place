@@ -14,7 +14,7 @@ export async function PUT(
     }
 
     const body = await request.json()
-    const { status } = body
+    const { status, employeeDocumentId } = body
 
     if (!status) {
       return NextResponse.json({ error: "Missing status" }, { status: 400 })
@@ -33,7 +33,19 @@ export async function PUT(
     const order = findResponse.data[0]
     const orderIdNumber = order.id
 
-    // Cập nhật order status
+    // Chuẩn bị data để cập nhật
+    const updateData: any = {
+      order_status: status,
+    }
+
+    // Chỉ gắn employee nếu:
+    // 1. Có employeeDocumentId được gửi lên
+    // 2. Order chưa có employee (employee là null, undefined, hoặc empty string)
+    if (employeeDocumentId && (!order.employee || order.employee === "")) {
+      updateData.employee = employeeDocumentId
+    }
+
+    // Cập nhật order status (và employee nếu cần)
     const updateUrl = `/api/orders/${orderIdNumber}`
     const response = await fetcherForOrderModule(updateUrl, {
       method: "PUT",
@@ -41,9 +53,7 @@ export async function PUT(
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        data: {
-          order_status: status,
-        },
+        data: updateData,
       }),
       cache: "no-store",
     })
@@ -67,4 +77,3 @@ export async function PUT(
     )
   }
 }
-

@@ -30,6 +30,7 @@ export async function GET(request: NextRequest) {
     const orderId = searchParams.get("orderId") || ""
     const customerName = searchParams.get("customerName") || ""
     const status = searchParams.get("status") || ""
+    const employee = searchParams.get("employee") || ""
     const dateFrom = searchParams.get("dateFrom") || ""
     const dateTo = searchParams.get("dateTo") || ""
 
@@ -78,6 +79,20 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    // Lưu employee filter để filter sau khi fetch (vì Content Manager API có thể không hỗ trợ filter null tốt)
+    const shouldFilterUnassigned = employee === "unassigned"
+    
+    if (employee && !shouldFilterUnassigned) {
+      // Filter theo employee documentId
+      params.set("filters[employee][$eq]", employee)
+    }
+    
+    // Nếu filter unassigned, sẽ fetch tất cả rồi filter ở server side
+    // Tăng pageSize lên cao để lấy nhiều records hơn khi filter unassigned
+    if (shouldFilterUnassigned) {
+      params.set("pageSize", "1000") // Lấy nhiều records để filter
+    }
+
     if (dateFrom) {
       params.set("filters[createdAt][$gte]", `${dateFrom}T00:00:00.000Z`)
     }
@@ -111,8 +126,32 @@ export async function GET(request: NextRequest) {
 
     // Content Manager API trả về format khác, cần check structure
     // Có thể là { results: [...], pagination: {...} } hoặc { data: [...], meta: {...} }
-    const ordersData = orders.results || orders.data || []
-    const paginationMeta = orders.pagination || orders.meta?.pagination
+    let ordersData = orders.results || orders.data || []
+    let paginationMeta = orders.pagination || orders.meta?.pagination
+
+    // Filter unassigned orders ở server side nếu cần
+    if (shouldFilterUnassigned) {
+      ordersData = ordersData.filter(
+        (order: any) =>
+          !order.employee || order.employee === "" || order.employee === null
+      )
+      
+      // Tính lại pagination sau khi filter
+      const totalFiltered = ordersData.length
+      const currentPage = parseInt(page)
+      const currentPageSize = parseInt(paginationMeta?.pageSize || pageSize || DEFAULT_PAGE_SIZE.toString())
+      const startIndex = (currentPage - 1) * currentPageSize
+      const endIndex = startIndex + currentPageSize
+      const paginatedData = ordersData.slice(startIndex, endIndex)
+      
+      ordersData = paginatedData
+      paginationMeta = {
+        page: currentPage,
+        pageSize: currentPageSize,
+        pageCount: Math.ceil(totalFiltered / currentPageSize),
+        total: totalFiltered,
+      }
+    }
 
     // Data đã được populate trực tiếp từ query chính (join bảng), không cần fetch riêng
     // Transform data để xử lý ảnh bằng getFullLinkResource
