@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from "next/navigation"
 import dayjs, { Dayjs } from "dayjs"
 import "dayjs/locale/vi"
 import Link from "next/link"
+import Image from "next/image"
 import { formatBigNumber } from "@lib/util/format-big-number"
 import {
   Button,
@@ -44,12 +45,8 @@ import {
   getCardTextClasses,
   getCardBorderClasses,
 } from "@lib/util/card-colors"
-import { CustomerCard } from "types/global"
+import { CustomerCard, StoreMetadata } from "types/global"
 import { CustomerCardModal } from "@modules/product/components/customer-card-modal"
-import {
-  printToThermalPrinter,
-  generateThermalReceipt,
-} from "@lib/util/thermal-printer"
 
 const PAGE_SIZE = 10
 
@@ -244,8 +241,10 @@ export default function ReconciliationContent() {
   const [loadingInvoice, setLoadingInvoice] = useState<Record<number, boolean>>(
     {}
   )
-  const [printingBill, setPrintingBill] = useState(false)
-  const [printError, setPrintError] = useState<string | null>(null)
+
+  console.log({ selectedOrderForInvoice })
+
+  const [storeMetadata, setStoreMetadata] = useState<StoreMetadata | null>(null)
 
   // Filter state - sẽ được sync với URL query params
   const [phoneNumber, setPhoneNumber] = useState("")
@@ -323,6 +322,22 @@ export default function ReconciliationContent() {
 
     router.push(`/admin?tab=orders&${params.toString()}`, { scroll: false })
   }
+
+  // Fetch store metadata
+  useEffect(() => {
+    const fetchStoreMetadata = async () => {
+      try {
+        const response = await fetch("/api/store-metadata")
+        if (response.ok) {
+          const data = await response.json()
+          setStoreMetadata(data.data)
+        }
+      } catch (error) {
+        console.error("Failed to fetch store metadata:", error)
+      }
+    }
+    fetchStoreMetadata()
+  }, [])
 
   // Đọc query params từ URL khi component mount hoặc URL thay đổi
   useEffect(() => {
@@ -524,6 +539,100 @@ export default function ReconciliationContent() {
     }
   }
 
+  const printInvoiceFromIframe = () => {
+    if (!selectedOrderForInvoice) return
+
+    // Tạo iframe ẩn
+    const iFrame = document.createElement("iframe")
+    document.body.appendChild(iFrame)
+    iFrame.style.display = "none"
+    iFrame.style.width = "0"
+    iFrame.style.height = "0"
+    iFrame.style.border = "none"
+
+    // Lấy nội dung invoice
+    const invoiceContent = document.querySelector(".invoice-content")
+    if (!invoiceContent) {
+      document.body.removeChild(iFrame)
+      return
+    }
+
+    // Clone nội dung và thêm vào iframe
+    iFrame.onload = () => {
+      setTimeout(() => {
+        if (iFrame.contentDocument && iFrame.contentWindow) {
+          const iframeDoc = iFrame.contentDocument
+          const iframeBody = iframeDoc.body
+
+          // Clone nội dung
+          const clonedContent = invoiceContent.cloneNode(true) as HTMLElement
+
+          // Tạo style tag với CSS print
+          const style = iframeDoc.createElement("style")
+          style.textContent = `
+            @media print {
+              @page {
+                size: 58mm auto;
+                margin: 0;
+              }
+              * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                color-adjust: exact !important;
+              }
+              body {
+                margin: 0;
+                padding: 2mm;
+                font-family: Arial, sans-serif;
+                width: 58mm;
+              }
+              body > * {
+                width: 100%;
+                margin: 0;
+              }
+              body * {
+                color: black !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                color-adjust: exact !important;
+                opacity: 1 !important;
+              }
+            }
+            body {
+              font-family: Arial, sans-serif;
+              color: black;
+              margin: 0;
+              padding: 2mm;
+              width: 58mm;
+              font-size: 10px;
+            }
+            body > * {
+              width: 100%;
+            }
+            * {
+              color: black !important;
+            }
+          `
+
+          iframeDoc.head.appendChild(style)
+          iframeBody.appendChild(clonedContent)
+
+          // In
+          iFrame.focus()
+          iFrame.contentWindow.print()
+
+          // Cleanup sau khi in
+          setTimeout(() => {
+            document.body.removeChild(iFrame)
+          }, 1000)
+        }
+      }, 100)
+    }
+
+    // Set src để trigger onload
+    iFrame.src = "about:blank"
+  }
+
   const fetchOrderDetail = async (
     order: OrderEntity
   ): Promise<OrderEntity | null> => {
@@ -542,15 +651,20 @@ export default function ReconciliationContent() {
 
       const data = await response.json()
       if (data.data) {
+        // Đảm bảo giữ lại customer từ order ban đầu nếu API không trả về
+        const detailedOrder = {
+          ...data.data,
+          customer: data.data.customer || order.customer,
+        }
         setOrderDetailsMap((prev) => ({
           ...prev,
-          [order.id]: data.data,
+          [order.id]: detailedOrder,
         }))
         // Cập nhật order trong danh sách với data đầy đủ
         setOrders((prevOrders) =>
-          prevOrders.map((o) => (o.id === order.id ? data.data : o))
+          prevOrders.map((o) => (o.id === order.id ? detailedOrder : o))
         )
-        return data.data
+        return detailedOrder
       }
       return null
     } catch (error) {
@@ -1196,12 +1310,12 @@ export default function ReconciliationContent() {
                               <span className="font-semibold">SĐT:</span>{" "}
                               {order.customer.phone_number || "N/A"}
                             </p>
-                            {order.customer.phone_number && (
+                            {order.customer?.phone_number && (
                               <IconButton
                                 size="small"
                                 onClick={() =>
                                   handleCopy(
-                                    order.customer.phone_number || "",
+                                    order.customer?.phone_number || "",
                                     "số điện thoại"
                                   )
                                 }
@@ -1279,7 +1393,13 @@ export default function ReconciliationContent() {
                                 order
                               )
                               if (detailedOrder) {
-                                setSelectedOrderForInvoice(detailedOrder)
+                                // Đảm bảo giữ lại customer từ order ban đầu
+                                const orderWithCustomer = {
+                                  ...detailedOrder,
+                                  customer:
+                                    detailedOrder.customer || order.customer,
+                                }
+                                setSelectedOrderForInvoice(orderWithCustomer)
                                 setOpenInvoiceDialog(true)
                               } else {
                                 // Fallback to basic order if fetch fails
@@ -1301,9 +1421,13 @@ export default function ReconciliationContent() {
                               }))
                             }
                           } else {
-                            setSelectedOrderForInvoice(
-                              orderDetailsMap[order.id]
-                            )
+                            // Đảm bảo giữ lại customer từ order ban đầu
+                            const orderFromMap = orderDetailsMap[order.id]
+                            const orderWithCustomer = {
+                              ...orderFromMap,
+                              customer: orderFromMap.customer || order.customer,
+                            }
+                            setSelectedOrderForInvoice(orderWithCustomer)
                             setOpenInvoiceDialog(true)
                           }
                         }}
@@ -1467,53 +1591,153 @@ export default function ReconciliationContent() {
                 size: 58mm auto;
                 margin: 0;
               }
+              * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                color-adjust: exact !important;
+              }
+              body {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                color-adjust: exact !important;
+              }
               body * {
                 visibility: hidden;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                color-adjust: exact !important;
               }
               .invoice-content,
               .invoice-content * {
-                visibility: visible;
+                visibility: visible !important;
+                color: black !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                color-adjust: exact !important;
+                opacity: 1 !important;
               }
               .invoice-content {
-                position: absolute;
-                left: 0;
-                top: 0;
-                width: 58mm;
-                max-width: 58mm;
-                padding: 2mm;
-                box-sizing: border-box;
-                overflow: visible;
-                font-size: 10px;
+                position: relative !important;
+                left: 0 !important;
+                top: 0 !important;
+                width: 58mm !important;
+                margin: 0 !important;
+                padding: 2mm !important;
+                box-sizing: border-box !important;
+                overflow: visible !important;
+                font-size: 10px !important;
+                font-weight: 700 !important;
+                color: black !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                color-adjust: exact !important;
+                opacity: 1 !important;
+              }
+              .invoice-content * {
+                color: black !important;
+                font-weight: 700 !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                color-adjust: exact !important;
+                opacity: 1 !important;
               }
               .invoice-content h1 {
-                font-size: 14px;
+                font-size: 14px !important;
+                font-weight: 900 !important;
+                color: black !important;
+                font-family: Arial, sans-serif !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                color-adjust: exact !important;
               }
               .invoice-content h2 {
-                font-size: 12px;
+                font-size: 12px !important;
+                font-weight: 800 !important;
+                color: black !important;
+                font-family: Arial, sans-serif !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                color-adjust: exact !important;
+              }
+              .invoice-content p,
+              .invoice-content span,
+              .invoice-content div {
+                font-size: 10px !important;
+                font-weight: 700 !important;
+                color: black !important;
+                font-family: Arial, sans-serif !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                color-adjust: exact !important;
+              }
+              .invoice-content strong {
+                font-weight: 900 !important;
+                color: black !important;
+                text-transform: uppercase !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                color-adjust: exact !important;
+              }
+              .invoice-content .uppercase,
+              .invoice-content [class*="uppercase"] {
+                text-transform: uppercase !important;
+              }
+              .invoice-content .text-gray-600,
+              .invoice-content .text-gray-700,
+              .invoice-content .text-gray-500,
+              .invoice-content .text-gray-400 {
+                color: black !important;
+                font-weight: 700 !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                color-adjust: exact !important;
+              }
+              .invoice-content .text-pink-700 {
+                color: black !important;
+                font-weight: 900 !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                color-adjust: exact !important;
               }
               .invoice-content table {
                 width: 100%;
                 table-layout: fixed;
-                font-size: 9px;
+                font-size: 15px !important;
+                font-weight: 700 !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                color-adjust: exact !important;
               }
               .invoice-content th,
               .invoice-content td {
                 padding: 2px 3px;
                 word-wrap: break-word;
                 overflow-wrap: break-word;
-                font-size: 9px;
+                font-size: 9px !important;
+                font-weight: 700 !important;
+                color: black !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                color-adjust: exact !important;
               }
               .invoice-content .text-right {
                 white-space: nowrap;
               }
               .MuiDialog-root {
                 position: relative;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                color-adjust: exact !important;
               }
               .MuiDialog-paper {
                 margin: 0 !important;
-                max-width: none !important;
-                width: 100% !important;
-                height: 100% !important;
+                max-width: 58mm !important;
+                width: 58mm !important;
+                height: auto !important;
+                box-shadow: none !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                color-adjust: exact !important;
               }
               .MuiDialogTitle-root {
                 display: none !important;
@@ -1521,6 +1745,9 @@ export default function ReconciliationContent() {
               .MuiDialogContent-root {
                 padding: 0 !important;
                 overflow: visible !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                color-adjust: exact !important;
               }
             }
           `,
@@ -1550,37 +1777,15 @@ export default function ReconciliationContent() {
             <Button
               variant="contained"
               startIcon={<PrintIcon />}
-              onClick={async () => {
-                if (!selectedOrderForInvoice) return
-                setPrintingBill(true)
-                setPrintError(null)
-                try {
-                  await printToThermalPrinter(selectedOrderForInvoice)
-                } catch (error: any) {
-                  setPrintError(error.message || "Lỗi khi in hóa đơn")
-                  console.error("Print error:", error)
-                } finally {
-                  setPrintingBill(false)
-                }
-              }}
-              disabled={printingBill || !selectedOrderForInvoice}
-              className="!bg-pink-600 !text-white !normal-case !font-semibold hover:!bg-pink-700"
-            >
-              {printingBill ? "Đang in..." : "In máy in bill"}
-            </Button>
-            <Button
-              variant="contained"
-              startIcon={<PrintIcon />}
-              onClick={() => window.print()}
+              onClick={printInvoiceFromIframe}
               className="!bg-neutral-900 !text-white !normal-case !font-semibold"
             >
-              In thường
+              In hoá đơn
             </Button>
             <Button
               variant="outlined"
               onClick={() => {
                 setOpenInvoiceDialog(false)
-                setPrintError(null)
               }}
               className="!normal-case !font-semibold"
             >
@@ -1588,20 +1793,6 @@ export default function ReconciliationContent() {
             </Button>
           </div>
         </DialogTitle>
-        {printError && (
-          <div className="px-6 pt-2">
-            <Alert severity="error" onClose={() => setPrintError(null)}>
-              {printError}
-            </Alert>
-          </div>
-        )}
-        {printError && (
-          <div className="px-6 pt-2">
-            <Alert severity="error" onClose={() => setPrintError(null)}>
-              {printError}
-            </Alert>
-          </div>
-        )}
         <DialogContent>
           {selectedOrderForInvoice && (
             <div
@@ -1613,18 +1804,117 @@ export default function ReconciliationContent() {
               }}
             >
               {/* Invoice Header */}
-              <div className="text-center mb-6">
-                <h2 className="text-xl font-semibold mb-1 text-gray-700">
-                  Mỹ phẩm Divi
-                </h2>
-                <h1 className="text-2xl font-bold mb-2">HÓA ĐƠN BÁN HÀNG</h1>
-                <p className="text-xs text-gray-600">
+              <div className="text-center">
+                <div
+                  className="mb-1 flex justify-center"
+                  style={{
+                    WebkitPrintColorAdjust: "exact",
+                    printColorAdjust: "exact",
+                    colorAdjust: "exact",
+                  }}
+                >
+                  <Image
+                    src="/logo.png"
+                    alt="DIVI"
+                    width={100}
+                    height={100}
+                    style={{
+                      width: "auto",
+                      height: "100px",
+                      objectFit: "contain",
+                      WebkitPrintColorAdjust: "exact",
+                      printColorAdjust: "exact",
+                      colorAdjust: "exact",
+                    }}
+                    className="print:block"
+                  />
+                </div>
+                {(storeMetadata?.phone_number || storeMetadata?.address) && (
+                  <div
+                    className="mb-2 text-sm"
+                    style={{
+                      color: "black",
+                      fontWeight: 700,
+                      WebkitPrintColorAdjust: "exact",
+                      printColorAdjust: "exact",
+                      colorAdjust: "exact",
+                    }}
+                  >
+                    {storeMetadata?.phone_number && (
+                      <p
+                        style={{
+                          color: "black",
+                          fontWeight: 700,
+                          WebkitPrintColorAdjust: "exact",
+                          printColorAdjust: "exact",
+                          colorAdjust: "exact",
+                        }}
+                      >
+                        ĐT: {storeMetadata.phone_number}
+                      </p>
+                    )}
+                    {storeMetadata?.address && (
+                      <p
+                        style={{
+                          color: "black",
+                          fontWeight: 700,
+                          WebkitPrintColorAdjust: "exact",
+                          printColorAdjust: "exact",
+                          colorAdjust: "exact",
+                        }}
+                      >
+                        {storeMetadata.address}
+                      </p>
+                    )}
+                  </div>
+                )}
+                <h1
+                  className="text-2xl font-bold mb-2"
+                  style={{
+                    color: "black",
+                    fontWeight: 900,
+                    WebkitPrintColorAdjust: "exact",
+                    printColorAdjust: "exact",
+                    colorAdjust: "exact",
+                  }}
+                >
+                  HÓA ĐƠN BÁN HÀNG
+                </h1>
+                <p
+                  className="text-sm text-gray-600"
+                  style={{
+                    color: "black",
+                    fontWeight: 700,
+                    WebkitPrintColorAdjust: "exact",
+                    printColorAdjust: "exact",
+                    colorAdjust: "exact",
+                  }}
+                >
                   Mã đơn:{" "}
-                  <strong className="!uppercase">
+                  <strong
+                    className="!uppercase"
+                    style={{
+                      color: "black",
+                      fontWeight: 900,
+                      textTransform: "uppercase",
+                      WebkitPrintColorAdjust: "exact",
+                      printColorAdjust: "exact",
+                      colorAdjust: "exact",
+                    }}
+                  >
                     {selectedOrderForInvoice.documentId}
                   </strong>
                 </p>
-                <p className="text-sm text-gray-600">
+                <p
+                  className="text-sm text-gray-600"
+                  style={{
+                    color: "black",
+                    fontWeight: 700,
+                    WebkitPrintColorAdjust: "exact",
+                    printColorAdjust: "exact",
+                    colorAdjust: "exact",
+                  }}
+                >
                   Ngày đặt:{" "}
                   {dayjs(selectedOrderForInvoice.createdAt).format(
                     "DD/MM/YYYY HH:mm"
@@ -1635,36 +1925,111 @@ export default function ReconciliationContent() {
               {/* Customer Info */}
               {selectedOrderForInvoice.customer && (
                 <div className="mb-6 border-b pb-4">
-                  <h2 className="text-lg font-semibold mb-2">
+                  <h2
+                    className="text-lg font-semibold mb-2"
+                    style={{
+                      color: "black",
+                      fontWeight: 800,
+                      WebkitPrintColorAdjust: "exact",
+                      printColorAdjust: "exact",
+                      colorAdjust: "exact",
+                    }}
+                  >
                     Thông tin khách hàng
                   </h2>
-                  <div className="grid grid-cols-2 gap-2 text-sm">
-                    <p>
-                      <strong>Tên:</strong>{" "}
+                  <div className="grid grid-cols-2 text-sm">
+                    <span
+                      style={{
+                        color: "black",
+                        fontWeight: 700,
+                        WebkitPrintColorAdjust: "exact",
+                        printColorAdjust: "exact",
+                        colorAdjust: "exact",
+                      }}
+                    >
+                      <strong
+                        style={{
+                          color: "black",
+                          fontWeight: 900,
+                          WebkitPrintColorAdjust: "exact",
+                          printColorAdjust: "exact",
+                          colorAdjust: "exact",
+                        }}
+                      >
+                        Tên:
+                      </strong>{" "}
                       {selectedOrderForInvoice.customer.full_name || "N/A"}
-                    </p>
-                    <p>
-                      <strong>SĐT:</strong>{" "}
+                    </span>
+                    <br />
+                    <span
+                      style={{
+                        color: "black",
+                        fontWeight: 700,
+                        WebkitPrintColorAdjust: "exact",
+                        printColorAdjust: "exact",
+                        colorAdjust: "exact",
+                      }}
+                    >
+                      <strong
+                        style={{
+                          color: "black",
+                          fontWeight: 900,
+                          WebkitPrintColorAdjust: "exact",
+                          printColorAdjust: "exact",
+                          colorAdjust: "exact",
+                        }}
+                      >
+                        SĐT:
+                      </strong>{" "}
                       {selectedOrderForInvoice.customer.phone_number || "N/A"}
-                    </p>
+                    </span>
+                    <br />
                     {selectedOrderForInvoice.customer.address && (
-                      <p className="col-span-2">
-                        <strong>Địa chỉ:</strong>{" "}
+                      <span
+                        className="col-span-2"
+                        style={{
+                          color: "black",
+                          fontWeight: 700,
+                          WebkitPrintColorAdjust: "exact",
+                          printColorAdjust: "exact",
+                          colorAdjust: "exact",
+                        }}
+                      >
+                        <strong
+                          style={{
+                            color: "black",
+                            fontWeight: 900,
+                            WebkitPrintColorAdjust: "exact",
+                            printColorAdjust: "exact",
+                            colorAdjust: "exact",
+                          }}
+                        >
+                          Địa chỉ:
+                        </strong>{" "}
                         {selectedOrderForInvoice.customer.address}
-                      </p>
+                      </span>
                     )}
                   </div>
                 </div>
               )}
-
+              <p>=====================================</p>
               {/* Order Items */}
               <div className="mb-6">
-                <h2 className="text-lg font-semibold mb-3">
+                <h2
+                  className="text-lg font-semibold mb-3"
+                  style={{
+                    color: "black",
+                    fontWeight: 800,
+                    WebkitPrintColorAdjust: "exact",
+                    printColorAdjust: "exact",
+                    colorAdjust: "exact",
+                  }}
+                >
                   Chi tiết đơn hàng
                 </h2>
                 <div className="space-y-3">
                   {(selectedOrderForInvoice.order_items || []).map(
-                    (item, index) => {
+                    (item, _) => {
                       const variant = item.variant
                       const product = variant?.product || item.product
                       const productName = product?.name || "N/A"
@@ -1675,23 +2040,65 @@ export default function ReconciliationContent() {
                       const total = unitPrice * quantity
 
                       return (
-                        <div key={item.id} className="border-b border-gray-200 pb-3">
+                        <div key={item.id}>
                           <div className="flex justify-between items-start mb-1">
                             <div className="flex-1">
-                              <span className="font-medium">{productName}</span>
+                              <span
+                                className="font-medium"
+                                style={{
+                                  color: "black",
+                                  fontWeight: 700,
+                                  WebkitPrintColorAdjust: "exact",
+                                  printColorAdjust: "exact",
+                                  colorAdjust: "exact",
+                                }}
+                              >
+                                {productName}
+                              </span>
                               {variant?.variant_value && (
-                                <span className="text-gray-600 ml-2">
+                                <span
+                                  className="text-gray-600 ml-2"
+                                  style={{
+                                    color: "black",
+                                    fontWeight: 700,
+                                    WebkitPrintColorAdjust: "exact",
+                                    printColorAdjust: "exact",
+                                    colorAdjust: "exact",
+                                  }}
+                                >
                                   ({variant.variant_value})
                                 </span>
                               )}
                             </div>
-                            <div className="text-right ml-4">
-                              {quantity} x {formatBigNumber(unitPrice, true)}
+                            <div
+                              className="text-right ml-4"
+                              style={{
+                                color: "black",
+                                fontWeight: 700,
+                                WebkitPrintColorAdjust: "exact",
+                                printColorAdjust: "exact",
+                                colorAdjust: "exact",
+                              }}
+                            >
+                              SL: {quantity} x{" "}
+                              {formatBigNumber(unitPrice, true)}
                             </div>
                           </div>
-                          <div className="text-right text-gray-600">
+                          <div
+                            className="text-right text-gray-600"
+                            style={{
+                              color: "black",
+                              fontWeight: 700,
+                              WebkitPrintColorAdjust: "exact",
+                              printColorAdjust: "exact",
+                              colorAdjust: "exact",
+                            }}
+                          >
                             Thành tiền: {formatBigNumber(total, true)}
                           </div>
+                          <p className="pb-3">
+                            -----------------------------------------------------------------
+                          </p>
                         </div>
                       )
                     }
@@ -1707,9 +2114,27 @@ export default function ReconciliationContent() {
                     style={{ minWidth: "300px", maxWidth: "400px" }}
                   >
                     <div className="flex justify-between text-sm">
-                      <span>Tiền hàng:</span>
                       <span
-                        style={{ whiteSpace: "nowrap", marginLeft: "10px" }}
+                        style={{
+                          color: "black",
+                          fontWeight: 700,
+                          WebkitPrintColorAdjust: "exact",
+                          printColorAdjust: "exact",
+                          colorAdjust: "exact",
+                        }}
+                      >
+                        Tiền hàng:
+                      </span>
+                      <span
+                        style={{
+                          whiteSpace: "nowrap",
+                          marginLeft: "10px",
+                          color: "black",
+                          fontWeight: 700,
+                          WebkitPrintColorAdjust: "exact",
+                          printColorAdjust: "exact",
+                          colorAdjust: "exact",
+                        }}
                       >
                         {formatBigNumber(
                           (selectedOrderForInvoice.order_items || []).reduce(
@@ -1730,9 +2155,27 @@ export default function ReconciliationContent() {
                       </span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span>Phí vận chuyển:</span>
                       <span
-                        style={{ whiteSpace: "nowrap", marginLeft: "10px" }}
+                        style={{
+                          color: "black",
+                          fontWeight: 700,
+                          WebkitPrintColorAdjust: "exact",
+                          printColorAdjust: "exact",
+                          colorAdjust: "exact",
+                        }}
+                      >
+                        Phí vận chuyển:
+                      </span>
+                      <span
+                        style={{
+                          whiteSpace: "nowrap",
+                          marginLeft: "10px",
+                          color: "black",
+                          fontWeight: 700,
+                          WebkitPrintColorAdjust: "exact",
+                          printColorAdjust: "exact",
+                          colorAdjust: "exact",
+                        }}
                       >
                         {toNumber(selectedOrderForInvoice.shipping_fee) === 0
                           ? "Miễn phí"
@@ -1743,10 +2186,28 @@ export default function ReconciliationContent() {
                       </span>
                     </div>
                     <div className="flex justify-between text-lg font-bold border-t pt-2">
-                      <span>Tổng cộng:</span>
+                      <span
+                        style={{
+                          color: "black",
+                          fontWeight: 900,
+                          WebkitPrintColorAdjust: "exact",
+                          printColorAdjust: "exact",
+                          colorAdjust: "exact",
+                        }}
+                      >
+                        Tổng cộng:
+                      </span>
                       <span
                         className="text-pink-700"
-                        style={{ whiteSpace: "nowrap", marginLeft: "10px" }}
+                        style={{
+                          whiteSpace: "nowrap",
+                          marginLeft: "10px",
+                          color: "black",
+                          fontWeight: 900,
+                          WebkitPrintColorAdjust: "exact",
+                          printColorAdjust: "exact",
+                          colorAdjust: "exact",
+                        }}
                       >
                         {formatBigNumber(
                           (selectedOrderForInvoice.order_items || []).reduce(
@@ -1771,8 +2232,27 @@ export default function ReconciliationContent() {
               </div>
 
               {/* Footer */}
-              <div className="text-center text-sm text-gray-600 mt-8">
-                <p>Cảm ơn quý khách đã mua hàng!</p>
+              <div
+                className="text-center text-sm text-gray-600 mt-8"
+                style={{
+                  color: "black",
+                  fontWeight: 700,
+                  WebkitPrintColorAdjust: "exact",
+                  printColorAdjust: "exact",
+                  colorAdjust: "exact",
+                }}
+              >
+                <p
+                  style={{
+                    color: "black",
+                    fontWeight: 700,
+                    WebkitPrintColorAdjust: "exact",
+                    printColorAdjust: "exact",
+                    colorAdjust: "exact",
+                  }}
+                >
+                  Cảm ơn quý khách đã mua hàng!
+                </p>
               </div>
             </div>
           )}

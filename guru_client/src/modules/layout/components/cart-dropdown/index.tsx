@@ -267,6 +267,8 @@ const CartDropdown = () => {
                         }
                       }
 
+                      const isService = productData?.isService === true
+
                       return (
                         <div
                           className="flex space-x-4"
@@ -298,43 +300,46 @@ const CartDropdown = () => {
                                 </h4>
                                 {variantName && (
                                   <div className="text-xs text-ui-fg-subtle truncate">
-                                    Phân loại: {variantName}
+                                    {isService ? "Loại dịch vụ:" : "Phân loại:"}{" "}
+                                    {variantName}
                                   </div>
                                 )}
-                                <div className="flex items-center gap-2 mt-1">
-                                  <span className="text-sm text-ui-fg-subtle !my-auto">
-                                    Số lượng:
-                                  </span>
-                                  <div className="flex items-center space-x-1 !my-auto">
-                                    <IconButton
-                                      onClick={(e) => {
-                                        e.stopPropagation()
-                                        handleUpdateQuantity(
-                                          index,
-                                          item.quantity - 1
-                                        )
-                                      }}
-                                      className="!my-auto px-1.5 py-0.5 bg-neutral-100 hover:bg-neutral-200 rounded border border-stone-300 transition-colors"
-                                    >
-                                      <RemoveRoundedIcon className="!w-5 !h-5" />
-                                    </IconButton>
-                                    <span className="!my-auto text-sm font-semibold px-2 min-w-[24px] text-center">
-                                      {item.quantity}
+                                {!isService && (
+                                  <div className="flex items-center gap-2 mt-1">
+                                    <span className="text-sm text-ui-fg-subtle !my-auto">
+                                      Số lượng:
                                     </span>
-                                    <IconButton
-                                      onClick={(e) => {
-                                        e.stopPropagation()
-                                        handleUpdateQuantity(
-                                          index,
-                                          item.quantity + 1
-                                        )
-                                      }}
-                                      className="!my-auto px-1.5 py-0.5 bg-neutral-100 hover:bg-neutral-200 rounded border border-stone-300 transition-colors"
-                                    >
-                                      <AddRoundedIcon className="!w-5 !h-5" />
-                                    </IconButton>
+                                    <div className="flex items-center space-x-1 !my-auto">
+                                      <IconButton
+                                        onClick={(e) => {
+                                          e.stopPropagation()
+                                          handleUpdateQuantity(
+                                            index,
+                                            item.quantity - 1
+                                          )
+                                        }}
+                                        className="!my-auto px-1.5 py-0.5 bg-neutral-100 hover:bg-neutral-200 rounded border border-stone-300 transition-colors"
+                                      >
+                                        <RemoveRoundedIcon className="!w-5 !h-5" />
+                                      </IconButton>
+                                      <span className="!my-auto text-sm font-semibold px-2 min-w-[24px] text-center">
+                                        {item.quantity}
+                                      </span>
+                                      <IconButton
+                                        onClick={(e) => {
+                                          e.stopPropagation()
+                                          handleUpdateQuantity(
+                                            index,
+                                            item.quantity + 1
+                                          )
+                                        }}
+                                        className="!my-auto px-1.5 py-0.5 bg-neutral-100 hover:bg-neutral-200 rounded border border-stone-300 transition-colors"
+                                      >
+                                        <AddRoundedIcon className="!w-5 !h-5" />
+                                      </IconButton>
+                                    </div>
                                   </div>
-                                </div>
+                                )}
                               </div>
                               <div className="text-right">
                                 <div className="text-sm font-semibold">
@@ -457,19 +462,19 @@ const CartDropdown = () => {
                           productData.images?.[0]?.default ||
                           "/logo.png"
                         variantName = variant.variant_value
+                      }
                     }
-                  }
 
-                  const isService = productData?.isService === true
+                    const isService = productData?.isService === true
 
-                  return (
-                    <div
-                      className="flex space-x-4"
-                      key={`${productData.documentId}-${
-                        item.variantId || "default"
-                      }-${index}`}
-                      data-testid="cart-item"
-                    >
+                    return (
+                      <div
+                        className="flex space-x-4"
+                        key={`${productData.documentId}-${
+                          item.variantId || "default"
+                        }-${index}`}
+                        data-testid="cart-item"
+                      >
                         <Link
                           href={`/product/${productData.slug}`}
                           className="w-24"
