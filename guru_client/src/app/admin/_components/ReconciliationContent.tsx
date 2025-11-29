@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useRef } from "react"
+import { useEffect, useState, useRef, useMemo } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import dayjs, { Dayjs } from "dayjs"
 import "dayjs/locale/vi"
@@ -215,6 +215,8 @@ export default function ReconciliationContent() {
     useState<PaginationState>(defaultPagination)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
+  const [totalRevenue, setTotalRevenue] = useState<number>(0)
+  const [loadingRevenue, setLoadingRevenue] = useState(false)
   const [expandedOrderId, setExpandedOrderId] = useState<number | null>(null)
   const [openCardModal, setOpenCardModal] = useState(false)
   const [selectedCard, setSelectedCard] = useState<CustomerCard | undefined>(
@@ -278,6 +280,9 @@ export default function ReconciliationContent() {
   }) => {
     const params = new URLSearchParams(searchParams.toString())
 
+    // Xóa tab param để tránh duplicate khi push lại
+    params.delete("tab")
+
     if (updates.phoneNumber !== undefined) {
       if (updates.phoneNumber) {
         params.set("phoneNumber", updates.phoneNumber)
@@ -340,8 +345,11 @@ export default function ReconciliationContent() {
 
   // Fetch store metadata
   useEffect(() => {
+    if (hasFetchedStoreMetadataRef.current) return
+
     const fetchStoreMetadata = async () => {
       try {
+        hasFetchedStoreMetadataRef.current = true
         const response = await fetch("/api/store-metadata")
         if (response.ok) {
           const data = await response.json()
@@ -349,67 +357,19 @@ export default function ReconciliationContent() {
         }
       } catch (error) {
         console.error("Failed to fetch store metadata:", error)
+        hasFetchedStoreMetadataRef.current = false // Reset on error để có thể retry
       }
     }
     fetchStoreMetadata()
   }, [])
 
-  // Đọc query params từ URL khi component mount hoặc URL thay đổi
-  useEffect(() => {
-    const phoneNumberParam = searchParams.get("phoneNumber") || ""
-    const orderIdParam = searchParams.get("orderId") || ""
-    const customerNameParam = searchParams.get("customerName") || ""
-    let statusParam =
-      (searchParams.get("status") as OrderStatus | "all") || "all"
-    // Convert "approved" thành "shipping" vì đã gộp lại
-    if (statusParam === "approved") {
-      statusParam = "shipping"
-      // Update URL để đồng nhất
-      updateURLParams({ status: "shipping" })
-    }
-    const dateFromParam = searchParams.get("dateFrom")
-    const dateToParam = searchParams.get("dateTo")
-    const employeeParam = searchParams.get("employee") || "all"
-    const pageParam = searchParams.get("page")
-
-    setPhoneNumber(phoneNumberParam)
-    setOrderId(orderIdParam)
-    setCustomerName(customerNameParam)
-    setStatusFilter(statusParam)
-    setEmployeeFilter(employeeParam)
-
-    // Set date từ URL params, nếu không có thì dùng default (90 ngày gần nhất)
-    if (dateFromParam) {
-      setDateFrom(dayjs(dateFromParam))
-    } else {
-      // Default: 90 ngày trước
-      setDateFrom(dayjs().subtract(90, "day"))
-    }
-
-    if (dateToParam) {
-      setDateTo(dayjs(dateToParam))
-    } else {
-      // Default: hôm nay
-      setDateTo(dayjs())
-    }
-
-    if (pageParam) {
-      const page = parseInt(pageParam, 10)
-      if (!isNaN(page) && page > 0) {
-        setPagination((prev) => ({ ...prev, page }))
-      }
-    }
-  }, [searchParams])
-
   // Set default date range (90 ngày gần nhất) khi mount lần đầu nếu không có trong URL
   useEffect(() => {
-    if (hasSetDefaultDateRef.current) return
-
     const dateFromParam = searchParams.get("dateFrom")
     const dateToParam = searchParams.get("dateTo")
 
-    // Chỉ set default và update URL nếu không có params trong URL
-    if (!dateFromParam || !dateToParam) {
+    // Chỉ set default và update URL 1 lần khi mount lần đầu nếu không có params trong URL
+    if (!hasSetDefaultDateRef.current && (!dateFromParam || !dateToParam)) {
       hasSetDefaultDateRef.current = true
       const defaultDateFrom = dayjs().subtract(90, "day")
       const defaultDateTo = dayjs()
@@ -417,16 +377,52 @@ export default function ReconciliationContent() {
       setDateFrom(defaultDateFrom)
       setDateTo(defaultDateTo)
 
-      // Update URL với default values
+      // Update URL với default values (sẽ trigger fetch orders sau)
       updateURLParams({
         dateFrom: defaultDateFrom,
         dateTo: defaultDateTo,
       })
-    } else {
-      hasSetDefaultDateRef.current = true
+      return // Không đọc các params khác nữa, đợi URL update xong
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams]) // Chạy khi searchParams thay đổi, nhưng chỉ set default 1 lần
+
+    // Nếu đã set default rồi hoặc đã có date trong URL, đọc tất cả params
+    if (hasSetDefaultDateRef.current || (dateFromParam && dateToParam)) {
+      const phoneNumberParam = searchParams.get("phoneNumber") || ""
+      const orderIdParam = searchParams.get("orderId") || ""
+      const customerNameParam = searchParams.get("customerName") || ""
+      let statusParam =
+        (searchParams.get("status") as OrderStatus | "all") || "all"
+      // Convert "approved" thành "shipping" vì đã gộp lại
+      if (statusParam === "approved") {
+        statusParam = "shipping"
+        // Update URL để đồng nhất
+        updateURLParams({ status: "shipping" })
+      }
+      const employeeParam = searchParams.get("employee") || "all"
+      const pageParam = searchParams.get("page")
+
+      setPhoneNumber(phoneNumberParam)
+      setOrderId(orderIdParam)
+      setCustomerName(customerNameParam)
+      setStatusFilter(statusParam)
+      setEmployeeFilter(employeeParam)
+
+      // Set date từ URL params
+      if (dateFromParam) {
+        setDateFrom(dayjs(dateFromParam))
+      }
+      if (dateToParam) {
+        setDateTo(dayjs(dateToParam))
+      }
+
+      if (pageParam) {
+        const page = parseInt(pageParam, 10)
+        if (!isNaN(page) && page > 0) {
+          setPagination((prev) => ({ ...prev, page }))
+        }
+      }
+    }
+  }, [searchParams])
 
   const fetchOrders = async (targetPage?: number) => {
     setLoading(true)
@@ -509,10 +505,79 @@ export default function ReconciliationContent() {
     }
   }
 
+  // Debounce timer cho fetchTotalRevenue
+  const revenueDebounceRef = useRef<NodeJS.Timeout | null>(null)
+
+  // Fetch tổng doanh thu từ API endpoint riêng (tối ưu hơn)
+  // Sử dụng debounce để tránh fetch quá nhiều lần
+  const fetchTotalRevenue = async () => {
+    // Clear previous debounce
+    if (revenueDebounceRef.current) {
+      clearTimeout(revenueDebounceRef.current)
+    }
+
+    // Debounce 500ms để tránh fetch quá nhiều lần khi filter thay đổi nhanh
+    revenueDebounceRef.current = setTimeout(async () => {
+      setLoadingRevenue(true)
+      try {
+        // Đọc filter từ URL query params (giống fetchOrders)
+        const currentPhoneNumber = searchParams.get("phoneNumber") || ""
+        const currentOrderId = searchParams.get("orderId") || ""
+        const currentCustomerName = searchParams.get("customerName") || ""
+        let currentStatusFilter =
+          (searchParams.get("status") as OrderStatus | "all") || "all"
+        if (currentStatusFilter === "approved") {
+          currentStatusFilter = "shipping"
+        }
+        const currentDateFrom = searchParams.get("dateFrom")
+        const currentDateTo = searchParams.get("dateTo")
+        const currentEmployeeFilter = searchParams.get("employee") || "all"
+
+        const params = new URLSearchParams()
+
+        if (currentPhoneNumber) params.set("phoneNumber", currentPhoneNumber)
+        if (currentOrderId) params.set("orderId", currentOrderId)
+        if (currentCustomerName) params.set("customerName", currentCustomerName)
+        if (currentStatusFilter && currentStatusFilter !== "all") {
+          params.set("status", currentStatusFilter)
+        }
+        if (currentEmployeeFilter && currentEmployeeFilter !== "all") {
+          params.set("employee", currentEmployeeFilter)
+        }
+        if (currentDateFrom) {
+          params.set("dateFrom", currentDateFrom)
+        }
+        if (currentDateTo) {
+          params.set("dateTo", currentDateTo)
+        }
+
+        // Gọi API endpoint riêng để tính tổng doanh thu (tối ưu hơn)
+        const res = await fetch(
+          `/api/admin/orders/revenue?${params.toString()}`
+        )
+        const data = await res.json()
+
+        if (!res.ok) {
+          setTotalRevenue(0)
+          setLoadingRevenue(false)
+          return
+        }
+
+        setTotalRevenue(data.totalRevenue || 0)
+      } catch (err: any) {
+        console.error("Error fetching total revenue:", err)
+        setTotalRevenue(0)
+      } finally {
+        setLoadingRevenue(false)
+      }
+    }, 500) // Debounce 500ms
+  }
+
   // Track previous filter values để tránh fetch không cần thiết
   const prevFiltersRef = useRef<string | null>(null)
   const hasMountedRef = useRef(false)
   const hasSetDefaultDateRef = useRef(false)
+  const hasFetchedStoreMetadataRef = useRef(false)
 
   // Fetch orders khi authenticated hoặc khi filter params thay đổi
   useEffect(() => {
@@ -534,11 +599,18 @@ export default function ReconciliationContent() {
       page: searchParams.get("page") || "1",
     })
 
-    // Lần đầu mount: luôn fetch
+    // Lần đầu mount: đợi default date được set xong rồi mới fetch
     if (!hasMountedRef.current) {
-      hasMountedRef.current = true
-      prevFiltersRef.current = currentFilters
-      fetchOrders()
+      // Chỉ fetch nếu đã set default date (có dateFrom và dateTo trong URL)
+      const hasDateFrom = searchParams.get("dateFrom")
+      const hasDateTo = searchParams.get("dateTo")
+
+      if (hasDateFrom && hasDateTo) {
+        hasMountedRef.current = true
+        prevFiltersRef.current = currentFilters
+        fetchOrders()
+        fetchTotalRevenue()
+      }
       return
     }
 
@@ -546,6 +618,8 @@ export default function ReconciliationContent() {
     if (prevFiltersRef.current !== currentFilters) {
       prevFiltersRef.current = currentFilters
       fetchOrders()
+      // Fetch tổng doanh thu khi filter thay đổi
+      fetchTotalRevenue()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated, searchParams])
@@ -1331,6 +1405,24 @@ export default function ReconciliationContent() {
         </Alert>
       )}
 
+      {/* Tổng doanh thu */}
+      {!loading && (
+        <div className="bg-white border border-gray-200 rounded-lg p-4 lg:p-6 mb-6">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold text-gray-900">
+              Tổng doanh thu (tiền hàng)
+            </h3>
+            {loadingRevenue ? (
+              <CircularProgress size={24} />
+            ) : (
+              <p className="text-2xl font-bold text-pink-700">
+                {formatBigNumber(totalRevenue, true)}
+              </p>
+            )}
+          </div>
+        </div>
+      )}
+
       {loading ? (
         <div className="space-y-5">
           {[1, 2, 3].map((index) => (
@@ -1358,6 +1450,32 @@ export default function ReconciliationContent() {
             </div>
           )}
 
+          {orders.length > 0 && (
+            <div className="flex flex-col items-end justify-end my-6">
+              <span className="text-xs text-gray-500">
+                Trang {pagination.page} / {pagination.pageCount} (Tổng:{" "}
+                {pagination.total} đơn hàng)
+              </span>
+              <div className="flex items-center gap-2">
+                <IconButton
+                  onClick={() => handlePageChange("prev")}
+                  disabled={pagination.page <= 1 || loading}
+                  className="!border !border-neutral-200 !text-gray-700 hover:!bg-gray-50 disabled:!opacity-50"
+                  size="small"
+                >
+                  <ChevronLeftIcon />
+                </IconButton>
+                <IconButton
+                  onClick={() => handlePageChange("next")}
+                  disabled={pagination.page >= pagination.pageCount || loading}
+                  className="!border !border-neutral-200 !text-gray-700 hover:!bg-gray-50 disabled:!opacity-50"
+                  size="small"
+                >
+                  <ChevronRightIcon />
+                </IconButton>
+              </div>
+            </div>
+          )}
           <div className="space-y-5">
             {orders.map((order) => {
               const orderItems = order.order_items || []

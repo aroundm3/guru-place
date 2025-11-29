@@ -753,147 +753,151 @@ export default function OrdersPage() {
         </div>
       )}
 
-      <div className="space-y-5">
-        {orders.map((order) => {
-          const orderItems = order.order_items || []
-          const isExpanded = expandedOrderId === order.id
-          const createdDate = dayjs(order.createdAt).format("DD/MM/YYYY HH:mm")
-          const totalProducts = orderItems.reduce(
-            (sum, item) => sum + toNumber(item.quantity || 0),
-            0
-          )
-          const orderTotal = orderItems.reduce((sum, item) => {
-            const unitPrice = toNumber(
-              item.variant?.sale_price ?? item.product?.sale_price ?? 0
+      {!loading && (
+        <div className="space-y-5">
+          {orders.map((order) => {
+            const orderItems = order.order_items || []
+            const isExpanded = expandedOrderId === order.id
+            const createdDate = dayjs(order.createdAt).format(
+              "DD/MM/YYYY HH:mm"
             )
-            return sum + unitPrice * toNumber(item.quantity || 0)
-          }, 0)
-
-          const statusInfo = getOrderStatusInfo(order.order_status)
-
-          const items = order.order_items || []
-          const subtotal = items.reduce((sum, item) => {
-            const unitPrice = toNumber(
-              item.variant?.sale_price ?? item.product?.sale_price ?? 0
+            const totalProducts = orderItems.reduce(
+              (sum, item) => sum + toNumber(item.quantity || 0),
+              0
             )
-            return sum + unitPrice * toNumber(item.quantity || 0)
-          }, 0)
-          const shippingFee = toNumber(order.shipping_fee)
-          const totalItems = items.reduce(
-            (sum, item) => sum + toNumber(item.quantity || 0),
-            0
-          )
+            const orderTotal = orderItems.reduce((sum, item) => {
+              const unitPrice = toNumber(
+                item.variant?.sale_price ?? item.product?.sale_price ?? 0
+              )
+              return sum + unitPrice * toNumber(item.quantity || 0)
+            }, 0)
 
-          return (
-            <div
-              key={order.id}
-              className="border border-stone-200 rounded-2xl bg-white shadow-sm transition-shadow hover:shadow-md"
-            >
+            const statusInfo = getOrderStatusInfo(order.order_status)
+
+            const items = order.order_items || []
+            const subtotal = items.reduce((sum, item) => {
+              const unitPrice = toNumber(
+                item.variant?.sale_price ?? item.product?.sale_price ?? 0
+              )
+              return sum + unitPrice * toNumber(item.quantity || 0)
+            }, 0)
+            const shippingFee = toNumber(order.shipping_fee)
+            const totalItems = items.reduce(
+              (sum, item) => sum + toNumber(item.quantity || 0),
+              0
+            )
+
+            return (
               <div
-                // onClick={() =>
-                //   setExpandedOrderId((prev) =>
-                //     prev === order.id ? null : order.id
-                //   )
-                // }
-                className="cursor-pointer flex flex-row items-center gap-3 lg:gap-6 justify-between p-4 lg:p-6"
+                key={order.id}
+                className="border border-stone-200 rounded-2xl bg-white shadow-sm transition-shadow hover:shadow-md"
               >
-                <div className="flex-1 min-w-0 space-y-1.5">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <p className="text-xs lg:text-sm text-gray-500 uppercase tracking-wide">
-                      Mã đơn:
-                    </p>
-                    <button
-                      onClick={() => handleCopyOrderId(order.documentId)}
-                      className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-pink-50 hover:bg-pink-100 transition-colors group"
-                    >
-                      <span className="text-xs lg:text-sm font-semibold uppercase text-pink-700">
-                        {order.documentId}
+                <div
+                  // onClick={() =>
+                  //   setExpandedOrderId((prev) =>
+                  //     prev === order.id ? null : order.id
+                  //   )
+                  // }
+                  className="cursor-pointer flex flex-row items-center gap-3 lg:gap-6 justify-between p-4 lg:p-6"
+                >
+                  <div className="flex-1 min-w-0 space-y-1.5">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="text-xs lg:text-sm text-gray-500 uppercase tracking-wide">
+                        Mã đơn:
+                      </p>
+                      <button
+                        onClick={() => handleCopyOrderId(order.documentId)}
+                        className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-pink-50 hover:bg-pink-100 transition-colors group"
+                      >
+                        <span className="text-xs lg:text-sm font-semibold uppercase text-pink-700">
+                          {order.documentId}
+                        </span>
+                        <ContentCopyIcon className="!w-4 !h-4 text-pink-600 opacity-70 group-hover:opacity-100 transition-opacity" />
+                      </button>
+                      <span
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium ${statusInfo.bgColor} ${statusInfo.textColor} border ${statusInfo.borderColor}`}
+                      >
+                        {statusInfo.text}
                       </span>
-                      <ContentCopyIcon className="!w-4 !h-4 text-pink-600 opacity-70 group-hover:opacity-100 transition-opacity" />
-                    </button>
-                    <span
-                      className={`inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium ${statusInfo.bgColor} ${statusInfo.textColor} border ${statusInfo.borderColor}`}
+                    </div>
+                    <p className="text-sm lg:text-base text-gray-600 truncate">
+                      Ngày đặt: {createdDate}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 lg:gap-4 flex-shrink-0">
+                    <IconButton
+                      onClick={() =>
+                        setExpandedOrderId((prev) =>
+                          prev === order.id ? null : order.id
+                        )
+                      }
+                      className={`transition-transform text-pink-700 hover:bg-pink-50 flex-shrink-0 ${
+                        isExpanded ? "rotate-180" : ""
+                      }`}
+                      size="medium"
                     >
-                      {statusInfo.text}
+                      <ExpandMoreRoundedIcon />
+                    </IconButton>
+                  </div>
+                </div>
+
+                <Collapse in={isExpanded} timeout="auto" unmountOnExit>
+                  <div className="px-4 lg:px-6 pb-4 lg:pb-6 space-y-6">
+                    {renderOrderItems(order)}
+                    {renderOrderCards(order)}
+                    {renderOrderSummary(order)}
+                  </div>
+                </Collapse>
+                <div className="flex justify-between items-center pt-2 border-t p-3 lg:p-4">
+                  <span className="font-semibold text-gray-900">
+                    Tổng ({totalItems} sản phẩm)
+                  </span>
+                  <div className="flex items-center gap-3">
+                    {order.order_status === "pending_approval" && (
+                      <Button
+                        variant="outlined"
+                        color="error"
+                        size="small"
+                        onClick={() => handleOpenCancelDialog(order)}
+                        className="!normal-case !text-sm !font-semibold"
+                      >
+                        Hủy đơn
+                      </Button>
+                    )}
+                    <span className="font-bold text-pink-700 text-lg">
+                      {formatBigNumber(subtotal + shippingFee, true)}
                     </span>
                   </div>
-                  <p className="text-sm lg:text-base text-gray-600 truncate">
-                    Ngày đặt: {createdDate}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2 lg:gap-4 flex-shrink-0">
-                  <IconButton
-                    onClick={() =>
-                      setExpandedOrderId((prev) =>
-                        prev === order.id ? null : order.id
-                      )
-                    }
-                    className={`transition-transform text-pink-700 hover:bg-pink-50 flex-shrink-0 ${
-                      isExpanded ? "rotate-180" : ""
-                    }`}
-                    size="medium"
-                  >
-                    <ExpandMoreRoundedIcon />
-                  </IconButton>
                 </div>
               </div>
+            )
+          })}
 
-              <Collapse in={isExpanded} timeout="auto" unmountOnExit>
-                <div className="px-4 lg:px-6 pb-4 lg:pb-6 space-y-6">
-                  {renderOrderItems(order)}
-                  {renderOrderCards(order)}
-                  {renderOrderSummary(order)}
-                </div>
-              </Collapse>
-              <div className="flex justify-between items-center pt-2 border-t p-3 lg:p-4">
-                <span className="font-semibold text-gray-900">
-                  Tổng ({totalItems} sản phẩm)
-                </span>
-                <div className="flex items-center gap-3">
-                  {order.order_status === "pending_approval" && (
-                    <Button
-                      variant="outlined"
-                      color="error"
-                      size="small"
-                      onClick={() => handleOpenCancelDialog(order)}
-                      className="!normal-case !text-sm !font-semibold"
-                    >
-                      Hủy đơn
-                    </Button>
-                  )}
-                  <span className="font-bold text-pink-700 text-lg">
-                    {formatBigNumber(subtotal + shippingFee, true)}
-                  </span>
-                </div>
+          {customer && orders.length > 0 && (
+            <div className="flex flex-col lg:flex-row items-center justify-between gap-3 mt-6 border-t pt-4">
+              <span className="text-sm text-gray-500">
+                Trang {pagination.page} / {pagination.pageCount}
+              </span>
+              <div className="flex items-center gap-2">
+                <IconButton
+                  onClick={() => handlePageChange("prev")}
+                  disabled={pagination.page <= 1 || loading}
+                  className="!border !border-neutral-200 !text-gray-700 hover:!bg-gray-50 disabled:!opacity-50"
+                  size="small"
+                >
+                  <ChevronLeftIcon />
+                </IconButton>
+                <IconButton
+                  onClick={() => handlePageChange("next")}
+                  disabled={pagination.page >= pagination.pageCount || loading}
+                  className="!border !border-neutral-200 !text-gray-700 hover:!bg-gray-50 disabled:!opacity-50"
+                  size="small"
+                >
+                  <ChevronRightIcon />
+                </IconButton>
               </div>
             </div>
-          )
-        })}
-      </div>
-
-      {customer && orders.length > 0 && (
-        <div className="flex flex-col lg:flex-row items-center justify-between gap-3 mt-6 border-t pt-4">
-          <span className="text-sm text-gray-500">
-            Trang {pagination.page} / {pagination.pageCount}
-          </span>
-          <div className="flex items-center gap-2">
-            <IconButton
-              onClick={() => handlePageChange("prev")}
-              disabled={pagination.page <= 1 || loading}
-              className="!border !border-neutral-200 !text-gray-700 hover:!bg-gray-50 disabled:!opacity-50"
-              size="small"
-            >
-              <ChevronLeftIcon />
-            </IconButton>
-            <IconButton
-              onClick={() => handlePageChange("next")}
-              disabled={pagination.page >= pagination.pageCount || loading}
-              className="!border !border-neutral-200 !text-gray-700 hover:!bg-gray-50 disabled:!opacity-50"
-              size="small"
-            >
-              <ChevronRightIcon />
-            </IconButton>
-          </div>
+          )}
         </div>
       )}
 

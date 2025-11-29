@@ -1,7 +1,7 @@
 "use client"
 
 import { Popover } from "@headlessui/react"
-import { Fragment, useState, useEffect } from "react"
+import { Fragment, useState, useEffect, useRef } from "react"
 import { HttpTypes } from "@medusajs/types"
 
 import { Collapse, Drawer } from "@mui/material"
@@ -39,6 +39,7 @@ const SideMenu = ({ regions }: { regions: HttpTypes.StoreRegion[] | null }) => {
   const [isExpandContact, setIsExpandContact] = useState(false)
   const [metadata, setMetadata] = useState<StoreMetadata | null>(null)
   const [openServiceMenuDialog, setOpenServiceMenuDialog] = useState(false)
+  const hasFetchedMetadataRef = useRef(false)
 
   const closeSideBar = () => {
     setIsOpenSideBar(false)
@@ -46,13 +47,17 @@ const SideMenu = ({ regions }: { regions: HttpTypes.StoreRegion[] | null }) => {
 
   // Fetch metadata
   useEffect(() => {
+    if (hasFetchedMetadataRef.current) return
+    
     const fetchMetadata = async () => {
       try {
+        hasFetchedMetadataRef.current = true
         const response = await fetch("/api/store-metadata")
         const data = await response.json()
         setMetadata(data.data)
       } catch (error) {
         console.error("Failed to fetch store metadata:", error)
+        hasFetchedMetadataRef.current = false // Reset on error để có thể retry
       }
     }
     fetchMetadata()

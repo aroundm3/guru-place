@@ -447,7 +447,32 @@ export default function CustomersContent() {
               </p>
             </div>
           )}
-
+          {customers.length > 0 && (
+            <div className="flex flex-col items-end justify-end gap-1 my-6">
+              <span className="text-xs text-gray-500">
+                Trang {pagination.page} / {pagination.pageCount} (Tổng:{" "}
+                {pagination.total} khách hàng)
+              </span>
+              <div className="flex items-center gap-2">
+                <IconButton
+                  onClick={() => handlePageChange("prev")}
+                  disabled={pagination.page <= 1 || loading}
+                  className="!border !border-neutral-200 !text-gray-700 hover:!bg-gray-50 disabled:!opacity-50"
+                  size="small"
+                >
+                  <ChevronLeftIcon />
+                </IconButton>
+                <IconButton
+                  onClick={() => handlePageChange("next")}
+                  disabled={pagination.page >= pagination.pageCount || loading}
+                  className="!border !border-neutral-200 !text-gray-700 hover:!bg-gray-50 disabled:!opacity-50"
+                  size="small"
+                >
+                  <ChevronRightIcon />
+                </IconButton>
+              </div>
+            </div>
+          )}
           <div className="space-y-5">
             {customers.map((customer) => {
               const createdDate = customer.createdAt
