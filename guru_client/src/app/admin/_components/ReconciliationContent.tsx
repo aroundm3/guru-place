@@ -1086,9 +1086,11 @@ export default function ReconciliationContent() {
       )
     }
 
-    // Nếu là approved hoặc shipping, có thể chuyển sang completed
+    // Nếu là approved hoặc shipping, có thể chuyển sang completed hoặc cancelled
     if (currentStatus === "approved" || currentStatus === "shipping") {
-      return allStatuses.filter((s) => s.value === "completed")
+      return allStatuses.filter(
+        (s) => s.value === "completed" || s.value === "cancelled"
+      )
     }
 
     return allStatuses

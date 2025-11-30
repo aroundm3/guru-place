@@ -38,7 +38,8 @@ interface OptionsProps {
 }
 
 export default function Options({ productData }: OptionsProps) {
-  const { variants } = productData
+  const variants = productData?.variants ?? []
+  const hasVariants = variants.length > 0
   const isMobile = useIsMobile()
   const { getCardById } = useCustomerCards()
   const [currentPicked, setCurrentPicked] = useState<Variant | undefined>()
@@ -86,7 +87,7 @@ export default function Options({ productData }: OptionsProps) {
   }
 
   const handleConfirmAddToCart = () => {
-    if (!currentPicked && productData.variants.length > 1) {
+    if (!currentPicked && hasVariants) {
       setShowWarning({
         isOpen: true,
         message:
@@ -177,7 +178,7 @@ export default function Options({ productData }: OptionsProps) {
       <div className="flex flex-col space-y-2">
         {/* Desktop: Hiển thị đầy đủ options */}
         <div className="hidden lg:flex flex-col space-y-4">
-          {productData?.variants?.length > 1 && (
+          {hasVariants && (
             <p className="text-sm font-medium text-neutral-600">
               {isService ? "Loại dịch vụ:" : "Phân loại:"}
             </p>
@@ -504,7 +505,7 @@ export default function Options({ productData }: OptionsProps) {
 
             {/* Variant Selection */}
 
-            {productData?.variants?.length > 1 && (
+            {hasVariants && (
               <div className="mb-4">
                 <p className="text-sm font-medium text-neutral-600 mb-2">
                   {isService ? "Loại dịch vụ:" : "Phân loại:"}

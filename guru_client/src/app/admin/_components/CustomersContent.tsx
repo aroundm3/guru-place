@@ -514,10 +514,10 @@ export default function CustomersContent() {
                       </p>
                       <div className="text-xs lg:text-sm text-gray-600 space-y-1">
                         <div className="flex items-center gap-2">
-                          <p>
-                            <span className="font-semibold">SĐT:</span>{" "}
-                            {customer.phone_number || "N/A"}
-                          </p>
+                        <p>
+                          <span className="font-semibold">SĐT:</span>{" "}
+                          {customer.phone_number || "N/A"}
+                        </p>
                           {customer.phone_number && (
                             <IconButton
                               size="small"
