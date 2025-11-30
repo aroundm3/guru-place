@@ -246,8 +246,102 @@ export default function ReconciliationContent() {
   const [loadingInvoice, setLoadingInvoice] = useState<Record<number, boolean>>(
     {}
   )
+  const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null)
+  const [loadingQrCode, setLoadingQrCode] = useState(false)
 
   console.log({ selectedOrderForInvoice })
+
+  // Fetch QR code khi selectedOrderForInvoice thay đổi
+  useEffect(() => {
+    if (!selectedOrderForInvoice) {
+      setQrCodeUrl(null)
+      return
+    }
+
+    const generateQrCode = async () => {
+      setLoadingQrCode(true)
+      try {
+        // Tính tổng tiền thanh toán (tiền hàng + phí ship)
+        const subtotal = (selectedOrderForInvoice.order_items || []).reduce(
+          (sum, item) => {
+            const unitPrice = toNumber(
+              item.variant?.sale_price ?? item.product?.sale_price ?? 0
+            )
+            return sum + unitPrice * toNumber(item.quantity || 0)
+          },
+          0
+        )
+        const shippingFee = toNumber(selectedOrderForInvoice.shipping_fee)
+        const totalAmount = subtotal + shippingFee
+
+        console.log("Generating QR code for order:", {
+          documentId: selectedOrderForInvoice.documentId,
+          totalAmount,
+        })
+
+        const response = await fetch("/api/vietqr/generate", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            accountNo: "272986868888",
+            accountName: "VU THI THU TRANG",
+            acqId: "970407",
+            addInfo: selectedOrderForInvoice.documentId,
+            amount: totalAmount,
+            template: "qr_only",
+          }),
+        })
+
+        console.log("QR code API response status:", response.status)
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}))
+          console.error("QR code API error:", errorData)
+          throw new Error(errorData?.error || "Failed to generate QR code")
+        }
+
+        const data = await response.json()
+        console.log("QR code API response data:", {
+          hasData: !!data.data,
+          hasQrDataURL: !!data?.data?.qrDataURL,
+          hasQrCode: !!data?.data?.qrCode,
+          keys: Object.keys(data),
+          dataKeys: data.data ? Object.keys(data.data) : [],
+        })
+
+        // VietQR API trả về QR code image URL trong data.data.qrDataURL (base64 image)
+        if (data?.data?.qrDataURL) {
+          console.log("Setting QR code URL from data.data.qrDataURL")
+          setQrCodeUrl(data.data.qrDataURL)
+        } else if (data?.data?.qrCode) {
+          console.log("Setting QR code URL from data.data.qrCode")
+          setQrCodeUrl(data.data.qrCode)
+        } else if (data?.qrDataURL) {
+          console.log("Setting QR code URL from data.qrDataURL")
+          setQrCodeUrl(data.qrDataURL)
+        } else if (data?.qrCode) {
+          console.log("Setting QR code URL from data.qrCode")
+          setQrCodeUrl(data.qrCode)
+        } else {
+          console.warn("QR code URL not found in response:", data)
+          setQrCodeUrl(null)
+        }
+      } catch (error) {
+        console.error("Error generating QR code:", error)
+        if (error instanceof Error) {
+          console.error("Error message:", error.message)
+          console.error("Error stack:", error.stack)
+        }
+        setQrCodeUrl(null)
+      } finally {
+        setLoadingQrCode(false)
+      }
+    }
+
+    generateQrCode()
+  }, [selectedOrderForInvoice])
 
   const [storeMetadata, setStoreMetadata] = useState<StoreMetadata | null>(null)
 
@@ -722,8 +816,10 @@ export default function ReconciliationContent() {
               body {
                 margin: 0;
                 padding: 2mm;
-                font-family: Arial, sans-serif;
+                font-family: "Courier New", Courier, monospace !important;
                 width: 58mm;
+                font-size: 11px !important;
+                line-height: 1.2 !important;
               }
               body > * {
                 width: 100%;
@@ -735,21 +831,38 @@ export default function ReconciliationContent() {
                 print-color-adjust: exact !important;
                 color-adjust: exact !important;
                 opacity: 1 !important;
+                font-family: "Courier New", Courier, monospace !important;
+              }
+              img {
+                image-rendering: -webkit-optimize-contrast !important;
+                image-rendering: crisp-edges !important;
+                image-rendering: pixelated !important;
+                max-width: 100% !important;
+                height: auto !important;
               }
             }
             body {
-              font-family: Arial, sans-serif;
+              font-family: "Courier New", Courier, monospace !important;
               color: black;
               margin: 0;
               padding: 2mm;
               width: 58mm;
-              font-size: 10px;
+              font-size: 11px !important;
+              line-height: 1.2 !important;
             }
             body > * {
               width: 100%;
             }
             * {
               color: black !important;
+              font-family: "Courier New", Courier, monospace !important;
+            }
+            img {
+              image-rendering: -webkit-optimize-contrast !important;
+              image-rendering: crisp-edges !important;
+              image-rendering: pixelated !important;
+              max-width: 100% !important;
+              height: auto !important;
             }
           `
 
@@ -1872,11 +1985,14 @@ export default function ReconciliationContent() {
                 width: 58mm !important;
                 margin: 0 !important;
                 padding: 2mm !important;
+                padding-top: 1mm !important;
                 box-sizing: border-box !important;
                 overflow: visible !important;
-                font-size: 10px !important;
+                font-size: 11px !important;
                 font-weight: 700 !important;
                 color: black !important;
+                font-family: "Courier New", Courier, monospace !important;
+                line-height: 1.2 !important;
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
                 color-adjust: exact !important;
@@ -1885,25 +2001,28 @@ export default function ReconciliationContent() {
               .invoice-content * {
                 color: black !important;
                 font-weight: 700 !important;
+                font-family: "Courier New", Courier, monospace !important;
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
                 color-adjust: exact !important;
                 opacity: 1 !important;
               }
               .invoice-content h1 {
-                font-size: 14px !important;
+                font-size: 16px !important;
                 font-weight: 900 !important;
                 color: black !important;
-                font-family: Arial, sans-serif !important;
+                font-family: "Courier New", Courier, monospace !important;
+                line-height: 1.3 !important;
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
                 color-adjust: exact !important;
               }
               .invoice-content h2 {
-                font-size: 12px !important;
+                font-size: 13px !important;
                 font-weight: 800 !important;
                 color: black !important;
-                font-family: Arial, sans-serif !important;
+                font-family: "Courier New", Courier, monospace !important;
+                line-height: 1.2 !important;
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
                 color-adjust: exact !important;
@@ -1911,13 +2030,24 @@ export default function ReconciliationContent() {
               .invoice-content p,
               .invoice-content span,
               .invoice-content div {
-                font-size: 10px !important;
+                font-size: 11px !important;
                 font-weight: 700 !important;
                 color: black !important;
-                font-family: Arial, sans-serif !important;
+                font-family: "Courier New", Courier, monospace !important;
+                line-height: 1.2 !important;
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
                 color-adjust: exact !important;
+              }
+              .invoice-content img {
+                image-rendering: -webkit-optimize-contrast !important;
+                image-rendering: crisp-edges !important;
+                image-rendering: pixelated !important;
+                max-width: 100% !important;
+                height: auto !important;
+              }
+              .invoice-content .print\\:hidden {
+                display: none !important;
               }
               .invoice-content strong {
                 font-weight: 900 !important;
@@ -1951,8 +2081,9 @@ export default function ReconciliationContent() {
               .invoice-content table {
                 width: 100%;
                 table-layout: fixed;
-                font-size: 15px !important;
+                font-size: 11px !important;
                 font-weight: 700 !important;
+                font-family: "Courier New", Courier, monospace !important;
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
                 color-adjust: exact !important;
@@ -1962,8 +2093,9 @@ export default function ReconciliationContent() {
                 padding: 2px 3px;
                 word-wrap: break-word;
                 overflow-wrap: break-word;
-                font-size: 9px !important;
+                font-size: 11px !important;
                 font-weight: 700 !important;
+                font-family: "Courier New", Courier, monospace !important;
                 color: black !important;
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
@@ -2005,7 +2137,10 @@ export default function ReconciliationContent() {
       )}
       <Dialog
         open={openInvoiceDialog}
-        onClose={() => setOpenInvoiceDialog(false)}
+        onClose={() => {
+          setOpenInvoiceDialog(false)
+          setQrCodeUrl(null)
+        }}
         maxWidth="lg"
         fullWidth
         PaperProps={{
@@ -2029,7 +2164,7 @@ export default function ReconciliationContent() {
               onClick={printInvoiceFromIframe}
               className="!bg-neutral-900 !text-white !normal-case !font-semibold"
             >
-              In hoá đơn
+              In hóa đơn
             </Button>
             <Button
               variant="outlined"
@@ -2048,14 +2183,44 @@ export default function ReconciliationContent() {
               className="invoice-content"
               style={{
                 padding: "20px",
-                fontFamily: "Arial, sans-serif",
+                paddingTop: "10px",
+                fontFamily: "Courier New, Courier, monospace",
                 position: "relative",
               }}
             >
               {/* Invoice Header */}
               <div className="text-center">
+                {/* Logo as text for better thermal printer compatibility */}
                 <div
-                  className="mb-1 flex justify-center"
+                  className="mb-1 hidden print:block"
+                  style={{
+                    WebkitPrintColorAdjust: "exact",
+                    printColorAdjust: "exact",
+                    colorAdjust: "exact",
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: "18px",
+                      fontWeight: 900,
+                      color: "black",
+                      fontFamily: "Courier New, Courier, monospace",
+                      letterSpacing: "1px",
+                      lineHeight: "1.2",
+                      whiteSpace: "pre",
+                      WebkitPrintColorAdjust: "exact",
+                      printColorAdjust: "exact",
+                      colorAdjust: "exact",
+                    }}
+                  >
+                    {`╔═══════════╗
+║   DIVI    ║
+╚═══════════╝`}
+                  </div>
+                </div>
+                {/* Fallback image for screen view */}
+                <div
+                  className="mb-1 flex justify-center print:hidden"
                   style={{
                     WebkitPrintColorAdjust: "exact",
                     printColorAdjust: "exact",
@@ -2075,12 +2240,11 @@ export default function ReconciliationContent() {
                       printColorAdjust: "exact",
                       colorAdjust: "exact",
                     }}
-                    className="print:block"
                   />
                 </div>
                 {(storeMetadata?.phone_number || storeMetadata?.address) && (
                   <div
-                    className="mb-2 text-sm"
+                    className="mb-1 text-sm"
                     style={{
                       color: "black",
                       fontWeight: 700,
@@ -2117,8 +2281,8 @@ export default function ReconciliationContent() {
                     )}
                   </div>
                 )}
-                <h1
-                  className="text-2xl font-bold mb-2"
+                <h2
+                  className="text-2xl font-bold mb-1"
                   style={{
                     color: "black",
                     fontWeight: 900,
@@ -2128,8 +2292,8 @@ export default function ReconciliationContent() {
                   }}
                 >
                   HÓA ĐƠN BÁN HÀNG
-                </h1>
-                <p
+                </h2>
+                <span
                   className="text-sm text-gray-600"
                   style={{
                     color: "black",
@@ -2153,8 +2317,9 @@ export default function ReconciliationContent() {
                   >
                     {selectedOrderForInvoice.documentId}
                   </strong>
-                </p>
-                <p
+                </span>
+                <br />
+                <span
                   className="text-sm text-gray-600"
                   style={{
                     color: "black",
@@ -2168,14 +2333,14 @@ export default function ReconciliationContent() {
                   {dayjs(selectedOrderForInvoice.createdAt).format(
                     "DD/MM/YYYY HH:mm"
                   )}
-                </p>
+                </span>
               </div>
 
               {/* Customer Info */}
               {selectedOrderForInvoice.customer && (
-                <div className="mb-6 border-b pb-4">
-                  <h2
-                    className="text-lg font-semibold mb-2"
+                <div className="mb-3 border-b pb-2 border border-dashed">
+                  <h3
+                    className="text-lg font-semibold mb-1"
                     style={{
                       color: "black",
                       fontWeight: 800,
@@ -2185,7 +2350,7 @@ export default function ReconciliationContent() {
                     }}
                   >
                     Thông tin khách hàng
-                  </h2>
+                  </h3>
                   <div className="grid grid-cols-2 text-sm">
                     <span
                       style={{
@@ -2261,11 +2426,11 @@ export default function ReconciliationContent() {
                   </div>
                 </div>
               )}
-              <p>=====================================</p>
+
               {/* Order Items */}
-              <div className="mb-6">
+              <div className="mb-3">
                 <h2
-                  className="text-lg font-semibold mb-3"
+                  className="text-lg font-semibold mb-1"
                   style={{
                     color: "black",
                     fontWeight: 800,
@@ -2276,7 +2441,7 @@ export default function ReconciliationContent() {
                 >
                   Chi tiết đơn hàng
                 </h2>
-                <div className="space-y-3">
+                <div className="space-y-2">
                   {(selectedOrderForInvoice.order_items || []).map(
                     (item, _) => {
                       const variant = item.variant
@@ -2346,7 +2511,7 @@ export default function ReconciliationContent() {
                             Thành tiền: {formatBigNumber(total, true)}
                           </div>
                           <p className="pb-3">
-                            -----------------------------------------------------------------
+                            ---------------------------------
                           </p>
                         </div>
                       )
@@ -2356,10 +2521,10 @@ export default function ReconciliationContent() {
               </div>
 
               {/* Order Summary */}
-              <div className="mb-6">
+              <div className="mb-3">
                 <div className="flex justify-end">
                   <div
-                    className="space-y-2"
+                    className="space-y-1"
                     style={{ minWidth: "300px", maxWidth: "400px" }}
                   >
                     <div className="flex justify-between text-sm">
@@ -2480,9 +2645,66 @@ export default function ReconciliationContent() {
                 </div>
               </div>
 
+              {/* QR Code */}
+              {loadingQrCode ? (
+                <div className="text-center mt-4">
+                  <CircularProgress size={24} />
+                  <p
+                    className="text-sm mt-2"
+                    style={{
+                      color: "black",
+                      fontWeight: 700,
+                      WebkitPrintColorAdjust: "exact",
+                      printColorAdjust: "exact",
+                      colorAdjust: "exact",
+                    }}
+                  >
+                    Đang tạo mã QR...
+                  </p>
+                </div>
+              ) : qrCodeUrl ? (
+                <div
+                  className="flex flex-col items-center justify-center mt-4"
+                  style={{
+                    WebkitPrintColorAdjust: "exact",
+                    printColorAdjust: "exact",
+                    colorAdjust: "exact",
+                  }}
+                >
+                  <p
+                    className="text-sm font-semibold mb-2"
+                    style={{
+                      color: "black",
+                      fontWeight: 700,
+                      WebkitPrintColorAdjust: "exact",
+                      printColorAdjust: "exact",
+                      colorAdjust: "exact",
+                    }}
+                  >
+                    Quét mã QR để thanh toán
+                  </p>
+                  <div className="flex justify-center items-center">
+                    <img
+                      src={qrCodeUrl}
+                      alt="QR Code"
+                      style={{
+                        width: "150px",
+                        height: "150px",
+                        border: "2px solid black",
+                        WebkitPrintColorAdjust: "exact",
+                        printColorAdjust: "exact",
+                        colorAdjust: "exact",
+                        display: "block",
+                        margin: "0 auto",
+                      }}
+                    />
+                  </div>
+                </div>
+              ) : null}
+
               {/* Footer */}
               <div
-                className="text-center text-sm text-gray-600 mt-8"
+                className="text-center text-sm text-gray-600 mt-4"
                 style={{
                   color: "black",
                   fontWeight: 700,
