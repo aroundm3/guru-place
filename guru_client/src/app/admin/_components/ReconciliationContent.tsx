@@ -6,6 +6,7 @@ import dayjs, { Dayjs } from "dayjs"
 import "dayjs/locale/vi"
 import Link from "next/link"
 import Image from "next/image"
+import * as XLSX from "xlsx"
 import { formatBigNumber } from "@lib/util/format-big-number"
 import {
   Button,
@@ -38,6 +39,7 @@ import LogoutIcon from "@mui/icons-material/Logout"
 import ReceiptIcon from "@mui/icons-material/Receipt"
 import PrintIcon from "@mui/icons-material/Print"
 import ContentCopyIcon from "@mui/icons-material/ContentCopy"
+import DownloadIcon from "@mui/icons-material/Download"
 import {
   getCardBgClasses,
   getCardBadgeClasses,
@@ -123,6 +125,14 @@ type Customer = {
   phone_number?: string
   address?: string
   dob?: string
+}
+
+type ExportSummaryRow = {
+  productName: string
+  variantName: string
+  quantity: number
+  unitPrice: number
+  totalAmount: number
 }
 
 type OrderEntity = {
@@ -360,6 +370,7 @@ export default function ReconciliationContent() {
   // Snackbar state for copy notification
   const [snackbarOpen, setSnackbarOpen] = useState(false)
   const [snackbarMessage, setSnackbarMessage] = useState("")
+  const [exportingExcel, setExportingExcel] = useState(false)
 
   // Function để update URL query params
   const updateURLParams = (updates: {
@@ -758,6 +769,108 @@ export default function ReconciliationContent() {
       dateTo: null,
       page: 1,
     })
+  }
+
+  const handleExportExcel = async () => {
+    if (exportingExcel) return
+    setExportingExcel(true)
+
+    try {
+      const currentPhoneNumber = searchParams.get("phoneNumber") || ""
+      const currentOrderId = searchParams.get("orderId") || ""
+      const currentCustomerName = searchParams.get("customerName") || ""
+      let currentStatusFilter =
+        (searchParams.get("status") as OrderStatus | "all") || "all"
+      if (currentStatusFilter === "approved") {
+        currentStatusFilter = "shipping"
+      }
+      const currentEmployeeFilter = searchParams.get("employee") || "all"
+      const currentDateFrom = searchParams.get("dateFrom")
+      const currentDateTo = searchParams.get("dateTo")
+
+      const params = new URLSearchParams()
+      if (currentPhoneNumber) params.set("phoneNumber", currentPhoneNumber)
+      if (currentOrderId) params.set("orderId", currentOrderId)
+      if (currentCustomerName) params.set("customerName", currentCustomerName)
+      if (currentStatusFilter && currentStatusFilter !== "all") {
+        params.set("status", currentStatusFilter)
+      }
+      if (currentEmployeeFilter && currentEmployeeFilter !== "all") {
+        params.set("employee", currentEmployeeFilter)
+      }
+      if (currentDateFrom) params.set("dateFrom", currentDateFrom)
+      if (currentDateTo) params.set("dateTo", currentDateTo)
+
+      const queryString = params.toString()
+      const endpoint = queryString
+        ? `/api/admin/orders/export?${queryString}`
+        : "/api/admin/orders/export"
+
+      const response = await fetch(endpoint)
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data?.error || "Không thể export Excel.")
+      }
+
+      const rows: ExportSummaryRow[] = data?.rows || []
+
+      if (!rows.length) {
+        setSnackbarMessage("Không có dữ liệu để export.")
+        setSnackbarOpen(true)
+        return
+      }
+
+      const worksheetData = [
+        ["Tên sản phẩm", "Biến thể", "Số lượng đã bán", "Đơn giá", "Tổng tiền"],
+        ...rows.map((row) => [
+          row.productName || "N/A",
+          row.variantName || "Không có biến thể",
+          row.quantity ?? 0,
+          Math.round((row.unitPrice ?? 0) * 100) / 100,
+          Math.round((row.totalAmount ?? 0) * 100) / 100,
+        ]),
+      ]
+
+      const worksheet = XLSX.utils.aoa_to_sheet(worksheetData)
+      worksheet["!cols"] = [
+        { wch: 40 },
+        { wch: 30 },
+        { wch: 18 },
+        { wch: 18 },
+        { wch: 20 },
+      ]
+
+      const workbook = XLSX.utils.book_new()
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Thong ke ban hang")
+
+      const excelBuffer = XLSX.write(workbook, {
+        bookType: "xlsx",
+        type: "array",
+      })
+      const blob = new Blob([excelBuffer], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      })
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement("a")
+      link.href = url
+      link.download = `thong-ke-don-hang-${dayjs().format(
+        "YYYYMMDD_HHmmss"
+      )}.xlsx`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      URL.revokeObjectURL(url)
+
+      setSnackbarMessage("Đã export Excel thành công.")
+      setSnackbarOpen(true)
+    } catch (error: any) {
+      console.error("Export Excel error:", error)
+      setSnackbarMessage(error?.message || "Không thể export Excel.")
+      setSnackbarOpen(true)
+    } finally {
+      setExportingExcel(false)
+    }
   }
 
   const handleCopy = async (text: string, label: string) => {
@@ -1495,7 +1608,22 @@ export default function ReconciliationContent() {
             />
           </LocalizationProvider>
         </div>
-        <div className="flex gap-2 justify-end">
+        <div className="flex flex-wrap gap-2 justify-end">
+          <Button
+            variant="outlined"
+            onClick={handleExportExcel}
+            startIcon={
+              exportingExcel ? (
+                <CircularProgress size={16} color="inherit" />
+              ) : (
+                <DownloadIcon />
+              )
+            }
+            disabled={exportingExcel}
+            className="!normal-case !font-semibold !text-neutral-900 !border-neutral-300"
+          >
+            {exportingExcel ? "Đang xuất..." : "Export Excel"}
+          </Button>
           <Button
             variant="contained"
             onClick={handleSearch}

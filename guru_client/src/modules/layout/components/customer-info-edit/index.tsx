@@ -123,7 +123,7 @@ export default function CustomerInfoEdit() {
     e.preventDefault()
     if (!customerToEdit) return
 
-    if (!fullName.trim() || !address.trim()) {
+    if (!fullName.trim()) {
       setError("Vui lòng điền đầy đủ thông tin")
       return
     }
@@ -321,7 +321,7 @@ export default function CustomerInfoEdit() {
                       }}
                     />
 
-                    <LocalizationProvider
+                    {/* <LocalizationProvider
                       dateAdapter={AdapterDayjs}
                       adapterLocale="vi"
                     >
@@ -358,7 +358,7 @@ export default function CustomerInfoEdit() {
                           },
                         }}
                       />
-                    </LocalizationProvider>
+                    </LocalizationProvider> */}
 
                     <TextField
                       fullWidth

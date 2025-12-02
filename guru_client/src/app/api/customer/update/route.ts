@@ -9,6 +9,10 @@ export async function PUT(request: NextRequest) {
   try {
     const body = await request.json()
     const { documentId, full_name, phone_number, dob, address } = body
+    const normalizedAddress =
+      typeof address === "string" && address.trim().length > 0
+        ? address.trim()
+        : null
 
     if (!documentId) {
       return NextResponse.json(
@@ -17,7 +21,7 @@ export async function PUT(request: NextRequest) {
       )
     }
 
-    if (!full_name || !phone_number || !address) {
+    if (!full_name || !phone_number) {
       return NextResponse.json(
         { error: "Missing required fields" },
         { status: 400 }
@@ -35,7 +39,7 @@ export async function PUT(request: NextRequest) {
           full_name,
           phone_number,
           dob: dob || null,
-          address,
+          address: normalizedAddress,
         },
       }),
     })

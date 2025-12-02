@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import {
   Dialog,
   DialogContent,
@@ -72,20 +72,27 @@ export default function CustomerModalForCheckout({
   const [dob, setDob] = useState<Dayjs | null>(null)
   const [address, setAddress] = useState("")
 
-  // Reset form khi mở/đóng modal
+  const wasOpenRef = useRef(false)
+
+  // Reset form khi mở/đóng modal (bỏ qua thay đổi customer khi modal đang mở)
   useEffect(() => {
     if (open) {
-      // Luôn bắt đầu từ step phone, pre-fill phone number nếu có customer
-      setStep("phone")
-      setPhoneNumber(customer?.phone_number || "")
-      setError("")
+      if (!wasOpenRef.current) {
+        // Modal vừa mở
+        setStep("phone")
+        setPhoneNumber(customer?.phone_number || "")
+        setError("")
+      }
     } else {
+      // Modal đóng -> reset hoàn toàn
       setPhoneNumber("")
       setFullName("")
       setDob(null)
       setAddress("")
       setError("")
     }
+
+    wasOpenRef.current = open
   }, [open, customer])
 
   const handlePhoneSubmit = async (e: React.FormEvent) => {
@@ -118,7 +125,8 @@ export default function CustomerModalForCheckout({
         setAddress(existingCustomer.address || "")
         setStep("info")
       } else {
-        // New customer - chuyển sang form thông tin
+        // New customer - clear customer context và chuyển sang form thông tin
+        setCustomer(null)
         setFullName("")
         setDob(null)
         setAddress("")
@@ -134,7 +142,7 @@ export default function CustomerModalForCheckout({
 
   const handleInfoSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!fullName.trim() || !address.trim()) {
+    if (!fullName.trim()) {
       setError("Vui lòng điền đầy đủ thông tin")
       return
     }
@@ -326,7 +334,7 @@ export default function CustomerModalForCheckout({
                     }}
                   />
 
-                  <LocalizationProvider
+                  {/* <LocalizationProvider
                     dateAdapter={AdapterDayjs}
                     adapterLocale="vi"
                   >
@@ -363,7 +371,7 @@ export default function CustomerModalForCheckout({
                         },
                       }}
                     />
-                  </LocalizationProvider>
+                  </LocalizationProvider> */}
 
                   <TextField
                     fullWidth

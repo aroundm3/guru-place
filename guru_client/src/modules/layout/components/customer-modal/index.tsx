@@ -142,7 +142,7 @@ export default function CustomerModal() {
 
   const handleInfoSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!fullName.trim() || !address.trim()) {
+    if (!fullName.trim()) {
       setError("Vui lòng điền đầy đủ thông tin")
       return
     }
@@ -336,7 +336,7 @@ export default function CustomerModal() {
                     }}
                   />
 
-                  <LocalizationProvider
+                  {/* <LocalizationProvider
                     dateAdapter={AdapterDayjs}
                     adapterLocale="vi"
                   >
@@ -373,7 +373,7 @@ export default function CustomerModal() {
                         },
                       }}
                     />
-                  </LocalizationProvider>
+                  </LocalizationProvider> */}
 
                   <TextField
                     fullWidth

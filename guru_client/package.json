@@ -40,7 +40,8 @@
     "server-only": "^0.0.1",
     "swr": "^2.3.3",
     "tailwindcss-radix": "^2.8.0",
-    "webpack": "^5"
+    "webpack": "^5",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@babel/core": "^7.17.5",

@@ -5,6 +5,7 @@ import { formatBigNumber } from "@lib/util/format-big-number"
 import Image from "next/image"
 import Link from "next/link"
 import { Product, Variant } from "types/global"
+import { Customer } from "@lib/data/customer"
 import {
   Button,
   Checkbox,
@@ -245,8 +246,9 @@ export default function CartClientView() {
   }
 
   // Hàm xử lý checkout khi đã có customer
-  const processCheckout = async () => {
-    if (!customer) return
+  const processCheckout = async (overrideCustomer?: Customer | null) => {
+    const checkoutCustomer = overrideCustomer || customer
+    if (!checkoutCustomer) return
 
     setIsCheckoutLoading(true)
 
@@ -280,7 +282,7 @@ export default function CartClientView() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          customerId: customer.documentId,
+          customerId: checkoutCustomer.documentId,
           items,
           customerCards,
           shippingFee: null, // API sẽ tự tính dựa trên isFreeShip
@@ -836,11 +838,7 @@ export default function CartClientView() {
         onClose={() => setOpenCustomerModal(false)}
         onSuccess={(updatedCustomer) => {
           setOpenCustomerModal(false)
-          // Gọi processCheckout sau khi customer được set/update
-          // Customer đã được set trong context, nhưng để chắc chắn, đợi một chút
-          setTimeout(() => {
-            processCheckout()
-          }, 0)
+          processCheckout(updatedCustomer)
         }}
       />
 
