@@ -342,52 +342,51 @@ export default function Options({ productData }: OptionsProps) {
                 )
               })()}
           </Collapse>
-          {!isService && (
-            <div className="flex flex-col space-y-1">
-              <span className="text-xs font-semibold text-gray-400">
-                Chọn số lượng
-              </span>
-              <div className="flex space-x-1">
-                <IconButton
-                  onClick={() => {
-                    if (quantityPicked === 1) {
-                      return
-                    }
 
-                    setQuantityPicked(quantityPicked - 1)
-                  }}
-                  disabled={quantityPicked === 1}
-                  className="px-2 py-1 bg-neutral-100 cursor-pointer hover:bg-neutral-50 duration-300 border border-stone-300 rounded disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <RemoveRoundedIcon className="!w-5" />
-                </IconButton>
-                <div className="text-base font-semibold px-4 min-w-16 flex items-center justify-center cursor-pointer">
-                  <span className="mx-auto my-auto">{quantityPicked}</span>
-                </div>
-
-                <IconButton
-                  onClick={() => {
-                    const maxQuantity = currentPicked
-                      ? Number(currentPicked.quantity ?? 0)
-                      : Number(productData.quantity ?? 0)
-                    if (quantityPicked >= maxQuantity) {
-                      return
-                    }
-                    setQuantityPicked(quantityPicked + 1)
-                  }}
-                  disabled={
-                    (currentPicked &&
-                      quantityPicked >= Number(currentPicked.quantity ?? 0)) ||
-                    (!currentPicked &&
-                      quantityPicked >= Number(productData.quantity ?? 0))
+          <div className="flex flex-col space-y-1">
+            <span className="text-xs font-semibold text-gray-400">
+              Chọn số lượng
+            </span>
+            <div className="flex space-x-1">
+              <IconButton
+                onClick={() => {
+                  if (quantityPicked === 1) {
+                    return
                   }
-                  className="px-2 py-1 bg-neutral-100 cursor-pointer hover:bg-neutral-50 duration-300 border border-stone-300 rounded disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <AddRoundedIcon className="!w-5" />
-                </IconButton>
+
+                  setQuantityPicked(quantityPicked - 1)
+                }}
+                disabled={quantityPicked === 1}
+                className="px-2 py-1 bg-neutral-100 cursor-pointer hover:bg-neutral-50 duration-300 border border-stone-300 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <RemoveRoundedIcon className="!w-5" />
+              </IconButton>
+              <div className="text-base font-semibold px-4 min-w-16 flex items-center justify-center cursor-pointer">
+                <span className="mx-auto my-auto">{quantityPicked}</span>
               </div>
+
+              <IconButton
+                onClick={() => {
+                  const maxQuantity = currentPicked
+                    ? Number(currentPicked.quantity ?? 0)
+                    : Number(productData.quantity ?? 0)
+                  if (quantityPicked >= maxQuantity) {
+                    return
+                  }
+                  setQuantityPicked(quantityPicked + 1)
+                }}
+                disabled={
+                  (currentPicked &&
+                    quantityPicked >= Number(currentPicked.quantity ?? 0)) ||
+                  (!currentPicked &&
+                    quantityPicked >= Number(productData.quantity ?? 0))
+                }
+                className="px-2 py-1 bg-neutral-100 cursor-pointer hover:bg-neutral-50 duration-300 border border-stone-300 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <AddRoundedIcon className="!w-5" />
+              </IconButton>
             </div>
-          )}
+          </div>
 
           {(() => {
             const availableQuantity = currentPicked
@@ -607,53 +606,50 @@ export default function Options({ productData }: OptionsProps) {
             </Collapse>
 
             {/* Quantity Selection */}
-            {!isService && (
-              <div className="flex flex-col space-y-1 ">
-                <span className="text-xs font-semibold text-gray-400">
-                  Chọn số lượng
-                </span>
-                <div className="flex space-x-1">
-                  <IconButton
-                    onClick={() => {
-                      if (quantityPicked === 1) {
-                        return
-                      }
-
-                      setQuantityPicked(quantityPicked - 1)
-                    }}
-                    disabled={quantityPicked === 1}
-                    className="px-2 py-1 bg-neutral-100 cursor-pointer hover:bg-neutral-50 duration-300 border border-stone-300 rounded disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <RemoveRoundedIcon className="!w-5" />
-                  </IconButton>
-                  <div className="text-sm font-semibold px-4 min-w-16 flex items-center justify-center">
-                    <span className="mx-auto my-auto">{quantityPicked}</span>
-                  </div>
-
-                  <IconButton
-                    onClick={() => {
-                      const maxQuantity = currentPicked
-                        ? Number(currentPicked.quantity ?? 0)
-                        : Number(productData.quantity ?? 0)
-                      if (quantityPicked >= maxQuantity) {
-                        return
-                      }
-                      setQuantityPicked(quantityPicked + 1)
-                    }}
-                    disabled={
-                      (currentPicked &&
-                        quantityPicked >=
-                          Number(currentPicked.quantity ?? 0)) ||
-                      (!currentPicked &&
-                        quantityPicked >= Number(productData.quantity ?? 0))
+            <div className="flex flex-col space-y-1 ">
+              <span className="text-xs font-semibold text-gray-400">
+                Chọn số lượng
+              </span>
+              <div className="flex space-x-1">
+                <IconButton
+                  onClick={() => {
+                    if (quantityPicked === 1) {
+                      return
                     }
-                    className="px-2 py-1 bg-neutral-100 cursor-pointer hover:bg-neutral-50 duration-300 border border-stone-300 rounded disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <AddRoundedIcon className="!w-5" />
-                  </IconButton>
+
+                    setQuantityPicked(quantityPicked - 1)
+                  }}
+                  disabled={quantityPicked === 1}
+                  className="px-2 py-1 bg-neutral-100 cursor-pointer hover:bg-neutral-50 duration-300 border border-stone-300 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <RemoveRoundedIcon className="!w-5" />
+                </IconButton>
+                <div className="text-sm font-semibold px-4 min-w-16 flex items-center justify-center">
+                  <span className="mx-auto my-auto">{quantityPicked}</span>
                 </div>
+
+                <IconButton
+                  onClick={() => {
+                    const maxQuantity = currentPicked
+                      ? Number(currentPicked.quantity ?? 0)
+                      : Number(productData.quantity ?? 0)
+                    if (quantityPicked >= maxQuantity) {
+                      return
+                    }
+                    setQuantityPicked(quantityPicked + 1)
+                  }}
+                  disabled={
+                    (currentPicked &&
+                      quantityPicked >= Number(currentPicked.quantity ?? 0)) ||
+                    (!currentPicked &&
+                      quantityPicked >= Number(productData.quantity ?? 0))
+                  }
+                  className="px-2 py-1 bg-neutral-100 cursor-pointer hover:bg-neutral-50 duration-300 border border-stone-300 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <AddRoundedIcon className="!w-5" />
+                </IconButton>
               </div>
-            )}
+            </div>
 
             <Divider className="my-4" />
 

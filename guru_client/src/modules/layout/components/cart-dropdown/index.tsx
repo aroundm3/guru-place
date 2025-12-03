@@ -304,42 +304,41 @@ const CartDropdown = () => {
                                     {variantName}
                                   </div>
                                 )}
-                                {!isService && (
-                                  <div className="flex items-center gap-2 mt-1">
-                                    <span className="text-sm text-ui-fg-subtle !my-auto">
-                                      Số lượng:
+
+                                <div className="flex items-center gap-2 mt-1">
+                                  <span className="text-sm text-ui-fg-subtle !my-auto">
+                                    {"Số lượng:"}
+                                  </span>
+                                  <div className="flex items-center space-x-1 !my-auto">
+                                    <IconButton
+                                      onClick={(e) => {
+                                        e.stopPropagation()
+                                        handleUpdateQuantity(
+                                          index,
+                                          item.quantity - 1
+                                        )
+                                      }}
+                                      className="!my-auto px-1.5 py-0.5 bg-neutral-100 hover:bg-neutral-200 rounded border border-stone-300 transition-colors"
+                                    >
+                                      <RemoveRoundedIcon className="!w-5 !h-5" />
+                                    </IconButton>
+                                    <span className="!my-auto text-sm font-semibold px-2 min-w-[24px] text-center">
+                                      {item.quantity}
                                     </span>
-                                    <div className="flex items-center space-x-1 !my-auto">
-                                      <IconButton
-                                        onClick={(e) => {
-                                          e.stopPropagation()
-                                          handleUpdateQuantity(
-                                            index,
-                                            item.quantity - 1
-                                          )
-                                        }}
-                                        className="!my-auto px-1.5 py-0.5 bg-neutral-100 hover:bg-neutral-200 rounded border border-stone-300 transition-colors"
-                                      >
-                                        <RemoveRoundedIcon className="!w-5 !h-5" />
-                                      </IconButton>
-                                      <span className="!my-auto text-sm font-semibold px-2 min-w-[24px] text-center">
-                                        {item.quantity}
-                                      </span>
-                                      <IconButton
-                                        onClick={(e) => {
-                                          e.stopPropagation()
-                                          handleUpdateQuantity(
-                                            index,
-                                            item.quantity + 1
-                                          )
-                                        }}
-                                        className="!my-auto px-1.5 py-0.5 bg-neutral-100 hover:bg-neutral-200 rounded border border-stone-300 transition-colors"
-                                      >
-                                        <AddRoundedIcon className="!w-5 !h-5" />
-                                      </IconButton>
-                                    </div>
+                                    <IconButton
+                                      onClick={(e) => {
+                                        e.stopPropagation()
+                                        handleUpdateQuantity(
+                                          index,
+                                          item.quantity + 1
+                                        )
+                                      }}
+                                      className="!my-auto px-1.5 py-0.5 bg-neutral-100 hover:bg-neutral-200 rounded border border-stone-300 transition-colors"
+                                    >
+                                      <AddRoundedIcon className="!w-5 !h-5" />
+                                    </IconButton>
                                   </div>
-                                )}
+                                </div>
                               </div>
                               <div className="text-right">
                                 <div className="text-sm font-semibold">
@@ -533,46 +532,40 @@ const CartDropdown = () => {
                               </div>
                             </div>
                           </div>
-                          {!isService && (
-                            <div className="flex items-center gap-2 mt-1">
-                              <span
-                                data-testid="cart-item-quantity"
-                                data-value={item.quantity}
-                                className="text-sm font-semibold text-ui-fg-subtle"
+
+                          <div className="flex items-center gap-2 mt-1">
+                            <span
+                              data-testid="cart-item-quantity"
+                              data-value={item.quantity}
+                              className="text-sm font-semibold text-ui-fg-subtle"
+                            >
+                              {"Số lượng:"}
+                            </span>
+                            <div className="flex items-center space-x-1">
+                              <IconButton
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  handleUpdateQuantity(index, item.quantity - 1)
+                                }}
+                                className="!my-auto px-2 py-1 bg-neutral-100 hover:bg-neutral-50 duration-300 border border-stone-300 rounded"
                               >
-                                Số lượng:
+                                <RemoveRoundedIcon className="!w-5 !h-5" />
+                              </IconButton>
+                              <span className="!my-auto text-sm font-semibold px-4 min-w-10 flex items-center justify-center">
+                                {item.quantity}
                               </span>
-                              <div className="flex items-center space-x-1">
-                                <IconButton
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    handleUpdateQuantity(
-                                      index,
-                                      item.quantity - 1
-                                    )
-                                  }}
-                                  className="!my-auto px-2 py-1 bg-neutral-100 hover:bg-neutral-50 duration-300 border border-stone-300 rounded"
-                                >
-                                  <RemoveRoundedIcon className="!w-5 !h-5" />
-                                </IconButton>
-                                <span className="!my-auto text-sm font-semibold px-4 min-w-10 flex items-center justify-center">
-                                  {item.quantity}
-                                </span>
-                                <IconButton
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    handleUpdateQuantity(
-                                      index,
-                                      item.quantity + 1
-                                    )
-                                  }}
-                                  className="!my-autopx-2 py-1 bg-neutral-100 hover:bg-neutral-50 duration-300 border border-stone-300 rounded"
-                                >
-                                  <AddRoundedIcon className="!w-5 !h-5" />
-                                </IconButton>
-                              </div>
+                              <IconButton
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  handleUpdateQuantity(index, item.quantity + 1)
+                                }}
+                                className="!my-autopx-2 py-1 bg-neutral-100 hover:bg-neutral-50 duration-300 border border-stone-300 rounded"
+                              >
+                                <AddRoundedIcon className="!w-5 !h-5" />
+                              </IconButton>
                             </div>
-                          )}
+                          </div>
+
                           <button
                             onClick={() => handleRemoveItem(index)}
                             className="mt-1 text-right text-xs text-red-500 font-semibold hover:text-red-700"
