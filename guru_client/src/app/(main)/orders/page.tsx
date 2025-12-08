@@ -43,6 +43,7 @@ type OrderProduct = {
   name?: string
   slug?: string
   images?: { url?: string; default?: string; thumbnail?: string }[]
+  base_price?: number | string
   sale_price?: number | string
 }
 
@@ -60,6 +61,7 @@ type OrderVariantImage = {
 
 type OrderVariant = {
   variant_value?: string
+  base_price?: number | string
   sale_price?: number | string
   variant_image?: OrderVariantImage | null
   product?: OrderProduct
@@ -141,6 +143,54 @@ const defaultPagination: PaginationState = {
 const toNumber = (value: unknown) => {
   const parsed = Number(value)
   return Number.isNaN(parsed) ? 0 : parsed
+}
+
+type OrderItemPricing = {
+  baseUnit: number
+  saleUnit: number
+  quantity: number
+  baseLineTotal: number
+  saleLineTotal: number
+  lineDiscount: number
+}
+
+const getItemPricing = (item: OrderItem): OrderItemPricing => {
+  const rawBaseUnit = toNumber(
+    item.variant?.base_price ??
+      item.variant?.product?.base_price ??
+      item.product?.base_price ??
+      0
+  )
+  const saleUnit = toNumber(
+    item.variant?.sale_price ?? item.product?.sale_price ?? rawBaseUnit
+  )
+  const baseUnit = rawBaseUnit > 0 ? rawBaseUnit : saleUnit
+  const quantity = toNumber(item.quantity || 0)
+  const baseLineTotal = baseUnit * quantity
+  const saleLineTotal = saleUnit * quantity
+  const lineDiscount = Math.max(0, baseLineTotal - saleLineTotal)
+
+  return {
+    baseUnit,
+    saleUnit,
+    quantity,
+    baseLineTotal,
+    saleLineTotal,
+    lineDiscount,
+  }
+}
+
+const getOrderDiscountSummary = (items: OrderItem[] = []) => {
+  return items.reduce(
+    (acc, item) => {
+      const pricing = getItemPricing(item)
+      acc.baseSubtotal += pricing.baseLineTotal
+      acc.saleSubtotal += pricing.saleLineTotal
+      acc.discountTotal += pricing.lineDiscount
+      return acc
+    },
+    { baseSubtotal: 0, saleSubtotal: 0, discountTotal: 0 }
+  )
 }
 
 const getOrderStatusInfo = (status?: OrderStatus) => {
@@ -390,10 +440,8 @@ export default function OrdersPage() {
           }
           const productName = product?.name || "Sản phẩm"
           const variantName = variant?.variant_value
-          const price = toNumber(
-            variant?.sale_price ?? product?.sale_price ?? 0
-          )
-          const quantity = toNumber(item.quantity)
+          const { baseUnit, saleUnit, quantity, saleLineTotal, lineDiscount } =
+            getItemPricing(item)
           const productSlug = product?.slug
 
           return (
@@ -433,14 +481,24 @@ export default function OrdersPage() {
                   <p className="text-xs uppercase tracking-wide text-gray-400">
                     Đơn giá
                   </p>
+                  {baseUnit > saleUnit && (
+                    <p className="text-xs text-gray-400 line-through">
+                      {formatBigNumber(baseUnit, true)}
+                    </p>
+                  )}
                   <p className="text-sm lg:text-base font-semibold text-pink-700">
-                    {formatBigNumber(price, true)}
+                    {formatBigNumber(saleUnit, true)}
                   </p>
                 </div>
                 <div>
                   <p className="text-xs text-gray-500">
-                    Tổng: {formatBigNumber(price * quantity, true)}
+                    Tổng: {formatBigNumber(saleLineTotal, true)}
                   </p>
+                  {lineDiscount > 0 && (
+                    <p className="text-xs text-emerald-600">
+                      Giảm: -{formatBigNumber(lineDiscount, true)}
+                    </p>
+                  )}
                 </div>
               </div>
             </Link>
@@ -629,20 +687,30 @@ export default function OrdersPage() {
 
   const renderOrderSummary = (order: OrderEntity) => {
     const items = order.order_items || []
-    const subtotal = items.reduce((sum, item) => {
-      const unitPrice = toNumber(
-        item.variant?.sale_price ?? item.product?.sale_price ?? 0
-      )
-      return sum + unitPrice * toNumber(item.quantity || 0)
-    }, 0)
+    const { baseSubtotal, saleSubtotal, discountTotal } =
+      getOrderDiscountSummary(items)
     const shippingFee = toNumber(order.shipping_fee)
 
     return (
       <div className="space-y-2 text-sm text-gray-600">
         <div className="flex justify-between">
-          <span>Thành tiền:</span>
+          <span>Tiền hàng (giá gốc):</span>
           <span className="font-semibold">
-            {formatBigNumber(subtotal, true)}
+            {formatBigNumber(baseSubtotal, true)}
+          </span>
+        </div>
+        {discountTotal > 0 && (
+          <div className="flex justify-between text-emerald-600">
+            <span>Chiết khấu:</span>
+            <span className="font-semibold">
+              -{formatBigNumber(discountTotal, true)}
+            </span>
+          </div>
+        )}
+        <div className="flex justify-between">
+          <span>Tiền hàng sau CK:</span>
+          <span className="font-semibold">
+            {formatBigNumber(saleSubtotal, true)}
           </span>
         </div>
         <div className="flex justify-between">
@@ -651,6 +719,12 @@ export default function OrdersPage() {
             {shippingFee === 0
               ? "Miễn phí"
               : formatBigNumber(shippingFee, true)}
+          </span>
+        </div>
+        <div className="flex justify-between text-base font-semibold">
+          <span>Tổng cộng:</span>
+          <span className="text-pink-700">
+            {formatBigNumber(saleSubtotal + shippingFee, true)}
           </span>
         </div>
       </div>
@@ -761,26 +835,11 @@ export default function OrdersPage() {
             const createdDate = dayjs(order.createdAt).format(
               "DD/MM/YYYY HH:mm"
             )
-            const totalProducts = orderItems.reduce(
-              (sum, item) => sum + toNumber(item.quantity || 0),
-              0
-            )
-            const orderTotal = orderItems.reduce((sum, item) => {
-              const unitPrice = toNumber(
-                item.variant?.sale_price ?? item.product?.sale_price ?? 0
-              )
-              return sum + unitPrice * toNumber(item.quantity || 0)
-            }, 0)
-
             const statusInfo = getOrderStatusInfo(order.order_status)
 
             const items = order.order_items || []
-            const subtotal = items.reduce((sum, item) => {
-              const unitPrice = toNumber(
-                item.variant?.sale_price ?? item.product?.sale_price ?? 0
-              )
-              return sum + unitPrice * toNumber(item.quantity || 0)
-            }, 0)
+            const { saleSubtotal, discountTotal } =
+              getOrderDiscountSummary(items)
             const shippingFee = toNumber(order.shipping_fee)
             const totalItems = items.reduce(
               (sum, item) => sum + toNumber(item.quantity || 0),
@@ -849,9 +908,16 @@ export default function OrdersPage() {
                   </div>
                 </Collapse>
                 <div className="flex justify-between items-center pt-2 border-t p-3 lg:p-4">
-                  <span className="font-semibold text-gray-900">
-                    Tổng ({totalItems} sản phẩm)
-                  </span>
+                  <div className="flex flex-col">
+                    <span className="font-semibold text-gray-900">
+                      Tổng ({totalItems} sản phẩm)
+                    </span>
+                    {discountTotal > 0 && (
+                      <span className="text-xs text-emerald-600">
+                        Đã giảm: -{formatBigNumber(discountTotal, true)}
+                      </span>
+                    )}
+                  </div>
                   <div className="flex items-center gap-3">
                     {order.order_status === "pending_approval" && (
                       <Button
@@ -865,7 +931,7 @@ export default function OrdersPage() {
                       </Button>
                     )}
                     <span className="font-bold text-pink-700 text-lg">
-                      {formatBigNumber(subtotal + shippingFee, true)}
+                      {formatBigNumber(saleSubtotal + shippingFee, true)}
                     </span>
                   </div>
                 </div>

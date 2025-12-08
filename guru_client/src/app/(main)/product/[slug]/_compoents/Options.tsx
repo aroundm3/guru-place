@@ -235,7 +235,7 @@ export default function Options({ productData }: OptionsProps) {
                 </span>
                 {currentPicked.base_price > currentPicked.sale_price ? (
                   <span className="line-through text-xs font-medium text-gray-400">
-                    {formatBigNumber(currentPicked.sale_price, true)}
+                    {formatBigNumber(currentPicked.base_price, true)}
                   </span>
                 ) : (
                   ""

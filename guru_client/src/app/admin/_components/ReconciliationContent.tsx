@@ -5,7 +5,6 @@ import { useSearchParams, useRouter } from "next/navigation"
 import dayjs, { Dayjs } from "dayjs"
 import "dayjs/locale/vi"
 import Link from "next/link"
-import Image from "next/image"
 import * as XLSX from "xlsx"
 import { formatBigNumber } from "@lib/util/format-big-number"
 import {
@@ -59,6 +58,7 @@ type OrderProduct = {
   name?: string
   slug?: string
   images?: { url?: string; default?: string; thumbnail?: string }[]
+  base_price?: number | string
   sale_price?: number | string
 }
 
@@ -76,6 +76,7 @@ type OrderVariantImage = {
 
 type OrderVariant = {
   variant_value?: string
+  base_price?: number | string
   sale_price?: number | string
   variant_image?: OrderVariantImage | null
   product?: OrderProduct
@@ -165,6 +166,56 @@ const toNumber = (value: unknown) => {
   const parsed = Number(value)
   return Number.isNaN(parsed) ? 0 : parsed
 }
+
+type ItemPricing = {
+  baseUnit: number
+  saleUnit: number
+  quantity: number
+  baseLineTotal: number
+  saleLineTotal: number
+  lineDiscount: number
+}
+
+type OrderPricingSummary = {
+  baseSubtotal: number
+  saleSubtotal: number
+  discountTotal: number
+}
+
+const getItemPricing = (item: OrderItem): ItemPricing => {
+  const baseUnit = toNumber(
+    item.variant?.base_price ?? item.product?.base_price ?? 0
+  )
+  const saleUnit = toNumber(
+    item.variant?.sale_price ?? item.product?.sale_price ?? baseUnit
+  )
+  const quantity = toNumber(item.quantity || 0)
+  const baseLineTotal = baseUnit * quantity
+  const saleLineTotal = saleUnit * quantity
+  const lineDiscount = Math.max(0, baseLineTotal - saleLineTotal)
+
+  return {
+    baseUnit,
+    saleUnit,
+    quantity,
+    baseLineTotal,
+    saleLineTotal,
+    lineDiscount,
+  }
+}
+
+const getOrderPricingSummary = (items: OrderItem[] = []): OrderPricingSummary =>
+  items.reduce(
+    (acc, item) => {
+      const { baseLineTotal, saleLineTotal, lineDiscount } =
+        getItemPricing(item)
+      acc.baseSubtotal += baseLineTotal
+      acc.saleSubtotal += saleLineTotal
+      acc.discountTotal += lineDiscount
+      return acc
+    },
+    { baseSubtotal: 0, saleSubtotal: 0, discountTotal: 0 }
+  )
 
 const getOrderStatusInfo = (status?: OrderStatus) => {
   switch (status) {
@@ -258,6 +309,8 @@ export default function ReconciliationContent() {
   )
   const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null)
   const [loadingQrCode, setLoadingQrCode] = useState(false)
+  const [logoUrl, setLogoUrl] = useState("/logo.png")
+  const [logoDataUrl, setLogoDataUrl] = useState<string | null>(null)
 
   console.log({ selectedOrderForInvoice })
 
@@ -272,15 +325,9 @@ export default function ReconciliationContent() {
       setLoadingQrCode(true)
       try {
         // Tính tổng tiền thanh toán (tiền hàng + phí ship)
-        const subtotal = (selectedOrderForInvoice.order_items || []).reduce(
-          (sum, item) => {
-            const unitPrice = toNumber(
-              item.variant?.sale_price ?? item.product?.sale_price ?? 0
-            )
-            return sum + unitPrice * toNumber(item.quantity || 0)
-          },
-          0
-        )
+        const subtotal = getOrderPricingSummary(
+          selectedOrderForInvoice.order_items || []
+        ).saleSubtotal
         const shippingFee = toNumber(selectedOrderForInvoice.shipping_fee)
         const totalAmount = subtotal + shippingFee
 
@@ -352,6 +399,35 @@ export default function ReconciliationContent() {
 
     generateQrCode()
   }, [selectedOrderForInvoice])
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setLogoUrl(`${window.location.origin}/logo.png`)
+    }
+  }, [])
+
+  useEffect(() => {
+    const fetchLogoAsDataUrl = async () => {
+      try {
+        const response = await fetch(logoUrl, { cache: "force-cache" })
+        if (!response.ok) return
+        const blob = await response.blob()
+        const reader = new FileReader()
+        reader.onloadend = () => {
+          if (typeof reader.result === "string") {
+            setLogoDataUrl(reader.result)
+          }
+        }
+        reader.readAsDataURL(blob)
+      } catch (error) {
+        console.warn("Failed to load logo for printing:", error)
+      }
+    }
+
+    if (logoUrl) {
+      fetchLogoAsDataUrl()
+    }
+  }, [logoUrl])
 
   const [storeMetadata, setStoreMetadata] = useState<StoreMetadata | null>(null)
 
@@ -1252,10 +1328,8 @@ export default function ReconciliationContent() {
           }
           const productName = product?.name || "Sản phẩm"
           const variantName = variant?.variant_value
-          const price = toNumber(
-            variant?.sale_price ?? product?.sale_price ?? 0
-          )
-          const quantity = toNumber(item.quantity)
+          const { baseUnit, saleUnit, quantity, saleLineTotal, lineDiscount } =
+            getItemPricing(item)
           const productSlug = product?.slug
 
           return (
@@ -1292,18 +1366,28 @@ export default function ReconciliationContent() {
               </div>
 
               <div className="text-right flex flex-col justify-center gap-1 flex-shrink-0">
-                <div>
+                <div className="flex flex-col items-end">
                   <p className="text-xs uppercase tracking-wide text-gray-400">
                     Đơn giá
                   </p>
+                  {baseUnit > saleUnit && (
+                    <p className="text-xs text-gray-400 line-through">
+                      {formatBigNumber(baseUnit, true)}
+                    </p>
+                  )}
                   <p className="text-sm lg:text-base font-semibold text-pink-700">
-                    {formatBigNumber(price, true)}
+                    {formatBigNumber(saleUnit, true)}
                   </p>
                 </div>
-                <div>
+                <div className="text-right">
                   <p className="text-xs text-gray-500">
-                    Tổng: {formatBigNumber(price * quantity, true)}
+                    Tổng: {formatBigNumber(saleLineTotal, true)}
                   </p>
+                  {lineDiscount > 0 && (
+                    <p className="text-xs text-emerald-600">
+                      Giảm: -{formatBigNumber(lineDiscount, true)}
+                    </p>
+                  )}
                 </div>
               </div>
             </Link>
@@ -1487,20 +1571,28 @@ export default function ReconciliationContent() {
 
   const renderOrderSummary = (order: OrderEntity) => {
     const items = order.order_items || []
-    const subtotal = items.reduce((sum, item) => {
-      const unitPrice = toNumber(
-        item.variant?.sale_price ?? item.product?.sale_price ?? 0
-      )
-      return sum + unitPrice * toNumber(item.quantity || 0)
-    }, 0)
+    const summaryTotals = getOrderPricingSummary(items)
     const shippingFee = toNumber(order.shipping_fee)
+    const total = summaryTotals.saleSubtotal + shippingFee
 
     return (
       <div className="space-y-2 text-sm text-gray-600">
         <div className="flex justify-between">
-          <span>Thành tiền:</span>
+          <span>Tiền hàng (giá gốc):</span>
           <span className="font-semibold">
-            {formatBigNumber(subtotal, true)}
+            {formatBigNumber(summaryTotals.baseSubtotal, true)}
+          </span>
+        </div>
+        <div className="flex justify-between">
+          <span>Chiết khấu:</span>
+          <span className="font-semibold text-emerald-600">
+            -{formatBigNumber(summaryTotals.discountTotal, true)}
+          </span>
+        </div>
+        <div className="flex justify-between">
+          <span>Tiền hàng sau CK:</span>
+          <span className="font-semibold">
+            {formatBigNumber(summaryTotals.saleSubtotal, true)}
           </span>
         </div>
         <div className="flex justify-between">
@@ -1510,6 +1602,10 @@ export default function ReconciliationContent() {
               ? "Miễn phí"
               : formatBigNumber(shippingFee, true)}
           </span>
+        </div>
+        <div className="flex justify-between text-base font-semibold">
+          <span>Tổng cộng:</span>
+          <span className="text-pink-700">{formatBigNumber(total, true)}</span>
         </div>
       </div>
     )
@@ -1730,22 +1826,10 @@ export default function ReconciliationContent() {
                 (sum, item) => sum + toNumber(item.quantity || 0),
                 0
               )
-              const orderTotal = orderItems.reduce((sum, item) => {
-                const unitPrice = toNumber(
-                  item.variant?.sale_price ?? item.product?.sale_price ?? 0
-                )
-                return sum + unitPrice * toNumber(item.quantity || 0)
-              }, 0)
-
               const statusInfo = getOrderStatusInfo(order.order_status)
 
               const items = order.order_items || []
-              const subtotal = items.reduce((sum, item) => {
-                const unitPrice = toNumber(
-                  item.variant?.sale_price ?? item.product?.sale_price ?? 0
-                )
-                return sum + unitPrice * toNumber(item.quantity || 0)
-              }, 0)
+              const summaryTotals = getOrderPricingSummary(items)
               const shippingFee = toNumber(order.shipping_fee)
               const totalItems = items.reduce(
                 (sum, item) => sum + toNumber(item.quantity || 0),
@@ -1968,7 +2052,10 @@ export default function ReconciliationContent() {
                         </FormControl>
                       )}
                       <span className="font-bold text-pink-700 text-lg">
-                        {formatBigNumber(subtotal + shippingFee, true)}
+                        {formatBigNumber(
+                          summaryTotals.saleSubtotal + shippingFee,
+                          true
+                        )}
                       </span>
                     </div>
                   </div>
@@ -2312,7 +2399,7 @@ export default function ReconciliationContent() {
             <div
               className="invoice-content"
               style={{
-                padding: "20px",
+                // padding: "20px",
                 paddingTop: "10px",
                 fontFamily: "Courier New, Courier, monospace",
                 position: "relative",
@@ -2320,55 +2407,23 @@ export default function ReconciliationContent() {
             >
               {/* Invoice Header */}
               <div className="text-center">
-                {/* Logo as text for better thermal printer compatibility */}
                 <div
-                  className="mb-1 hidden print:block"
+                  className="mb-1 flex justify-center"
                   style={{
                     WebkitPrintColorAdjust: "exact",
                     printColorAdjust: "exact",
                     colorAdjust: "exact",
                   }}
                 >
-                  <div
-                    style={{
-                      fontSize: "18px",
-                      fontWeight: 900,
-                      color: "black",
-                      fontFamily: "Courier New, Courier, monospace",
-                      letterSpacing: "1px",
-                      lineHeight: "1.2",
-                      whiteSpace: "pre",
-                      WebkitPrintColorAdjust: "exact",
-                      printColorAdjust: "exact",
-                      colorAdjust: "exact",
-                    }}
-                  >
-                    {`╔═══════════╗
-║   DIVI    ║
-╚═══════════╝`}
-                  </div>
-                </div>
-                {/* Fallback image for screen view */}
-                <div
-                  className="mb-1 flex justify-center print:hidden"
-                  style={{
-                    WebkitPrintColorAdjust: "exact",
-                    printColorAdjust: "exact",
-                    colorAdjust: "exact",
-                  }}
-                >
-                  <Image
-                    src="/logo.png"
+                  <img
+                    src={logoDataUrl || logoUrl}
                     alt="DIVI"
-                    width={100}
-                    height={100}
                     style={{
-                      width: "auto",
-                      height: "100px",
+                      width: "120px",
+                      height: "auto",
                       objectFit: "contain",
-                      WebkitPrintColorAdjust: "exact",
-                      printColorAdjust: "exact",
-                      colorAdjust: "exact",
+                      filter: "grayscale(100%) contrast(220%) brightness(0.75)",
+                      imageRendering: "pixelated",
                     }}
                   />
                 </div>
@@ -2572,50 +2627,24 @@ export default function ReconciliationContent() {
                   Chi tiết đơn hàng
                 </h2>
                 <div className="space-y-2">
-                  {(selectedOrderForInvoice.order_items || []).map(
-                    (item, _) => {
-                      const variant = item.variant
-                      const product = variant?.product || item.product
-                      const productName = product?.name || "N/A"
-                      const unitPrice = toNumber(
-                        variant?.sale_price ?? product?.sale_price ?? 0
-                      )
-                      const quantity = toNumber(item.quantity || 0)
-                      const total = unitPrice * quantity
+                  {(selectedOrderForInvoice.order_items || []).map((item) => {
+                    const variant = item.variant
+                    const product = variant?.product || item.product
+                    const productName = product?.name || "N/A"
+                    const {
+                      baseUnit,
+                      saleUnit,
+                      quantity,
+                      saleLineTotal,
+                      lineDiscount,
+                    } = getItemPricing(item)
 
-                      return (
-                        <div key={item.id}>
-                          <div className="flex justify-between items-start mb-1">
-                            <div className="flex-1">
-                              <span
-                                className="font-medium"
-                                style={{
-                                  color: "black",
-                                  fontWeight: 700,
-                                  WebkitPrintColorAdjust: "exact",
-                                  printColorAdjust: "exact",
-                                  colorAdjust: "exact",
-                                }}
-                              >
-                                {productName}
-                              </span>
-                              {variant?.variant_value && (
-                                <span
-                                  className="text-gray-600 ml-2"
-                                  style={{
-                                    color: "black",
-                                    fontWeight: 700,
-                                    WebkitPrintColorAdjust: "exact",
-                                    printColorAdjust: "exact",
-                                    colorAdjust: "exact",
-                                  }}
-                                >
-                                  ({variant.variant_value})
-                                </span>
-                              )}
-                            </div>
-                            <div
-                              className="text-right ml-4"
+                    return (
+                      <div key={item.id}>
+                        <div className="flex justify-between items-start mb-1">
+                          <div className="flex-1">
+                            <span
+                              className="font-medium"
                               style={{
                                 color: "black",
                                 fontWeight: 700,
@@ -2624,12 +2653,25 @@ export default function ReconciliationContent() {
                                 colorAdjust: "exact",
                               }}
                             >
-                              SL: {quantity} x{" "}
-                              {formatBigNumber(unitPrice, true)}
-                            </div>
+                              {productName}
+                            </span>
+                            {variant?.variant_value && (
+                              <span
+                                className="text-gray-600 ml-2"
+                                style={{
+                                  color: "black",
+                                  fontWeight: 700,
+                                  WebkitPrintColorAdjust: "exact",
+                                  printColorAdjust: "exact",
+                                  colorAdjust: "exact",
+                                }}
+                              >
+                                ({variant.variant_value})
+                              </span>
+                            )}
                           </div>
                           <div
-                            className="text-right text-gray-600"
+                            className="text-right ml-4"
                             style={{
                               color: "black",
                               fontWeight: 700,
@@ -2638,15 +2680,44 @@ export default function ReconciliationContent() {
                               colorAdjust: "exact",
                             }}
                           >
-                            Thành tiền: {formatBigNumber(total, true)}
+                            {baseUnit > saleUnit && (
+                              <span>
+                                Giá gốc: {formatBigNumber(baseUnit, true)}
+                              </span>
+                            )}
+                            <br />
+                            <span>
+                              SL: {quantity} x {formatBigNumber(saleUnit, true)}
+                            </span>
                           </div>
-                          <p className="pb-3">
-                            ---------------------------------
-                          </p>
                         </div>
-                      )
-                    }
-                  )}
+                        <div
+                          className="text-right text-gray-600"
+                          style={{
+                            color: "black",
+                            fontWeight: 700,
+                            WebkitPrintColorAdjust: "exact",
+                            printColorAdjust: "exact",
+                            colorAdjust: "exact",
+                          }}
+                        >
+                          Thành tiền: {formatBigNumber(saleLineTotal, true)}
+                          {lineDiscount > 0 && (
+                            <>
+                              <br />
+                              <span className="text-xs text-emerald-700">
+                                Chiết khấu: -
+                                {formatBigNumber(lineDiscount, true)}
+                              </span>
+                            </>
+                          )}
+                        </div>
+                        <p className="pb-3">
+                          ---------------------------------
+                        </p>
+                      </div>
+                    )
+                  })}
                 </div>
               </div>
 
@@ -2657,120 +2728,153 @@ export default function ReconciliationContent() {
                     className="space-y-1"
                     style={{ minWidth: "300px", maxWidth: "400px" }}
                   >
-                    <div className="flex justify-between text-sm">
-                      <span
-                        style={{
-                          color: "black",
-                          fontWeight: 700,
-                          WebkitPrintColorAdjust: "exact",
-                          printColorAdjust: "exact",
-                          colorAdjust: "exact",
-                        }}
-                      >
-                        Tiền hàng:
-                      </span>
-                      <span
-                        style={{
-                          whiteSpace: "nowrap",
-                          marginLeft: "10px",
-                          color: "black",
-                          fontWeight: 700,
-                          WebkitPrintColorAdjust: "exact",
-                          printColorAdjust: "exact",
-                          colorAdjust: "exact",
-                        }}
-                      >
-                        {formatBigNumber(
-                          (selectedOrderForInvoice.order_items || []).reduce(
-                            (sum, item) => {
-                              const unitPrice = toNumber(
-                                item.variant?.sale_price ??
-                                  item.product?.sale_price ??
-                                  0
-                              )
-                              return (
-                                sum + unitPrice * toNumber(item.quantity || 0)
-                              )
-                            },
-                            0
-                          ),
-                          true
-                        )}
-                      </span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span
-                        style={{
-                          color: "black",
-                          fontWeight: 700,
-                          WebkitPrintColorAdjust: "exact",
-                          printColorAdjust: "exact",
-                          colorAdjust: "exact",
-                        }}
-                      >
-                        Phí vận chuyển:
-                      </span>
-                      <span
-                        style={{
-                          whiteSpace: "nowrap",
-                          marginLeft: "10px",
-                          color: "black",
-                          fontWeight: 700,
-                          WebkitPrintColorAdjust: "exact",
-                          printColorAdjust: "exact",
-                          colorAdjust: "exact",
-                        }}
-                      >
-                        {toNumber(selectedOrderForInvoice.shipping_fee) === 0
-                          ? "Miễn phí"
-                          : formatBigNumber(
-                              toNumber(selectedOrderForInvoice.shipping_fee),
-                              true
-                            )}
-                      </span>
-                    </div>
-                    <div className="flex justify-between text-lg font-bold border-t pt-2">
-                      <span
-                        style={{
-                          color: "black",
-                          fontWeight: 900,
-                          WebkitPrintColorAdjust: "exact",
-                          printColorAdjust: "exact",
-                          colorAdjust: "exact",
-                        }}
-                      >
-                        Tổng cộng:
-                      </span>
-                      <span
-                        className="text-pink-700"
-                        style={{
-                          whiteSpace: "nowrap",
-                          marginLeft: "10px",
-                          color: "black",
-                          fontWeight: 900,
-                          WebkitPrintColorAdjust: "exact",
-                          printColorAdjust: "exact",
-                          colorAdjust: "exact",
-                        }}
-                      >
-                        {formatBigNumber(
-                          (selectedOrderForInvoice.order_items || []).reduce(
-                            (sum, item) => {
-                              const unitPrice = toNumber(
-                                item.variant?.sale_price ??
-                                  item.product?.sale_price ??
-                                  0
-                              )
-                              return (
-                                sum + unitPrice * toNumber(item.quantity || 0)
-                              )
-                            },
-                            0
-                          ) + toNumber(selectedOrderForInvoice.shipping_fee),
-                          true
-                        )}
-                      </span>
-                    </div>
+                    {(() => {
+                      const totals = getOrderPricingSummary(
+                        selectedOrderForInvoice.order_items || []
+                      )
+                      const shippingFee = toNumber(
+                        selectedOrderForInvoice.shipping_fee
+                      )
+                      const grandTotal = totals.saleSubtotal + shippingFee
+
+                      return (
+                        <>
+                          <div className="flex justify-between text-sm">
+                            <span
+                              style={{
+                                color: "black",
+                                fontWeight: 700,
+                                WebkitPrintColorAdjust: "exact",
+                                printColorAdjust: "exact",
+                                colorAdjust: "exact",
+                              }}
+                            >
+                              Tiền hàng (giá gốc):
+                            </span>
+                            <span
+                              style={{
+                                whiteSpace: "nowrap",
+                                marginLeft: "10px",
+                                color: "black",
+                                fontWeight: 700,
+                                WebkitPrintColorAdjust: "exact",
+                                printColorAdjust: "exact",
+                                colorAdjust: "exact",
+                              }}
+                            >
+                              {formatBigNumber(totals.baseSubtotal, true)}
+                            </span>
+                          </div>
+                          <div className="flex justify-between text-sm">
+                            <span
+                              style={{
+                                color: "black",
+                                fontWeight: 700,
+                                WebkitPrintColorAdjust: "exact",
+                                printColorAdjust: "exact",
+                                colorAdjust: "exact",
+                              }}
+                            >
+                              Chiết khấu:
+                            </span>
+                            <span
+                              style={{
+                                whiteSpace: "nowrap",
+                                marginLeft: "10px",
+                                color: "black",
+                                fontWeight: 700,
+                                WebkitPrintColorAdjust: "exact",
+                                printColorAdjust: "exact",
+                                colorAdjust: "exact",
+                              }}
+                            >
+                              -{formatBigNumber(totals.discountTotal, true)}
+                            </span>
+                          </div>
+                          <div className="flex justify-between text-sm">
+                            <span
+                              style={{
+                                color: "black",
+                                fontWeight: 700,
+                                WebkitPrintColorAdjust: "exact",
+                                printColorAdjust: "exact",
+                                colorAdjust: "exact",
+                              }}
+                            >
+                              Tiền hàng sau CK:
+                            </span>
+                            <span
+                              style={{
+                                whiteSpace: "nowrap",
+                                marginLeft: "10px",
+                                color: "black",
+                                fontWeight: 700,
+                                WebkitPrintColorAdjust: "exact",
+                                printColorAdjust: "exact",
+                                colorAdjust: "exact",
+                              }}
+                            >
+                              {formatBigNumber(totals.saleSubtotal, true)}
+                            </span>
+                          </div>
+                          <div className="flex justify-between text-sm">
+                            <span
+                              style={{
+                                color: "black",
+                                fontWeight: 700,
+                                WebkitPrintColorAdjust: "exact",
+                                printColorAdjust: "exact",
+                                colorAdjust: "exact",
+                              }}
+                            >
+                              Phí vận chuyển:
+                            </span>
+                            <span
+                              style={{
+                                whiteSpace: "nowrap",
+                                marginLeft: "10px",
+                                color: "black",
+                                fontWeight: 700,
+                                WebkitPrintColorAdjust: "exact",
+                                printColorAdjust: "exact",
+                                colorAdjust: "exact",
+                              }}
+                            >
+                              {shippingFee === 0
+                                ? "Miễn phí"
+                                : formatBigNumber(shippingFee, true)}
+                            </span>
+                          </div>
+                          <div className="flex justify-between text-lg font-bold border-t pt-2">
+                            <span
+                              style={{
+                                color: "black",
+                                fontWeight: 900,
+                                WebkitPrintColorAdjust: "exact",
+                                printColorAdjust: "exact",
+                                colorAdjust: "exact",
+                              }}
+                            >
+                              Tổng cộng:
+                            </span>
+                            <span
+                              className="text-pink-700"
+                              style={{
+                                whiteSpace: "nowrap",
+                                marginLeft: "10px",
+                                color: "black",
+                                fontWeight: 900,
+                                WebkitPrintColorAdjust: "exact",
+                                printColorAdjust: "exact",
+                                colorAdjust: "exact",
+                              }}
+                            >
+                              {formatBigNumber(grandTotal, true)}
+                            </span>
+                          </div>
+                        </>
+                      )
+                    })()}
                   </div>
                 </div>
               </div>
@@ -2801,18 +2905,20 @@ export default function ReconciliationContent() {
                     colorAdjust: "exact",
                   }}
                 >
-                  <p
-                    className="text-sm font-semibold mb-2"
-                    style={{
-                      color: "black",
-                      fontWeight: 700,
-                      WebkitPrintColorAdjust: "exact",
-                      printColorAdjust: "exact",
-                      colorAdjust: "exact",
-                    }}
-                  >
-                    Quét mã QR để thanh toán
-                  </p>
+                  <div className="flex justify-center w-full items-center">
+                    <p
+                      className="text-sm font-semibold mb-2 text-center"
+                      style={{
+                        color: "black",
+                        fontWeight: 700,
+                        WebkitPrintColorAdjust: "exact",
+                        printColorAdjust: "exact",
+                        colorAdjust: "exact",
+                      }}
+                    >
+                      Quét mã QR để thanh toán
+                    </p>
+                  </div>
                   <div className="flex justify-center items-center">
                     <img
                       src={qrCodeUrl}
@@ -2834,7 +2940,7 @@ export default function ReconciliationContent() {
 
               {/* Footer */}
               <div
-                className="text-center text-sm text-gray-600 mt-4"
+                className="text-center text-sm text-gray-600 mt-4 items-center"
                 style={{
                   color: "black",
                   fontWeight: 700,
@@ -2843,17 +2949,20 @@ export default function ReconciliationContent() {
                   colorAdjust: "exact",
                 }}
               >
-                <p
-                  style={{
-                    color: "black",
-                    fontWeight: 700,
-                    WebkitPrintColorAdjust: "exact",
-                    printColorAdjust: "exact",
-                    colorAdjust: "exact",
-                  }}
-                >
-                  Cảm ơn quý khách đã mua hàng!
-                </p>
+                <div className="flex justify-center w-full">
+                  <p
+                    className="text-center"
+                    style={{
+                      color: "black",
+                      fontWeight: 700,
+                      WebkitPrintColorAdjust: "exact",
+                      printColorAdjust: "exact",
+                      colorAdjust: "exact",
+                    }}
+                  >
+                    Cảm ơn quý khách đã mua hàng!
+                  </p>
+                </div>
               </div>
             </div>
           )}
