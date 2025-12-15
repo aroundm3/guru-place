@@ -372,6 +372,7 @@ export default factories.createCoreController(
           customerCards,
           shippingFee,
           point = 0,
+          promotionId,
         } = ctx.request.body;
 
         // Validate input
@@ -404,6 +405,22 @@ export default factories.createCoreController(
           id: customer.id,
           documentId: customer.documentId,
         });
+
+        // Validate promotion if present
+        let promotion = null;
+        if (promotionId) {
+          promotion = await strapi.documents("api::promotion.promotion").findOne({
+            documentId: promotionId,
+          });
+          if (!promotion) {
+            return ctx.notFound("Promotion not found");
+          }
+          strapi.log.info("Promotion found:", {
+            id: promotion.id,
+            documentId: promotion.documentId,
+            code: promotion.code,
+          });
+        }
 
         // Validate và tính toán tổng tiền, đồng thời kiểm tra số lượng
         let totalAmount = 0;
@@ -492,6 +509,34 @@ export default factories.createCoreController(
         // Tính shipping fee: nếu có product isFreeShip thì = 0, mặc định = 15000
         const finalShippingFee = hasFreeShip ? 0 : (shippingFee ?? 15000);
 
+        // Calculate promotion discount
+        let promotionDiscount = 0;
+        if (promotion) {
+          const minOrderAmount = Number(promotion.discountMinimumOrderAmount || 0);
+          if (totalAmount < minOrderAmount) {
+             strapi.log.warn(`Order total ${totalAmount} is less than minimum ${minOrderAmount} for promotion. Ignoring promotion.`);
+             promotion = null;
+          } else {
+
+          const promoValue = Number(promotion.value);
+          if (promotion.type === "percent") {
+            promotionDiscount = (totalAmount * promoValue) / 100;
+            if (promotion.discountMaximumOrderAmount) {
+              const maxDiscount = Number(promotion.discountMaximumOrderAmount);
+              if (maxDiscount > 0) {
+                promotionDiscount = Math.min(promotionDiscount, maxDiscount);
+              }
+            }
+          } else {
+            promotionDiscount = promoValue;
+          }
+          
+          
+          // Ensure discount doesn't exceed total
+          promotionDiscount = Math.min(promotionDiscount, totalAmount);
+        }
+        }
+
         // Tạo order - dùng customer.id (integer) thay vì customerId (documentId string)
         strapi.log.info("Creating order with customerId:", customer.id);
         const order = await strapi.entityService.create("api::order.order", {
@@ -499,6 +544,7 @@ export default factories.createCoreController(
             customer: customer.id, // Dùng id (integer) cho relation
             shipping_fee: Number(finalShippingFee),
             point: Number(point),
+            promotion_discount: Math.floor(promotionDiscount), // Save calculated discount
             publishedAt: new Date(),
           },
         });

@@ -7,7 +7,7 @@ import { Product, ProductListBlock } from "types/global"
 export const getProductBySlug = async (slug: string) => {
   try {
     const data = await fetcher(
-      `/api/products?filters[slug][$eq]=${slug}&populate[brand]=true&populate[category]=true&populate[media]=true&populate[variants][populate][variant_image]=true&populate[variants][populate][customer_cards]=true`,
+      `/api/products?filters[slug][$eq]=${slug}&populate[brand]=true&populate[category]=true&populate[media]=true&populate[variants][populate][variant_image]=true&populate[variants][populate][customer_cards]=true&populate[promotions][populate][image]=true`,
       {
         next: { revalidate: 10 },
       }
@@ -62,6 +62,21 @@ export const getProductBySlug = async (slug: string) => {
             default: getFullLinkResource(variant.variant_image?.url),
           },
         })),
+        promotions: productRs.promotions?.map((promotion: any) => ({
+          ...promotion,
+          image: promotion.image
+            ? {
+                small: getFullLinkResource(
+                  promotion.image?.formats?.small?.url ?? promotion.image?.url
+                ),
+                thumbnail: getFullLinkResource(
+                  promotion.image?.formats?.thumbnail?.url ??
+                    promotion.image?.url
+                ),
+                default: getFullLinkResource(promotion.image?.url),
+              }
+            : null,
+        })) || [],
         customerCartId: productRs.customer_card?.data?.id || null,
       }
     }

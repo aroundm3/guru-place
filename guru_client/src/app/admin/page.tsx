@@ -14,10 +14,11 @@ import {
 import LogoutIcon from "@mui/icons-material/Logout"
 import ReconciliationContent from "./_components/ReconciliationContent"
 import CustomersContent from "./_components/CustomersContent"
+import PromotionsContent from "./_components/PromotionsContent"
 import EmployeeSelector from "./_components/EmployeeSelector"
 import { EmployeeProvider, Employee } from "@lib/context/employee-context"
 
-type TabValue = "orders" | "customers"
+type TabValue = "orders" | "customers" | "promotions"
 
 function AdminPageContent() {
   const searchParams = useSearchParams()
@@ -264,12 +265,20 @@ function AdminPageContent() {
               value="customers"
               className="!normal-case !font-semibold"
             />
+            <Tab
+              label="Quản lý khuyến mãi"
+              value="promotions"
+              className="!normal-case !font-semibold"
+            />
           </Tabs>
         </div>
 
         <Box sx={{ mt: 3 }}>
           {currentTab === "orders" && <ReconciliationContent key="orders" />}
           {currentTab === "customers" && <CustomersContent key="customers" />}
+          {currentTab === "promotions" && (
+            <PromotionsContent key="promotions" />
+          )}
         </Box>
       </div>
     </EmployeeProvider>

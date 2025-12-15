@@ -124,6 +124,7 @@ type OrderEntity = {
   order_status?: OrderStatus
   order_items?: OrderItem[]
   order_customer_cards?: OrderCustomerCard[]
+  promotion_discount?: number | string
 }
 
 interface PaginationState {
@@ -685,11 +686,16 @@ export default function OrdersPage() {
     )
   }
 
+
+
   const renderOrderSummary = (order: OrderEntity) => {
     const items = order.order_items || []
     const { baseSubtotal, saleSubtotal, discountTotal } =
       getOrderDiscountSummary(items)
     const shippingFee = toNumber(order.shipping_fee)
+    const promotionDiscount = toNumber(order.promotion_discount)
+
+    const finalTotal = Math.max(0, saleSubtotal + shippingFee - promotionDiscount)
 
     return (
       <div className="space-y-2 text-sm text-gray-600">
@@ -701,7 +707,7 @@ export default function OrdersPage() {
         </div>
         {discountTotal > 0 && (
           <div className="flex justify-between text-emerald-600">
-            <span>Chiết khấu:</span>
+            <span>Chiết khấu sản phẩm:</span>
             <span className="font-semibold">
               -{formatBigNumber(discountTotal, true)}
             </span>
@@ -713,6 +719,14 @@ export default function OrdersPage() {
             {formatBigNumber(saleSubtotal, true)}
           </span>
         </div>
+        {promotionDiscount > 0 && (
+          <div className="flex justify-between text-pink-600">
+            <span>Mã giảm giá:</span>
+            <span className="font-semibold">
+              -{formatBigNumber(promotionDiscount, true)}
+            </span>
+          </div>
+        )}
         <div className="flex justify-between">
           <span>Phí vận chuyển:</span>
           <span className="font-semibold">
@@ -724,7 +738,7 @@ export default function OrdersPage() {
         <div className="flex justify-between text-base font-semibold">
           <span>Tổng cộng:</span>
           <span className="text-pink-700">
-            {formatBigNumber(saleSubtotal + shippingFee, true)}
+            {formatBigNumber(finalTotal, true)}
           </span>
         </div>
       </div>
@@ -841,10 +855,17 @@ export default function OrdersPage() {
             const { saleSubtotal, discountTotal } =
               getOrderDiscountSummary(items)
             const shippingFee = toNumber(order.shipping_fee)
+            const promotionDiscount = toNumber(order.promotion_discount)
             const totalItems = items.reduce(
               (sum, item) => sum + toNumber(item.quantity || 0),
               0
             )
+
+            const finalTotal = Math.max(
+              0,
+              saleSubtotal + shippingFee - promotionDiscount
+            )
+            const totalDiscountDisplay = discountTotal + promotionDiscount
 
             return (
               <div
@@ -907,14 +928,14 @@ export default function OrdersPage() {
                     {renderOrderSummary(order)}
                   </div>
                 </Collapse>
-                <div className="flex justify-between items-center pt-2 border-t p-3 lg:p-4">
+                <div className="flex justify-between items-center border-t p-3 lg:p-4 py-5">
                   <div className="flex flex-col">
                     <span className="font-semibold text-gray-900">
                       Tổng ({totalItems} sản phẩm)
                     </span>
-                    {discountTotal > 0 && (
+                    {totalDiscountDisplay > 0 && (
                       <span className="text-xs text-emerald-600">
-                        Đã giảm: -{formatBigNumber(discountTotal, true)}
+                        Đã giảm: -{formatBigNumber(totalDiscountDisplay, true)}
                       </span>
                     )}
                   </div>
@@ -931,7 +952,7 @@ export default function OrdersPage() {
                       </Button>
                     )}
                     <span className="font-bold text-pink-700 text-lg">
-                      {formatBigNumber(saleSubtotal + shippingFee, true)}
+                      {formatBigNumber(finalTotal, true)}
                     </span>
                   </div>
                 </div>

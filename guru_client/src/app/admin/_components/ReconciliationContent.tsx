@@ -146,6 +146,7 @@ type OrderEntity = {
   order_customer_cards?: OrderCustomerCard[]
   customer?: Customer
   employee?: string | null
+  promotion_discount: number
 }
 
 interface PaginationState {
@@ -329,7 +330,13 @@ export default function ReconciliationContent() {
           selectedOrderForInvoice.order_items || []
         ).saleSubtotal
         const shippingFee = toNumber(selectedOrderForInvoice.shipping_fee)
-        const totalAmount = subtotal + shippingFee
+        const promotionDiscount = toNumber(
+          selectedOrderForInvoice.promotion_discount
+        )
+        const totalAmount = Math.max(
+          0,
+          subtotal + shippingFee - promotionDiscount
+        )
 
         console.log("Generating QR code for order:", {
           documentId: selectedOrderForInvoice.documentId,
@@ -1571,9 +1578,14 @@ export default function ReconciliationContent() {
 
   const renderOrderSummary = (order: OrderEntity) => {
     const items = order.order_items || []
+
     const summaryTotals = getOrderPricingSummary(items)
     const shippingFee = toNumber(order.shipping_fee)
-    const total = summaryTotals.saleSubtotal + shippingFee
+    const promotionDiscount = toNumber(order.promotion_discount)
+    const total = Math.max(
+      0,
+      summaryTotals.saleSubtotal + shippingFee - promotionDiscount
+    )
 
     return (
       <div className="space-y-2 text-sm text-gray-600">
@@ -1595,6 +1607,14 @@ export default function ReconciliationContent() {
             {formatBigNumber(summaryTotals.saleSubtotal, true)}
           </span>
         </div>
+        {promotionDiscount > 0 && (
+          <div className="flex justify-between text-pink-600">
+            <span>Mã giảm giá:</span>
+            <span className="font-semibold">
+              -{formatBigNumber(promotionDiscount, true)}
+            </span>
+          </div>
+        )}
         <div className="flex justify-between">
           <span>Phí vận chuyển:</span>
           <span className="font-semibold">
@@ -1831,9 +1851,14 @@ export default function ReconciliationContent() {
               const items = order.order_items || []
               const summaryTotals = getOrderPricingSummary(items)
               const shippingFee = toNumber(order.shipping_fee)
+              const promotionDiscount = toNumber(order.promotion_discount)
               const totalItems = items.reduce(
                 (sum, item) => sum + toNumber(item.quantity || 0),
                 0
+              )
+              const finalTotal = Math.max(
+                0,
+                summaryTotals.saleSubtotal + shippingFee - promotionDiscount
               )
 
               return (
@@ -2052,10 +2077,7 @@ export default function ReconciliationContent() {
                         </FormControl>
                       )}
                       <span className="font-bold text-pink-700 text-lg">
-                        {formatBigNumber(
-                          summaryTotals.saleSubtotal + shippingFee,
-                          true
-                        )}
+                        {formatBigNumber(finalTotal, true)}
                       </span>
                     </div>
                   </div>
@@ -2735,7 +2757,13 @@ export default function ReconciliationContent() {
                       const shippingFee = toNumber(
                         selectedOrderForInvoice.shipping_fee
                       )
-                      const grandTotal = totals.saleSubtotal + shippingFee
+                      const promotionDiscount = toNumber(
+                        selectedOrderForInvoice.promotion_discount
+                      )
+                      const grandTotal = Math.max(
+                        0,
+                        totals.saleSubtotal + shippingFee - promotionDiscount
+                      )
 
                       return (
                         <>
@@ -2817,6 +2845,34 @@ export default function ReconciliationContent() {
                               {formatBigNumber(totals.saleSubtotal, true)}
                             </span>
                           </div>
+                          {promotionDiscount > 0 && (
+                            <div className="flex justify-between text-sm">
+                              <span
+                                style={{
+                                  color: "black",
+                                  fontWeight: 700,
+                                  WebkitPrintColorAdjust: "exact",
+                                  printColorAdjust: "exact",
+                                  colorAdjust: "exact",
+                                }}
+                              >
+                                Mã giảm giá:
+                              </span>
+                              <span
+                                style={{
+                                  whiteSpace: "nowrap",
+                                  marginLeft: "10px",
+                                  color: "black",
+                                  fontWeight: 700,
+                                  WebkitPrintColorAdjust: "exact",
+                                  printColorAdjust: "exact",
+                                  colorAdjust: "exact",
+                                }}
+                              >
+                                -{formatBigNumber(promotionDiscount, true)}
+                              </span>
+                            </div>
+                          )}
                           <div className="flex justify-between text-sm">
                             <span
                               style={{

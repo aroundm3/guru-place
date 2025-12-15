@@ -30,6 +30,7 @@ import {
   getCardBadgeClasses,
   getCardTextClasses,
 } from "@lib/util/card-colors"
+import PromotionsSection from "./PromotionsSection"
 
 interface CartItem {
   variantId: string | null
@@ -39,6 +40,20 @@ interface CartItem {
   }
 }
 
+type Promotion = {
+  id: number
+  documentId: string
+  code: string
+  title: string
+  description?: string
+  type: "percent" | "cash"
+  value: number | string
+  discountMinimumOrderAmount?: number | string
+  discountMaximumOrderAmount?: number | string
+  isDisable?: boolean
+  isPrivate?: boolean
+}
+
 export default function CartClientView() {
   const [cart, setCart] = useState<CartItem[]>([])
   const [selectedItems, setSelectedItems] = useState<Set<number>>(new Set())
@@ -46,6 +61,10 @@ export default function CartClientView() {
   const [isLoadingCart, setIsLoadingCart] = useState(true)
   const [openCardModal, setOpenCardModal] = useState<string>("")
   const [openCustomerModal, setOpenCustomerModal] = useState(false)
+  const [isCheckoutFlow, setIsCheckoutFlow] = useState(false)
+  const [selectedPromotion, setSelectedPromotion] = useState<Promotion | null>(
+    null
+  )
   const [snackbar, setSnackbar] = useState<{
     open: boolean
     message: string
@@ -99,6 +118,20 @@ export default function CartClientView() {
       quantity,
     }))
   }, [cart, selectedItems, getCardById])
+
+  // Lấy danh sách product IDs từ selected items
+  const selectedProductIds = useMemo(() => {
+    const productIds: string[] = []
+    cart.forEach((item, index) => {
+      if (selectedItems.has(index)) {
+        const productId = item.product?.productData?.documentId
+        if (productId && !productIds.includes(productId)) {
+          productIds.push(productId)
+        }
+      }
+    })
+    return productIds
+  }, [cart, selectedItems])
 
   // Đọc cart từ localStorage
   useEffect(() => {
@@ -242,6 +275,7 @@ export default function CartClientView() {
     if (selectedItems.size === 0) return
 
     // Luôn mở modal để user có thể xem/chỉnh sửa thông tin hoặc tiếp tục
+    setIsCheckoutFlow(true)
     setOpenCustomerModal(true)
   }
 
@@ -287,6 +321,7 @@ export default function CartClientView() {
           customerCards,
           shippingFee: null, // API sẽ tự tính dựa trên isFreeShip
           point: 0,
+          promotionId: selectedPromotion?.documentId,
         }),
       })
 
@@ -395,6 +430,48 @@ export default function CartClientView() {
       return sum + (card.discount || 0)
     }, 0)
   }, [selectedCustomerCards, subtotal])
+
+  // Calculate promotion discount
+  const promotionDiscount = useMemo(() => {
+    if (!selectedPromotion || subtotal === 0) return 0
+
+    const minOrderAmount = Number(
+      selectedPromotion.discountMinimumOrderAmount || 0
+    )
+    if (subtotal < minOrderAmount) return 0
+
+    let discount = 0
+    const promoValue = Number(selectedPromotion.value)
+
+    if (selectedPromotion.type === "percent") {
+      discount = (subtotal * promoValue) / 100
+      if (selectedPromotion.discountMaximumOrderAmount) {
+        const maxDiscount = Number(selectedPromotion.discountMaximumOrderAmount)
+        if (maxDiscount > 0) {
+          discount = Math.min(discount, maxDiscount)
+        }
+      }
+    } else {
+      discount = promoValue
+    }
+
+    return Math.min(discount, subtotal)
+  }, [selectedPromotion, subtotal])
+
+  // Calculate shipping fee
+  const shippingFee = useMemo(() => {
+    if (selectedItems.size === 0) return 0
+
+    // Check if any selected item has isFreeShip
+    const hasFreeShip = Array.from(selectedItems).some((index) => {
+      const item = cart[index]
+      return item.product?.productData?.isFreeShip === true
+    })
+
+    return hasFreeShip ? 0 : 15000
+  }, [cart, selectedItems])
+
+  const finalTotal = Math.max(0, subtotal - promotionDiscount + shippingFee)
 
   // Skeleton component cho cart items
   const CartItemSkeleton = () => (
@@ -650,6 +727,18 @@ export default function CartClientView() {
         })}
       </div>
 
+      {/* Promotions Section - Luôn hiển thị để user nhập mã private */}
+      <PromotionsSection
+        productIds={selectedProductIds}
+        onSelectPromotion={setSelectedPromotion}
+        customer={customer}
+        onRequestCustomerInfo={() => {
+          setIsCheckoutFlow(false)
+          setOpenCustomerModal(true)
+        }}
+        subtotal={subtotal}
+      />
+
       {/* Summary */}
       <div className="border-t pt-4 lg:pt-6">
         {/* Customer Cards - Desktop: dàn ngang, Mobile: tối giản */}
@@ -791,11 +880,33 @@ export default function CartClientView() {
           </div>
         )}
         <Divider className="my-6" />
-        <div className="max-w-md lg:ml-auto space-y-3 lg:space-y-4">
+        <div className="max-w-md sm:ml-auto space-y-3 lg:space-y-4">
+          <div className="flex justify-between text-base lg:text-lg">
+            <span className="font-semibold">Tạm tính:</span>
+            <span className="font-bold text-lg lg:text-xl">
+              {formatBigNumber(subtotal, true)}
+            </span>
+          </div>
+          {promotionDiscount > 0 && (
+            <div className="flex justify-between text-base lg:text-lg text-pink-600">
+              <span className="font-semibold">Mã giảm giá:</span>
+              <span className="font-bold text-lg lg:text-xl">
+                -{formatBigNumber(promotionDiscount, true)}
+              </span>
+            </div>
+          )}
+          <div className="flex justify-between text-base lg:text-lg">
+            <span className="font-semibold">Phí vận chuyển:</span>
+            <span className="font-bold text-lg lg:text-xl">
+              {shippingFee === 0
+                ? "Miễn phí"
+                : formatBigNumber(shippingFee, true)}
+            </span>
+          </div>
           <div className="flex justify-between text-base lg:text-lg">
             <span className="font-semibold">Tổng cộng:</span>
             <span className="font-bold text-pink-700 text-lg lg:text-xl">
-              {formatBigNumber(subtotal, true)}
+              {formatBigNumber(finalTotal, true)}
             </span>
           </div>
           <div className="text-sm lg:text-base font-semibold text-gray-600">
@@ -838,8 +949,15 @@ export default function CartClientView() {
         onClose={() => setOpenCustomerModal(false)}
         onSuccess={(updatedCustomer) => {
           setOpenCustomerModal(false)
-          processCheckout(updatedCustomer)
+          if (isCheckoutFlow) {
+            processCheckout(updatedCustomer)
+          }
         }}
+        message={
+          isCheckoutFlow
+            ? undefined
+            : "Vui lòng nhập thông tin của bạn để có thêm nhiều mã giảm giá"
+        }
       />
 
       <Snackbar

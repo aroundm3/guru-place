@@ -1,0 +1,79 @@
+{
+  "kind": "collectionType",
+  "collectionName": "promotions",
+  "info": {
+    "singularName": "promotion",
+    "pluralName": "promotions",
+    "displayName": "Promotion"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "code": {
+      "type": "string",
+      "required": true,
+      "unique": true
+    },
+    "description": {
+      "type": "text"
+    },
+    "type": {
+      "type": "enumeration",
+      "required": true,
+      "default": "cash",
+      "enum": [
+        "percent",
+        "cash"
+      ]
+    },
+    "image": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": [
+        "images",
+        "files"
+      ]
+    },
+    "value": {
+      "type": "biginteger",
+      "required": true
+    },
+    "title": {
+      "type": "string",
+      "required": true
+    },
+    "discountMinimumOrderAmount": {
+      "type": "biginteger",
+      "default": "0"
+    },
+    "customers": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::customer.customer",
+      "mappedBy": "promotions"
+    },
+    "products": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::product.product",
+      "mappedBy": "promotions"
+    },
+    "discountMaximumOrderAmount": {
+      "type": "biginteger"
+    },
+    "isPrivate": {
+      "type": "boolean",
+      "default": false
+    },
+    "isDisable": {
+      "type": "boolean",
+      "default": false
+    },
+    "promotion_discount": {
+      "type": "biginteger",
+      "default": "0"
+    }
+  }
+}

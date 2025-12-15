@@ -9,6 +9,7 @@ import ImageCarousel from "./_compoents/ImageCarousel"
 import RichTextBlockRender from "@modules/home/components/rich-text-block-render/RichTextBlockRender"
 import Options from "./_compoents/Options"
 import BlockProduct from "@modules/home/components/product/BlockProduct"
+import PromotionsList from "./_compoents/PromotionsList"
 import { Divider } from "@medusajs/ui"
 import LocalShippingIcon from "@mui/icons-material/LocalShipping"
 import { Fragment } from "react"
@@ -207,6 +208,15 @@ export default async function Home(props: { params: { slug: string } }) {
             </div>
           </div>
         </div>
+
+        {/* Promotions Section */}
+        {productDetail.promotions && productDetail.promotions.length > 0 && (
+          <>
+            <Divider />
+            <PromotionsList promotions={productDetail.promotions} />
+          </>
+        )}
+
         {productDetail.isService && <Divider />}
         {!productDetail.isService && (
           <>

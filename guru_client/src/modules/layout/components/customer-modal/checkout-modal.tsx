@@ -54,12 +54,14 @@ interface CustomerModalForCheckoutProps {
   open: boolean
   onClose: () => void
   onSuccess: (customer: any) => void
+  message?: string
 }
 
 export default function CustomerModalForCheckout({
   open,
   onClose,
   onSuccess,
+  message,
 }: CustomerModalForCheckoutProps) {
   const { customer, setCustomer, isLoading } = useCustomer()
   const [step, setStep] = useState<Step>("phone")
@@ -238,7 +240,7 @@ export default function CustomerModalForCheckout({
                   variant="body1"
                   className="text-gray-600 !mb-3 lg:!mb-4 text-left !text-xs lg:!text-base"
                 >
-                  Vui lòng nhập thông tin để thanh toán
+                  {message || "Vui lòng nhập thông tin để thanh toán"}
                 </Typography>
 
                 <form

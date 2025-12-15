@@ -54,6 +54,10 @@
     "employee": {
       "type": "string",
       "unique": false
+    },
+    "promotion_discount": {
+      "type": "biginteger",
+      "default": "0"
     }
   }
 }

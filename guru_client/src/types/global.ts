@@ -65,6 +65,24 @@ export interface RichTextBlock {
   url?: string
 }
 
+export interface Promotion {
+  id: number
+  documentId: string
+  code: string
+  title: string
+  description?: string
+  type: "percent" | "cash"
+  value: number | string
+  discountMinimumOrderAmount?: number | string
+  discountMaximumOrderAmount?: number | string
+  isDisable?: boolean
+  isPrivate?: boolean
+  image?: ImageMedia | null
+  createdAt?: string
+  updatedAt?: string
+  publishedAt?: string
+}
+
 export interface Variant {
   id: number
   documentId: string
@@ -101,6 +119,7 @@ export interface Product {
   isTopSelling: boolean
   isFreeShip: boolean
   isService?: boolean
+  promotions?: Promotion[]
 }
 
 export interface ProductListBlock {
