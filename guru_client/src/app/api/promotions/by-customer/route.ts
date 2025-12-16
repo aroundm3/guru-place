@@ -30,8 +30,14 @@ export async function GET(request: NextRequest) {
     params.set("filters[publishedAt][$notNull]", "true")
     params.set("filters[isDisable][$ne]", "true")
     
-    // Filter by customer
-    params.set("filters[customers][documentId][$eq]", customerId)
+    // Filter by customer OR global public promotions
+    // 1. Customer specific
+    params.set("filters[$or][0][customers][documentId][$eq]", customerId)
+    
+    // 2. Global (No customers AND Not Private AND Not Disabled)
+    params.set("filters[$or][1][customers][$null]", "true")
+    params.set("filters[$or][1][isPrivate][$eq]", "false")
+    params.set("filters[$or][1][isDisable][$eq]", "false")
     
     // Populate necessary fields
     params.set("populate[image]", "true")

@@ -962,138 +962,145 @@ export default function PromotionsContent() {
                 control={
                   <Checkbox
                     checked={formData.isPrivate}
-                    onChange={(e) =>
-                      handleFormChange("isPrivate", e.target.checked)
-                    }
+                    onChange={(e) => {
+                      const checked = e.target.checked
+                      handleFormChange("isPrivate", checked)
+                      if (checked) {
+                        setSelectedCustomers([])
+                        setSelectedProducts([])
+                      }
+                    }}
                   />
                 }
                 label="Mã dành khách hàng riêng"
               />
             </div>
-            <FormHelperText>
-              Disable: Khuyến mãi sẽ không được áp dụng | Private: Chỉ áp dụng
-              cho khách hàng được chọn
-            </FormHelperText>
 
-            <Autocomplete
-              multiple
-              options={customerOptions}
-              value={selectedCustomers}
-              onChange={(_, newValue) => setSelectedCustomers(newValue)}
-              getOptionLabel={(option) =>
-                `${option.full_name} (${option.phone_number})`
-              }
-              isOptionEqualToValue={(option, value) =>
-                option.documentId === value.documentId
-              }
-              loading={customerLoading}
-              onInputChange={(_, value) => setCustomerSearch(value)}
-              filterOptions={(x) => x}
-              ListboxProps={{
-                onScroll: (event: React.SyntheticEvent) => {
-                  const listboxNode = event.currentTarget
-                  if (
-                    listboxNode.scrollTop + listboxNode.clientHeight ===
-                    listboxNode.scrollHeight
-                  ) {
-                    if (customerHasMore && !customerLoading) {
-                      const nextPage = customerPage + 1
-                      setCustomerPage(nextPage)
-                      fetchCustomers(customerSearch, nextPage)
-                    }
+            {!formData.isPrivate && (
+              <>
+                <Autocomplete
+                  multiple
+                  options={customerOptions}
+                  value={selectedCustomers}
+                  onChange={(_, newValue) => setSelectedCustomers(newValue)}
+                  getOptionLabel={(option) =>
+                    `${option.full_name} (${option.phone_number})`
                   }
-                },
-              }}
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  label="Khách hàng áp dụng"
-                  placeholder="Tìm theo tên hoặc số điện thoại"
-                  size="small"
-                  InputProps={{
-                    ...params.InputProps,
-                    endAdornment: (
-                      <>
-                        {customerLoading ? (
-                          <CircularProgress size={20} />
-                        ) : null}
-                        {params.InputProps.endAdornment}
-                      </>
-                    ),
+                  isOptionEqualToValue={(option, value) =>
+                    option.documentId === value.documentId
+                  }
+                  loading={customerLoading}
+                  onInputChange={(_, value) => setCustomerSearch(value)}
+                  filterOptions={(x) => x}
+                  ListboxProps={{
+                    onScroll: (event: React.SyntheticEvent) => {
+                      const listboxNode = event.currentTarget
+                      if (
+                        listboxNode.scrollTop + listboxNode.clientHeight ===
+                        listboxNode.scrollHeight
+                      ) {
+                        if (customerHasMore && !customerLoading) {
+                          const nextPage = customerPage + 1
+                          setCustomerPage(nextPage)
+                          fetchCustomers(customerSearch, nextPage)
+                        }
+                      }
+                    },
                   }}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Khách hàng áp dụng"
+                      placeholder="Tìm theo tên hoặc số điện thoại"
+                      size="small"
+                      InputProps={{
+                        ...params.InputProps,
+                        endAdornment: (
+                          <>
+                            {customerLoading ? (
+                              <CircularProgress size={20} />
+                            ) : null}
+                            {params.InputProps.endAdornment}
+                          </>
+                        ),
+                      }}
+                    />
+                  )}
+                  renderTags={(value, getTagProps) =>
+                    value.map((option, index) => (
+                      <Chip
+                        label={`${option.full_name} (${option.phone_number})`}
+                        size="small"
+                        {...getTagProps({ index })}
+                      />
+                    ))
+                  }
                 />
-              )}
-              renderTags={(value, getTagProps) =>
-                value.map((option, index) => (
-                  <Chip
-                    label={`${option.full_name} (${option.phone_number})`}
-                    size="small"
-                    {...getTagProps({ index })}
-                  />
-                ))
-              }
-            />
-            <FormHelperText>
-              Để trống nếu áp dụng cho tất cả khách hàng
-            </FormHelperText>
+                <FormHelperText>
+                  Để trống nếu áp dụng cho tất cả khách hàng
+                </FormHelperText>
 
-            <Autocomplete
-              multiple
-              options={productOptions}
-              value={selectedProducts}
-              onChange={(_, newValue) => setSelectedProducts(newValue)}
-              getOptionLabel={(option) => option.name || "N/A"}
-              isOptionEqualToValue={(option, value) =>
-                option.documentId === value.documentId
-              }
-              loading={productLoading}
-              onInputChange={(_, value) => setProductSearch(value)}
-              filterOptions={(x) => x}
-              ListboxProps={{
-                onScroll: (event: React.SyntheticEvent) => {
-                  const listboxNode = event.currentTarget
-                  if (
-                    listboxNode.scrollTop + listboxNode.clientHeight ===
-                    listboxNode.scrollHeight
-                  ) {
-                    if (productHasMore && !productLoading) {
-                      const nextPage = productPage + 1
-                      setProductPage(nextPage)
-                      fetchProducts(productSearch, nextPage)
-                    }
+                <Autocomplete
+                  multiple
+                  options={productOptions}
+                  value={selectedProducts}
+                  onChange={(_, newValue) => setSelectedProducts(newValue)}
+                  getOptionLabel={(option) => option.name || "N/A"}
+                  isOptionEqualToValue={(option, value) =>
+                    option.documentId === value.documentId
                   }
-                },
-              }}
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  label="Sản phẩm áp dụng"
-                  placeholder="Tìm theo tên hoặc mã sản phẩm"
-                  size="small"
-                  InputProps={{
-                    ...params.InputProps,
-                    endAdornment: (
-                      <>
-                        {productLoading ? <CircularProgress size={20} /> : null}
-                        {params.InputProps.endAdornment}
-                      </>
-                    ),
+                  loading={productLoading}
+                  onInputChange={(_, value) => setProductSearch(value)}
+                  filterOptions={(x) => x}
+                  ListboxProps={{
+                    onScroll: (event: React.SyntheticEvent) => {
+                      const listboxNode = event.currentTarget
+                      if (
+                        listboxNode.scrollTop + listboxNode.clientHeight ===
+                        listboxNode.scrollHeight
+                      ) {
+                        if (productHasMore && !productLoading) {
+                          const nextPage = productPage + 1
+                          setProductPage(nextPage)
+                          fetchProducts(productSearch, nextPage)
+                        }
+                      }
+                    },
                   }}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Sản phẩm áp dụng"
+                      placeholder="Tìm theo tên hoặc mã sản phẩm"
+                      size="small"
+                      InputProps={{
+                        ...params.InputProps,
+                        endAdornment: (
+                          <>
+                            {productLoading ? (
+                              <CircularProgress size={20} />
+                            ) : null}
+                            {params.InputProps.endAdornment}
+                          </>
+                        ),
+                      }}
+                    />
+                  )}
+                  renderTags={(value, getTagProps) =>
+                    value.map((option, index) => (
+                      <Chip
+                        label={option.name}
+                        size="small"
+                        {...getTagProps({ index })}
+                      />
+                    ))
+                  }
                 />
-              )}
-              renderTags={(value, getTagProps) =>
-                value.map((option, index) => (
-                  <Chip
-                    label={option.name}
-                    size="small"
-                    {...getTagProps({ index })}
-                  />
-                ))
-              }
-            />
-            <FormHelperText>
-              Để trống nếu áp dụng cho tất cả sản phẩm
-            </FormHelperText>
+                <FormHelperText>
+                  Để trống nếu áp dụng cho tất cả sản phẩm
+                </FormHelperText>
+              </>
+            )}
           </div>
         </DialogContent>
         <DialogActions className="mx-3 mb-3">

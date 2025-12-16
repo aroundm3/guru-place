@@ -7,8 +7,9 @@ const FULL_ACCESS_API_KEY = process.env.FULL_ACCESS_API_KEY
 // PUT - Update promotion
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { promotionId: string } }
+  props: { params: Promise<{ promotionId: string }> }
 ) {
+  const params = await props.params
   try {
     // Kiểm tra authentication
     const cookieStore = await cookies()
@@ -118,8 +119,9 @@ export async function PUT(
 // DELETE - Delete promotion
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { promotionId: string } }
+  props: { params: Promise<{ promotionId: string }> }
 ) {
+  const params = await props.params
   try {
     // Kiểm tra authentication
     const cookieStore = await cookies()
@@ -157,7 +159,10 @@ export async function DELETE(
       )
     }
 
-    const data = await deleteResponse.json()
+    // Handle empty response (204 No Content) or possible empty 200 OK
+    const text = await deleteResponse.text()
+    const data = text ? JSON.parse(text) : { success: true }
+
     return NextResponse.json(data)
   } catch (error: any) {
     console.error("Error deleting promotion:", error)

@@ -254,3 +254,59 @@ export async function getListProductsBlock(
     return []
   }
 }
+
+export async function getGlobalPromotions() {
+  try {
+    const data = await fetcher(
+      `/api/promotions?filters[products][$null]=true&filters[customers][$null]=true&filters[isDisable][$eq]=false&filters[isPrivate][$eq]=false&populate[image]=true`,
+      {
+        next: { revalidate: 10 },
+      }
+    )
+
+    return data.data.map((promotion: any) => ({
+      ...promotion,
+      image: promotion.image
+        ? {
+            small: getFullLinkResource(
+              promotion.image?.formats?.small?.url ?? promotion.image?.url
+            ),
+            thumbnail: getFullLinkResource(
+              promotion.image?.formats?.thumbnail?.url ?? promotion.image?.url
+            ),
+            default: getFullLinkResource(promotion.image?.url),
+          }
+        : null,
+    }))
+  } catch (ex) {
+    return []
+  }
+}
+
+export async function getLatestPromotions() {
+  try {
+    const data = await fetcher(
+      `/api/promotions?filters[customers][$null]=true&filters[isDisable][$eq]=false&filters[isPrivate][$eq]=false&sort=createdAt:desc&pagination[limit]=10&populate[image]=true`,
+      {
+        next: { revalidate: 10 },
+      }
+    )
+
+    return data.data.map((promotion: any) => ({
+      ...promotion,
+      image: promotion.image
+        ? {
+            small: getFullLinkResource(
+              promotion.image?.formats?.small?.url ?? promotion.image?.url
+            ),
+            thumbnail: getFullLinkResource(
+              promotion.image?.formats?.thumbnail?.url ?? promotion.image?.url
+            ),
+            default: getFullLinkResource(promotion.image?.url),
+          }
+        : null,
+    }))
+  } catch (ex) {
+    return []
+  }
+}

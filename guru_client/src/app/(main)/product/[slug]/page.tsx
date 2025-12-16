@@ -1,6 +1,6 @@
 export const revalidate = 60 // Revalidate every 60 seconds
 import { Metadata, ResolvingMetadata } from "next"
-import { getProductBySlug } from "@lib/data/product"
+import { getProductBySlug, getGlobalPromotions } from "@lib/data/product"
 import { Breadcrumbs, Typography } from "@mui/material"
 import Link from "next/link"
 import { Product } from "types/global"
@@ -113,6 +113,7 @@ export default async function Home(props: { params: { slug: string } }) {
   const params = await props.params
 
   const productDetail: Product = await getProductBySlug(params.slug)
+  const globalPromotions = await getGlobalPromotions()
 
   if (!productDetail) {
     return notFound()
@@ -210,10 +211,16 @@ export default async function Home(props: { params: { slug: string } }) {
         </div>
 
         {/* Promotions Section */}
-        {productDetail.promotions && productDetail.promotions.length > 0 && (
+        {((productDetail.promotions && productDetail.promotions.length > 0) ||
+          (globalPromotions && globalPromotions.length > 0)) && (
           <>
             <Divider />
-            <PromotionsList promotions={productDetail.promotions} />
+            <PromotionsList
+              promotions={[
+                ...(productDetail.promotions || []),
+                ...globalPromotions,
+              ]}
+            />
           </>
         )}
 

@@ -3,10 +3,9 @@
 import { useState } from "react"
 import { Dialog, DialogTitle, DialogContent, IconButton } from "@mui/material"
 import LocalOfferIcon from "@mui/icons-material/LocalOffer"
-import PercentIcon from "@mui/icons-material/Percent"
-import AttachMoneyIcon from "@mui/icons-material/AttachMoney"
 import CloseIcon from "@mui/icons-material/Close"
-import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined"
+import { usePathname } from "next/navigation"
+import Link from "next/link"
 
 type Promotion = {
   id: number
@@ -27,22 +26,18 @@ type Promotion = {
   } | null
 }
 
-interface PromotionsListProps {
+interface LatestPromotionsProps {
   promotions: Promotion[]
 }
 
-export default function PromotionsList({ promotions }: PromotionsListProps) {
+export default function LatestPromotions({ promotions }: LatestPromotionsProps) {
   const [selectedPromotion, setSelectedPromotion] = useState<Promotion | null>(
     null
   )
   const [openDialog, setOpenDialog] = useState(false)
+  const pathname = usePathname()
 
-  // Filter out disabled and private promotions
-  const activePromotions = promotions?.filter(
-    (promo) => !promo.isDisable && !promo.isPrivate
-  ) || []
-
-  if (!activePromotions || activePromotions.length === 0) {
+  if (!promotions || promotions.length === 0) {
     return null
   }
 
@@ -62,52 +57,49 @@ export default function PromotionsList({ promotions }: PromotionsListProps) {
   }
 
   return (
-    <>
-      <div className="flex flex-col space-y-4">
-        <div className="flex items-center gap-2">
-          <LocalOfferIcon className="text-pink-600" />
-          <h3 className="text-lg font-bold text-gray-900">
-            Khuyến mãi đặc biệt
-          </h3>
-        </div>
+    <div className="flex flex-col space-y-4 px-4 lg:px-0">
+      {/* <div className="flex items-center gap-2">
+        <LocalOfferIcon className="text-pink-600" />
+        <h3 className="text-sm font-bold text-gray-900 uppercase">
+          Mã giảm giá mới nhất
+        </h3>
+      </div> */}
 
-        <div className="flex overflow-x-auto gap-4 pb-4 -mx-4 px-4 lg:mx-0 lg:px-0 scrollbar-hide">
-          {activePromotions.map((promotion) => {
-            return (
-              <div
-                key={promotion.documentId}
-                onClick={() => handleOpenDialog(promotion)}
-                className="flex-shrink-0 w-72 border-2 border-pink-200 rounded-xl p-4 bg-gradient-to-br from-pink-50 to-white hover:shadow-lg hover:border-pink-300 transition-all duration-300 cursor-pointer relative overflow-hidden group"
-              >
-                {/* Background decoration */}
-                <div className="absolute top-0 right-0 w-20 h-20 bg-pink-100 rounded-full -mr-10 -mt-10 opacity-30 group-hover:opacity-50 transition-opacity"></div>
+      {/* Horizontal Scroll Container */}
+      <div className="flex overflow-x-auto gap-4 pb-4 -mx-4 px-4 lg:mx-0 lg:px-0 scrollbar-hide">
+        {promotions.map((promotion) => (
+          <div
+            key={promotion.documentId}
+            onClick={() => handleOpenDialog(promotion)}
+            className="flex-shrink-0 w-72 border-2 border-pink-200 rounded-xl p-4 bg-gradient-to-br from-pink-50 to-white hover:shadow-lg hover:border-pink-300 transition-all duration-300 cursor-pointer relative overflow-hidden group"
+          >
+            {/* Background decoration */}
+            <div className="absolute top-0 right-0 w-20 h-20 bg-pink-100 rounded-full -mr-10 -mt-10 opacity-30 group-hover:opacity-50 transition-opacity"></div>
 
-                <div className="relative z-10 flex items-center gap-3">
-                  {/* Logo Divi */}
-                  <div className="flex-shrink-0">
-                    <img
-                      src="/logo.png"
-                      alt="Divi Logo"
-                      className="w-12 h-12 rounded-lg object-contain bg-white p-1 shadow-sm"
-                    />
-                  </div>
-
-                  {/* Content */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="bg-pink-600 text-white px-2 py-0.5 rounded text-xs font-bold uppercase">
-                        {promotion.code}
-                      </span>
-                    </div>
-                    <h4 className="text-sm font-bold text-gray-900 line-clamp-2 leading-snug">
-                      {promotion.title}
-                    </h4>
-                  </div>
-                </div>
+            <div className="relative z-10 flex items-center gap-3">
+              {/* Logo Divi */}
+              <div className="flex-shrink-0">
+                <img
+                  src="/logo.png"
+                  alt="Divi Logo"
+                  className="w-12 h-12 rounded-lg object-contain bg-white p-1 shadow-sm"
+                />
               </div>
-            )
-          })}
-        </div>
+
+              {/* Content */}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="bg-pink-600 text-white px-2 py-0.5 rounded text-xs font-bold uppercase">
+                    {promotion.code}
+                  </span>
+                </div>
+                <h4 className="text-sm font-bold text-gray-900 line-clamp-2 leading-snug">
+                  {promotion.title}
+                </h4>
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
 
       {/* Detail Dialog */}
@@ -280,29 +272,21 @@ export default function PromotionsList({ promotions }: PromotionsListProps) {
                       </div>
                     )
                   )}
-
-                  <div className="flex items-start gap-2 text-sm">
-                    <svg
-                      className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5"
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                    <span className="text-gray-700 font-medium">
-                      Áp dụng cho sản phẩm này
-                    </span>
-                  </div>
                 </div>
               </div>
             </div>
           )}
         </DialogContent>
+        {pathname === "/" && (
+          <div className="px-6 pb-6 pt-2">
+            <Link href="/products" className="w-full block">
+              <button className="w-full bg-pink-600 text-white py-3 rounded-xl font-bold hover:bg-pink-700 transition-all shadow-lg hover:shadow-pink-200 uppercase text-sm tracking-wide">
+                Khám phá ngay
+              </button>
+            </Link>
+          </div>
+        )}
       </Dialog>
-    </>
+    </div>
   )
 }
