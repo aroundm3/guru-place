@@ -409,9 +409,11 @@ export default factories.createCoreController(
         // Validate promotion if present
         let promotion = null;
         if (promotionId) {
-          promotion = await strapi.documents("api::promotion.promotion").findOne({
-            documentId: promotionId,
-          });
+          promotion = await strapi
+            .documents("api::promotion.promotion")
+            .findOne({
+              documentId: promotionId,
+            });
           if (!promotion) {
             return ctx.notFound("Promotion not found");
           }
@@ -424,6 +426,7 @@ export default factories.createCoreController(
 
         // Validate và tính toán tổng tiền, đồng thời kiểm tra số lượng
         let totalAmount = 0;
+        let nonServiceTotal = 0; // Total for non-service items only (for promotion)
         let hasFreeShip = false;
         const orderItemsData = [];
 
@@ -490,6 +493,11 @@ export default factories.createCoreController(
 
           totalAmount += itemPrice * quantity;
 
+          // Add to nonServiceTotal only if not a service
+          if (product.isService !== true) {
+            nonServiceTotal += itemPrice * quantity;
+          }
+
           // Kiểm tra nếu product có isFreeShip = true
           if (product.isFreeShip === true) {
             hasFreeShip = true;
@@ -509,32 +517,36 @@ export default factories.createCoreController(
         // Tính shipping fee: nếu có product isFreeShip thì = 0, mặc định = 15000
         const finalShippingFee = hasFreeShip ? 0 : (shippingFee ?? 15000);
 
-        // Calculate promotion discount
+        // Calculate promotion discount (only on non-service items)
         let promotionDiscount = 0;
         if (promotion) {
-          const minOrderAmount = Number(promotion.discountMinimumOrderAmount || 0);
-          if (totalAmount < minOrderAmount) {
-             strapi.log.warn(`Order total ${totalAmount} is less than minimum ${minOrderAmount} for promotion. Ignoring promotion.`);
-             promotion = null;
+          const minOrderAmount = Number(
+            promotion.discountMinimumOrderAmount || 0
+          );
+          if (nonServiceTotal < minOrderAmount) {
+            strapi.log.warn(
+              `Non-service total ${nonServiceTotal} is less than minimum ${minOrderAmount} for promotion. Ignoring promotion.`
+            );
+            promotion = null;
           } else {
-
-          const promoValue = Number(promotion.value);
-          if (promotion.type === "percent") {
-            promotionDiscount = (totalAmount * promoValue) / 100;
-            if (promotion.discountMaximumOrderAmount) {
-              const maxDiscount = Number(promotion.discountMaximumOrderAmount);
-              if (maxDiscount > 0) {
-                promotionDiscount = Math.min(promotionDiscount, maxDiscount);
+            const promoValue = Number(promotion.value);
+            if (promotion.type === "percent") {
+              promotionDiscount = (nonServiceTotal * promoValue) / 100;
+              if (promotion.discountMaximumOrderAmount) {
+                const maxDiscount = Number(
+                  promotion.discountMaximumOrderAmount
+                );
+                if (maxDiscount > 0) {
+                  promotionDiscount = Math.min(promotionDiscount, maxDiscount);
+                }
               }
+            } else {
+              promotionDiscount = promoValue;
             }
-          } else {
-            promotionDiscount = promoValue;
+
+            // Ensure discount doesn't exceed non-service total
+            promotionDiscount = Math.min(promotionDiscount, nonServiceTotal);
           }
-          
-          
-          // Ensure discount doesn't exceed total
-          promotionDiscount = Math.min(promotionDiscount, totalAmount);
-        }
         }
 
         // Tạo order - dùng customer.id (integer) thay vì customerId (documentId string)

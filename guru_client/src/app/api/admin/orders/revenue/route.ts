@@ -110,7 +110,7 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Tính tổng doanh thu (chỉ tính subtotal, không tính shipping fee)
+    // Tính tổng doanh thu (tính subtotal - promotion_discount, không tính shipping fee)
     const totalRevenue = filteredOrders.reduce((sum: number, order: any) => {
       const orderItems = order.order_items || []
       const subtotal = orderItems.reduce((itemSum: number, item: any) => {
@@ -119,7 +119,12 @@ export async function GET(request: NextRequest) {
         const quantity = Number(item.quantity || 0) || 0
         return itemSum + unitPrice * quantity
       }, 0)
-      return sum + subtotal
+
+      // Subtract promotion discount from subtotal
+      const promotionDiscount = Number(order.promotion_discount || 0)
+      const orderRevenue = subtotal - promotionDiscount
+
+      return sum + orderRevenue
     }, 0)
 
     return NextResponse.json({

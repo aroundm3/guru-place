@@ -65,6 +65,9 @@ export default function CartClientView() {
   const [selectedPromotion, setSelectedPromotion] = useState<Promotion | null>(
     null
   )
+
+  console.log("promotions bdhajjsh: ", { selectedPromotion })
+
   const [snackbar, setSnackbar] = useState<{
     open: boolean
     message: string
@@ -418,6 +421,29 @@ export default function CartClientView() {
   const subtotal = calculateSubtotal()
   const selectedCount = selectedItems.size
 
+  // Calculate subtotal for non-service items only (for promotion discount)
+  const nonServiceSubtotal = useMemo(() => {
+    return cart.reduce((acc, item, index) => {
+      if (!selectedItems.has(index)) return acc
+
+      const productData = item.product?.productData
+      if (!productData || productData.isService === true) return acc
+
+      // Find variant if variantId exists
+      let price = productData.sale_price
+      if (item.variantId && productData.variants?.length) {
+        const variant = productData.variants.find(
+          (v) => v.documentId === item.variantId
+        )
+        if (variant) {
+          price = variant.sale_price
+        }
+      }
+
+      return acc + price * item.quantity
+    }, 0)
+  }, [cart, selectedItems])
+
   // Tính tổng số tiền tích được từ tất cả các card
   // discount là số tiền cố định (VND) sẽ được tích vào tài khoản
   const totalEarnedAmount = useMemo(() => {
@@ -431,20 +457,20 @@ export default function CartClientView() {
     }, 0)
   }, [selectedCustomerCards, subtotal])
 
-  // Calculate promotion discount
+  // Calculate promotion discount (only on non-service items)
   const promotionDiscount = useMemo(() => {
-    if (!selectedPromotion || subtotal === 0) return 0
+    if (!selectedPromotion || nonServiceSubtotal === 0) return 0
 
     const minOrderAmount = Number(
       selectedPromotion.discountMinimumOrderAmount || 0
     )
-    if (subtotal < minOrderAmount) return 0
+    if (nonServiceSubtotal < minOrderAmount) return 0
 
     let discount = 0
     const promoValue = Number(selectedPromotion.value)
 
     if (selectedPromotion.type === "percent") {
-      discount = (subtotal * promoValue) / 100
+      discount = (nonServiceSubtotal * promoValue) / 100
       if (selectedPromotion.discountMaximumOrderAmount) {
         const maxDiscount = Number(selectedPromotion.discountMaximumOrderAmount)
         if (maxDiscount > 0) {
@@ -455,8 +481,8 @@ export default function CartClientView() {
       discount = promoValue
     }
 
-    return Math.min(discount, subtotal)
-  }, [selectedPromotion, subtotal])
+    return Math.min(discount, nonServiceSubtotal)
+  }, [selectedPromotion, nonServiceSubtotal])
 
   // Calculate shipping fee
   const shippingFee = useMemo(() => {
@@ -649,49 +675,48 @@ export default function CartClientView() {
                       {isService ? "Loại dịch vụ:" : "Phân loại:"} {variantName}
                     </p>
                   )}
-                  {!isService && (
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className="text-xs lg:text-sm font-semibold text-gray-600">
-                        Số lượng:
+
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="text-xs lg:text-sm font-semibold text-gray-600">
+                      Số lượng:
+                    </span>
+                    <div className="flex items-center space-x-1">
+                      <IconButton
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          updateQuantity(index, item.quantity - 1)
+                        }}
+                        disabled={item.quantity <= 1}
+                        className="px-2 py-1 bg-neutral-100 hover:bg-neutral-50 duration-300 border border-stone-300 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <RemoveRoundedIcon className="!w-4 !h-4" />
+                      </IconButton>
+                      <span className="text-sm font-semibold px-4 min-w-10 flex items-center justify-center">
+                        {item.quantity}
                       </span>
-                      <div className="flex items-center space-x-1">
-                        <IconButton
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            updateQuantity(index, item.quantity - 1)
-                          }}
-                          disabled={item.quantity <= 1}
-                          className="px-2 py-1 bg-neutral-100 hover:bg-neutral-50 duration-300 border border-stone-300 rounded disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          <RemoveRoundedIcon className="!w-4 !h-4" />
-                        </IconButton>
-                        <span className="text-sm font-semibold px-4 min-w-10 flex items-center justify-center">
-                          {item.quantity}
-                        </span>
-                        <IconButton
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            const maxQty = variant
-                              ? Number(variant.quantity) || 0
-                              : Number(productData.quantity) || 0
-                            updateQuantity(
-                              index,
-                              Math.min(item.quantity + 1, maxQty)
-                            )
-                          }}
-                          disabled={
-                            item.quantity >=
-                            Number(
-                              variant ? variant.quantity : productData.quantity
-                            )
-                          }
-                          className="px-2 py-1 bg-neutral-100 hover:bg-neutral-50 duration-300 border border-stone-300 rounded disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          <AddRoundedIcon className="!w-4 !h-4" />
-                        </IconButton>
-                      </div>
+                      <IconButton
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          const maxQty = variant
+                            ? Number(variant.quantity) || 0
+                            : Number(productData.quantity) || 0
+                          updateQuantity(
+                            index,
+                            Math.min(item.quantity + 1, maxQty)
+                          )
+                        }}
+                        disabled={
+                          item.quantity >=
+                          Number(
+                            variant ? variant.quantity : productData.quantity
+                          )
+                        }
+                        className="px-2 py-1 bg-neutral-100 hover:bg-neutral-50 duration-300 border border-stone-300 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <AddRoundedIcon className="!w-4 !h-4" />
+                      </IconButton>
                     </div>
-                  )}
+                  </div>
                 </div>
               </div>
               <div className="flex items-center justify-between lg:justify-end lg:flex-col lg:text-right flex-shrink-0 lg:min-w-[100px] gap-2">
@@ -736,7 +761,7 @@ export default function CartClientView() {
           setIsCheckoutFlow(false)
           setOpenCustomerModal(true)
         }}
-        subtotal={subtotal}
+        subtotal={nonServiceSubtotal}
       />
 
       {/* Summary */}
