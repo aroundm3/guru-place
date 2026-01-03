@@ -3,10 +3,7 @@
 import { useState } from "react"
 import { Dialog, DialogTitle, DialogContent, IconButton } from "@mui/material"
 import LocalOfferIcon from "@mui/icons-material/LocalOffer"
-import PercentIcon from "@mui/icons-material/Percent"
-import AttachMoneyIcon from "@mui/icons-material/AttachMoney"
 import CloseIcon from "@mui/icons-material/Close"
-import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined"
 
 type Promotion = {
   id: number
@@ -178,7 +175,12 @@ export default function PromotionsList({ promotions }: PromotionsListProps) {
                           <span>
                             HSD:{" "}
                             {new Date(promotion.expiredAt).toLocaleDateString(
-                              "vi-VN"
+                              "vi-VN",
+                              {
+                                day: "2-digit",
+                                month: "2-digit",
+                                year: "numeric",
+                              }
                             )}
                           </span>
                         ) : (

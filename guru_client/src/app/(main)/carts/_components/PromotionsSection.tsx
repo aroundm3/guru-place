@@ -5,11 +5,9 @@ import {
   TextField,
   Button,
   CircularProgress,
-  Chip,
   IconButton,
   Snackbar,
   Radio,
-  Typography,
   Skeleton,
   Dialog,
   DialogTitle,
@@ -18,8 +16,6 @@ import {
 import CloseIcon from "@mui/icons-material/Close"
 import SearchIcon from "@mui/icons-material/Search"
 import LocalOfferIcon from "@mui/icons-material/LocalOffer"
-import ContentCopyIcon from "@mui/icons-material/ContentCopy"
-import CheckCircleIcon from "@mui/icons-material/CheckCircle"
 import PersonIcon from "@mui/icons-material/Person"
 import { Customer } from "@lib/data/customer"
 
@@ -373,7 +369,12 @@ export default function PromotionsSection({
                     <span>
                       HSD:{" "}
                       {new Date(promotion.expiredAt).toLocaleDateString(
-                        "vi-VN"
+                        "vi-VN",
+                        {
+                          day: "2-digit",
+                          month: "2-digit",
+                          year: "numeric",
+                        }
                       )}
                     </span>
                   ) : (

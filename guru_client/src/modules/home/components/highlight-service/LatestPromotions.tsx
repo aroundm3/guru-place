@@ -2,7 +2,6 @@
 
 import { useState } from "react"
 import { Dialog, DialogTitle, DialogContent, IconButton } from "@mui/material"
-import LocalOfferIcon from "@mui/icons-material/LocalOffer"
 import CloseIcon from "@mui/icons-material/Close"
 import { usePathname } from "next/navigation"
 import Link from "next/link"
@@ -167,7 +166,12 @@ export default function LatestPromotions({
                       <span>
                         HSD:{" "}
                         {new Date(promotion.expiredAt).toLocaleDateString(
-                          "vi-VN"
+                          "vi-VN",
+                          {
+                            day: "2-digit",
+                            month: "2-digit",
+                            year: "numeric",
+                          }
                         )}
                       </span>
                     ) : (
