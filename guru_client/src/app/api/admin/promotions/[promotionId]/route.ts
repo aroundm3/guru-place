@@ -41,6 +41,8 @@ export async function PUT(
       customerIds,
       productIds,
       imageId,
+      quantity,
+      expiredAt,
     } = body
 
     const promotionData: any = {
@@ -83,6 +85,14 @@ export async function PUT(
 
     if (imageId !== undefined) {
       promotionData.image = imageId
+    }
+
+    if (quantity !== undefined) {
+      promotionData.quantity = quantity
+    }
+
+    if (expiredAt !== undefined) {
+      promotionData.expiredAt = expiredAt
     }
 
     // Dùng REST API trực tiếp với FULL_ACCESS_API_KEY

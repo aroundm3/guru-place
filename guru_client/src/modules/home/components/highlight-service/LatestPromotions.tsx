@@ -19,6 +19,8 @@ type Promotion = {
   discountMaximumOrderAmount?: number | string
   isDisable?: boolean
   isPrivate?: boolean
+  quantity?: number | string | null
+  expiredAt?: string | null
   image?: {
     small?: string
     thumbnail?: string
@@ -30,14 +32,42 @@ interface LatestPromotionsProps {
   promotions: Promotion[]
 }
 
-export default function LatestPromotions({ promotions }: LatestPromotionsProps) {
+export default function LatestPromotions({
+  promotions,
+}: LatestPromotionsProps) {
   const [selectedPromotion, setSelectedPromotion] = useState<Promotion | null>(
     null
   )
   const [openDialog, setOpenDialog] = useState(false)
   const pathname = usePathname()
 
-  if (!promotions || promotions.length === 0) {
+  // Filter promotions
+  const activePromotions = promotions.filter((promo) => {
+    // Basic checks (already filtered by API but good to double check)
+    if (promo.isDisable || promo.isPrivate) return false
+
+    // Check quantity (if set)
+    if (promo.quantity !== null && promo.quantity !== undefined) {
+      const qty =
+        typeof promo.quantity === "string"
+          ? parseInt(promo.quantity, 10)
+          : promo.quantity
+      if (qty <= 0) return false
+    }
+
+    // Check expiration (if set)
+    if (promo.expiredAt) {
+      const expirationDate = new Date(promo.expiredAt)
+      const now = new Date()
+      if (expirationDate < now) {
+        return false
+      }
+    }
+
+    return true
+  })
+
+  if (!activePromotions || activePromotions.length === 0) {
     return null
   }
 
@@ -66,36 +96,88 @@ export default function LatestPromotions({ promotions }: LatestPromotionsProps) 
       </div> */}
 
       {/* Horizontal Scroll Container */}
-      <div className="flex overflow-x-auto gap-4 pb-4 -mx-4 px-4 lg:mx-0 lg:px-0 scrollbar-hide">
-        {promotions.map((promotion) => (
+      <div className="flex overflow-x-auto gap-4 pb-4 -mx-4 px-4 lg:mx-0 lg:px-0 scrollbar-hide py-2">
+        {activePromotions.map((promotion) => (
           <div
             key={promotion.documentId}
             onClick={() => handleOpenDialog(promotion)}
-            className="flex-shrink-0 w-72 border-2 border-pink-200 rounded-xl p-4 bg-gradient-to-br from-pink-50 to-white hover:shadow-lg hover:border-pink-300 transition-all duration-300 cursor-pointer relative overflow-hidden group"
+            className="flex-shrink-0 w-80 relative group cursor-pointer transition-transform hover:-translate-y-1 drop-shadow-sm filter"
           >
-            {/* Background decoration */}
-            <div className="absolute top-0 right-0 w-20 h-20 bg-pink-100 rounded-full -mr-10 -mt-10 opacity-30 group-hover:opacity-50 transition-opacity"></div>
-
-            <div className="relative z-10 flex items-center gap-3">
-              {/* Logo Divi */}
-              <div className="flex-shrink-0">
+            {/* Coupon Card Container */}
+            <div
+              className="flex h-28 bg-white relative overflow-hidden"
+              style={{
+                // Use CSS Mask for true transparency
+                maskImage:
+                  "radial-gradient(circle at 0px 8px, transparent 4px, black 4.5px), radial-gradient(circle at 100% 8px, transparent 4px, black 4.5px)",
+                maskSize: "50% 16px",
+                maskPosition: "top left, top right",
+                maskRepeat: "repeat-y",
+                WebkitMaskImage:
+                  "radial-gradient(circle at 0px 8px, transparent 4px, black 4.5px), radial-gradient(circle at 100% 8px, transparent 4px, black 4.5px)",
+                WebkitMaskSize: "50% 16px",
+                WebkitMaskPosition: "top left, top right",
+                WebkitMaskRepeat: "repeat-y",
+              }}
+            >
+              {/* Left Side - Logo */}
+              <div className="w-24 bg-pink-50 flex items-center justify-center p-2 relative border-r border-dashed border-pink-200">
                 <img
                   src="/logo.png"
                   alt="Divi Logo"
-                  className="w-12 h-12 rounded-lg object-contain bg-white p-1 shadow-sm"
+                  className="w-16 h-16 object-contain drop-shadow-sm"
                 />
+
+                {/* Divider Notches - Keep these as they are internal decoration */}
+                <div className="absolute -right-1.5 top-[-6px] w-3 h-3 bg-white rounded-full z-10 box-content border border-gray-100"></div>
+                <div className="absolute -right-1.5 bottom-[-6px] w-3 h-3 bg-white rounded-full z-10 box-content border border-gray-100"></div>
               </div>
 
-              {/* Content */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="bg-pink-600 text-white px-2 py-0.5 rounded text-xs font-bold uppercase">
-                    {promotion.code}
+              {/* Right Side - Content */}
+              <div className="flex-1 p-3 flex flex-col justify-between min-w-0 relative bg-white">
+                {/* Quantity Badge - Larger */}
+                {promotion.quantity && (
+                  <div className="absolute top-0 right-3">
+                    <span className="bg-red-100 text-red-600 text-sm font-extrabold px-2 py-0.5 rounded-b-lg shadow-sm border border-red-100">
+                      x{parseInt(promotion.quantity.toString(), 10)}
+                    </span>
+                  </div>
+                )}
+
+                <div className="mt-1">
+                  {/* Title */}
+                  <div className="pr-10">
+                    <h4 className="text-sm font-bold text-gray-800 line-clamp-2 leading-snug">
+                      {promotion.title}
+                    </h4>
+                  </div>
+
+                  {/* Code */}
+                  <div className="mt-1.5">
+                    <span className="text-[10px] bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded border border-gray-200 font-mono">
+                      {promotion.code}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Footer */}
+                <div className="flex items-end justify-between mt-auto">
+                  <div className="text-[10px] text-gray-400">
+                    {promotion.expiredAt ? (
+                      <span>
+                        HSD:{" "}
+                        {new Date(promotion.expiredAt).toLocaleDateString(
+                          "vi-VN"
+                        )}
+                      </span>
+                    ) : (
+                      ""
+                    )}
+                  </div>
+                  <span className="text-xs text-blue-600 font-bold mr-3 hover:underline">
+                    Điều kiện
                   </span>
                 </div>
-                <h4 className="text-sm font-bold text-gray-900 line-clamp-2 leading-snug">
-                  {promotion.title}
-                </h4>
               </div>
             </div>
           </div>
@@ -183,6 +265,56 @@ export default function LatestPromotions({ promotions }: LatestPromotionsProps) 
                   Điều kiện áp dụng:
                 </p>
                 <div className="space-y-2">
+                  {selectedPromotion.quantity && (
+                    <div className="flex items-start gap-2 text-sm">
+                      <svg
+                        className="w-5 h-5 text-orange-500 flex-shrink-0 mt-0.5"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z" />
+                      </svg>
+                      <div>
+                        <span className="font-medium text-gray-700">
+                          Số lượng còn lại:{" "}
+                        </span>
+                        <span className="text-orange-600 font-semibold">
+                          {parseInt(
+                            selectedPromotion.quantity.toString(),
+                            10
+                          ).toLocaleString("vi-VN")}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
+                  {selectedPromotion.expiredAt && (
+                    <div className="flex items-start gap-2 text-sm">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24"
+                        fill="currentColor"
+                        className="w-5 h-5 text-gray-500 flex-shrink-0 mt-0.5"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zM12.75 6a.75.75 0 00-1.5 0v6c0 .414.336.75.75.75h4.5a.75.75 0 000-1.5h-3.75V6z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                      <div>
+                        <span className="font-medium text-gray-700">
+                          Hạn sử dụng:{" "}
+                        </span>
+                        <span>
+                          {new Date(
+                            selectedPromotion.expiredAt
+                          ).toLocaleDateString("vi-VN")}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
                   {selectedPromotion.discountMinimumOrderAmount ? (
                     <div className="flex items-start gap-2 text-sm">
                       <svg

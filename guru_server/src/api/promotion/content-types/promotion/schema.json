@@ -74,6 +74,13 @@
     "promotion_discount": {
       "type": "biginteger",
       "default": "0"
+    },
+    "quantity": {
+      "type": "biginteger",
+      "min": "01"
+    },
+    "expiredAt": {
+      "type": "date"
     }
   }
 }

@@ -25,7 +25,8 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url)
     const page = searchParams.get("page") || "1"
-    const pageSize = searchParams.get("pageSize") || DEFAULT_PAGE_SIZE.toString()
+    const pageSize =
+      searchParams.get("pageSize") || DEFAULT_PAGE_SIZE.toString()
     const searchQuery = searchParams.get("search") || ""
 
     // Build query params cho Strapi Content Manager API
@@ -131,6 +132,8 @@ export async function POST(request: NextRequest) {
       customerIds,
       productIds,
       imageId,
+      quantity,
+      expiredAt,
     } = body
 
     // Validate required fields
@@ -153,6 +156,8 @@ export async function POST(request: NextRequest) {
       isDisable: isDisable || false,
       isPrivate: isPrivate || false,
       publishedAt: new Date().toISOString(), // Publish ngay
+      quantity: quantity !== undefined ? quantity : null,
+      expiredAt: expiredAt || null,
     }
 
     if (discountMaximumOrderAmount) {

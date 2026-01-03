@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
-import dayjs from "dayjs"
+import dayjs, { Dayjs } from "dayjs"
 import "dayjs/locale/vi"
 import {
   Button,
@@ -35,6 +35,10 @@ import EditIcon from "@mui/icons-material/Edit"
 import DeleteIcon from "@mui/icons-material/Delete"
 import ContentCopyIcon from "@mui/icons-material/ContentCopy"
 
+import { DatePicker } from "@mui/x-date-pickers/DatePicker"
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider"
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs"
+
 const PAGE_SIZE = 10
 
 dayjs.locale("vi")
@@ -51,6 +55,8 @@ type Promotion = {
   discountMaximumOrderAmount?: number | string
   isDisable?: boolean
   isPrivate?: boolean
+  quantity?: number | string
+  expiredAt?: string | null
   createdAt?: string
   updatedAt?: string
   customers?: Array<{
@@ -125,6 +131,8 @@ export default function PromotionsContent() {
     discountMaximumOrderAmount: "",
     isDisable: false,
     isPrivate: false,
+    quantity: "",
+    expiredAt: "",
   })
   const [selectedCustomers, setSelectedCustomers] = useState<Customer[]>([])
   const [selectedProducts, setSelectedProducts] = useState<Product[]>([])
@@ -211,6 +219,9 @@ export default function PromotionsContent() {
       })
 
       if (currentSearch) params.set("search", currentSearch)
+
+      // Add timestamp to prevent caching
+      params.set("_t", Date.now().toString())
 
       const res = await fetch(`/api/admin/promotions?${params.toString()}`)
       const data = await res.json()
@@ -410,6 +421,8 @@ export default function PromotionsContent() {
       discountMaximumOrderAmount: "",
       isDisable: false,
       isPrivate: false,
+      quantity: "",
+      expiredAt: "",
     })
     setSelectedCustomers([])
     setSelectedProducts([])
@@ -446,6 +459,8 @@ export default function PromotionsContent() {
         promotion.discountMaximumOrderAmount?.toString() || "",
       isDisable: promotion.isDisable || false,
       isPrivate: promotion.isPrivate || false,
+      quantity: promotion.quantity ? String(promotion.quantity) : "",
+      expiredAt: promotion.expiredAt ? promotion.expiredAt.split("T")[0] : "",
     })
     setSelectedCustomers(promotion.customers || [])
     setSelectedProducts(promotion.products || [])
@@ -493,14 +508,32 @@ export default function PromotionsContent() {
         title: formData.title,
         description: formData.description,
         type: formData.type,
-        value: formData.value,
-        discountMinimumOrderAmount: formData.discountMinimumOrderAmount,
-        discountMaximumOrderAmount: formData.discountMaximumOrderAmount,
+        value: Number(formData.value),
+        discountMinimumOrderAmount: formData.discountMinimumOrderAmount
+          ? Number(formData.discountMinimumOrderAmount)
+          : null,
+        discountMaximumOrderAmount: formData.discountMaximumOrderAmount
+          ? Number(formData.discountMaximumOrderAmount)
+          : null,
         isDisable: formData.isDisable,
         isPrivate: formData.isPrivate,
-        customerIds: selectedCustomers.map((c) => c.documentId),
-        productIds: selectedProducts.map((p) => p.documentId),
+        // Send null if quantity is empty to imply unlimited/no restriction. Allow 0.
+        quantity:
+          formData.quantity !== "" &&
+          formData.quantity !== null &&
+          formData.quantity !== undefined
+            ? Number(formData.quantity)
+            : null,
+        expiredAt: formData.expiredAt ? formData.expiredAt : null,
+        customerIds: formData.isPrivate
+          ? []
+          : selectedCustomers.map((c) => c.documentId),
+        productIds: formData.isPrivate
+          ? []
+          : selectedProducts.map((p) => p.documentId),
       }
+
+      console.log("Saving promotion payload:", body)
 
       const url =
         dialogMode === "create"
@@ -527,6 +560,7 @@ export default function PromotionsContent() {
       handleCloseDialog()
       fetchPromotions()
     } catch (err: any) {
+      console.error("Error saving promotion:", err)
       setFormError(err?.message || "Có lỗi xảy ra khi lưu khuyến mãi.")
     } finally {
       setSubmitting(false)
@@ -759,6 +793,21 @@ export default function PromotionsContent() {
                             đ
                           </p>
                         )}
+                        {promotion.quantity && (
+                          <p>
+                            <span className="font-semibold">Số lượng:</span>{" "}
+                            {parseInt(
+                              promotion.quantity.toString(),
+                              10
+                            ).toLocaleString("vi-VN")}
+                          </p>
+                        )}
+                        {promotion.expiredAt && (
+                          <p>
+                            <span className="font-semibold">Hết hạn:</span>{" "}
+                            {dayjs(promotion.expiredAt).format("DD/MM/YYYY")}
+                          </p>
+                        )}
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="font-semibold">Khách hàng:</span>
                           {promotion.customers && promotion.customers.length > 0
@@ -944,6 +993,40 @@ export default function PromotionsContent() {
               type="number"
               placeholder="Không giới hạn"
             />
+
+            <div className="flex gap-4">
+              <TextField
+                label="Số lượng"
+                value={formData.quantity}
+                onChange={(e) => handleFormChange("quantity", e.target.value)}
+                fullWidth
+                size="small"
+                type="number"
+                placeholder="Không giới hạn"
+              />
+              <LocalizationProvider
+                dateAdapter={AdapterDayjs}
+                adapterLocale="vi"
+              >
+                <DatePicker
+                  label="Ngày hết hạn"
+                  value={formData.expiredAt ? dayjs(formData.expiredAt) : null}
+                  onChange={(newValue) =>
+                    handleFormChange(
+                      "expiredAt",
+                      newValue ? newValue.format("YYYY-MM-DD") : ""
+                    )
+                  }
+                  slotProps={{
+                    textField: {
+                      size: "small",
+                      fullWidth: true,
+                    },
+                    field: { clearable: true },
+                  }}
+                />
+              </LocalizationProvider>
+            </div>
 
             {/* Checkboxes for isDisable and isPrivate */}
             <div className="flex gap-4">

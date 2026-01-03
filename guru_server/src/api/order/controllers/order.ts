@@ -895,6 +895,41 @@ export default factories.createCoreController(
           strapi.log.info("No customer cards to process");
         }
 
+        // Trừ số lượng promotion nếu đã được áp dụng
+        if (promotion) {
+          const currentQty = Number(promotion.quantity || 0);
+          // User req: "nếu quantity = 0 hoặc null thì ko trừ còn là number và lớn hơn 1 thì trừ đi 1" -> Interpreted: > 0
+          if (currentQty > 0) {
+            try {
+              const newQty = currentQty - 1;
+              strapi.log.info("Decrementing promotion quantity:", {
+                promotionId: promotion.documentId,
+                code: promotion.code,
+                oldQty: currentQty,
+                newQty: newQty,
+              });
+
+              await strapi.documents("api::promotion.promotion").update({
+                documentId: promotion.documentId,
+                data: {
+                  quantity: newQty,
+                } as any,
+              });
+
+              // Publish promotion update
+              await strapi.documents("api::promotion.promotion").publish({
+                documentId: promotion.documentId,
+              });
+            } catch (promoError) {
+              // Log error but don't fail the order since it's already created
+              strapi.log.error(
+                "Failed to decrement promotion quantity:",
+                promoError
+              );
+            }
+          }
+        }
+
         // Lấy order đầy đủ với relations để trả về
         strapi.log.info("Fetching full order with relations...");
 
