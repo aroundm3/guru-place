@@ -463,42 +463,62 @@ export default function Options({ productData }: OptionsProps) {
             </div>
 
             {/* Product Info */}
-            <div className="mb-4 pb-4 border-b">
-              <p className="text-sm font-medium text-gray-600 mb-1">
-                {productData.name}
-              </p>
-              <div className="flex items-center justify-between">
-                <span className="text-xl font-bold text-pink-600">
-                  {currentPicked
-                    ? formatBigNumber(currentPicked.sale_price, true)
-                    : formatBigNumber(productData.sale_price, true)}
-                </span>
-                {!isService && (
-                  <div className="flex flex-col items-end gap-1">
-                    <span className="text-xs font-normal text-neutral-600">
-                      Sẵn:{" "}
-                      <span className="text-sm font-semibold">
-                        {formatBigNumber(
-                          Number(
-                            currentPicked?.quantity ?? productData.quantity ?? 0
-                          )
-                        )}
+            <div className="mb-4 pb-4 border-b flex space-x-4">
+              <Image
+                src={
+                  currentPicked?.variant_image?.default ||
+                  currentPicked?.variant_image?.thumbnail ||
+                  productData.images?.[0]?.default ||
+                  "/logo.png"
+                }
+                alt={
+                  currentPicked
+                    ? `${productData.name} - ${currentPicked.variant_value}`
+                    : productData.name
+                }
+                width={100}
+                height={100}
+                className="rounded-lg object-contain"
+              />
+              <div className="w-full">
+                <p className="text-sm font-medium text-gray-600 mb-1">
+                  {productData.name}
+                </p>
+                <div className="flex justify-between">
+                  <span className="text-xl font-bold text-pink-600">
+                    {currentPicked
+                      ? formatBigNumber(currentPicked.sale_price, true)
+                      : formatBigNumber(productData.sale_price, true)}
+                  </span>
+                  {!isService && (
+                    <div className="flex flex-col items-end gap-1">
+                      <span className="text-xs font-normal text-neutral-600">
+                        Sẵn:{" "}
+                        <span className="text-sm font-semibold">
+                          {formatBigNumber(
+                            Number(
+                              currentPicked?.quantity ??
+                                productData.quantity ??
+                                0
+                            )
+                          )}
+                        </span>
                       </span>
-                    </span>
-                    <span className="text-xs font-normal text-neutral-600">
-                      Đã bán:{" "}
-                      <span className="text-sm font-semibold">
-                        {formatBigNumber(
-                          Number(
-                            currentPicked?.sold_quantity ??
-                              productData.sold_quantity ??
-                              0
-                          )
-                        )}
+                      <span className="text-xs font-normal text-neutral-600">
+                        Đã bán:{" "}
+                        <span className="text-sm font-semibold">
+                          {formatBigNumber(
+                            Number(
+                              currentPicked?.sold_quantity ??
+                                productData.sold_quantity ??
+                                0
+                            )
+                          )}
+                        </span>
                       </span>
-                    </span>
-                  </div>
-                )}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 
