@@ -111,24 +111,53 @@ export async function GET(request: NextRequest) {
     }
 
     // Tính tổng doanh thu (tính subtotal - promotion_discount, không tính shipping fee)
+    let totalServiceRevenue = 0
+    let totalProductRevenue = 0
+
     const totalRevenue = filteredOrders.reduce((sum: number, order: any) => {
       const orderItems = order.order_items || []
-      const subtotal = orderItems.reduce((itemSum: number, item: any) => {
+
+      let orderServiceSubtotal = 0
+      let orderProductSubtotal = 0
+
+      orderItems.forEach((item: any) => {
         const unitPrice =
           Number(item.variant?.sale_price ?? item.product?.sale_price ?? 0) || 0
         const quantity = Number(item.quantity || 0) || 0
-        return itemSum + unitPrice * quantity
-      }, 0)
+        const lineTotal = unitPrice * quantity
 
-      // Subtract promotion discount from subtotal
+        const isService =
+          item.product?.isService === true ||
+          item.variant?.product?.isService === true
+
+        if (isService) {
+          orderServiceSubtotal += lineTotal
+        } else {
+          orderProductSubtotal += lineTotal
+        }
+      })
+
+      // Service revenue is raw
+      totalServiceRevenue += orderServiceSubtotal
+
+      // Product revenue subtracts discount (assuming discount only applies to products)
       const promotionDiscount = Number(order.promotion_discount || 0)
-      const orderRevenue = subtotal - promotionDiscount
+      // Ensure specific product order revenue is not negative
+      const orderProductRevenue = Math.max(
+        0,
+        orderProductSubtotal - promotionDiscount
+      )
 
-      return sum + orderRevenue
+      totalProductRevenue += orderProductRevenue
+
+      // Total for this order
+      return sum + orderServiceSubtotal + orderProductRevenue
     }, 0)
 
     return NextResponse.json({
       totalRevenue,
+      totalServiceRevenue,
+      totalProductRevenue,
       orderCount: filteredOrders.length,
     })
   } catch (error: any) {

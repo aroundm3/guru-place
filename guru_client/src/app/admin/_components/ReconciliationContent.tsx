@@ -134,6 +134,7 @@ type ExportSummaryRow = {
   quantity: number
   unitPrice: number
   totalAmount: number
+  isService?: boolean
 }
 
 type OrderEntity = {
@@ -278,6 +279,8 @@ export default function ReconciliationContent() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const [totalRevenue, setTotalRevenue] = useState<number>(0)
+  const [totalServiceRevenue, setTotalServiceRevenue] = useState<number>(0)
+  const [totalProductRevenue, setTotalProductRevenue] = useState<number>(0)
   const [loadingRevenue, setLoadingRevenue] = useState(false)
   const [expandedOrderId, setExpandedOrderId] = useState<number | null>(null)
   const [openCardModal, setOpenCardModal] = useState(false)
@@ -449,6 +452,17 @@ export default function ReconciliationContent() {
     dayjs().subtract(90, "day")
   )
   const [dateTo, setDateTo] = useState<Dayjs | null>(dayjs())
+
+  // Month picker state (helper for date range)
+  const [selectedMonth, setSelectedMonth] = useState<Dayjs | null>(null)
+
+  const handleMonthChange = (newValue: Dayjs | null) => {
+    setSelectedMonth(newValue)
+    if (newValue) {
+      setDateFrom(newValue.startOf("month"))
+      setDateTo(newValue.endOf("month"))
+    }
+  }
 
   // Snackbar state for copy notification
   const [snackbarOpen, setSnackbarOpen] = useState(false)
@@ -747,14 +761,20 @@ export default function ReconciliationContent() {
 
         if (!res.ok) {
           setTotalRevenue(0)
+          setTotalServiceRevenue(0)
+          setTotalProductRevenue(0)
           setLoadingRevenue(false)
           return
         }
 
         setTotalRevenue(data.totalRevenue || 0)
+        setTotalServiceRevenue(data.totalServiceRevenue || 0)
+        setTotalProductRevenue(data.totalProductRevenue || 0)
       } catch (err: any) {
         console.error("Error fetching total revenue:", err)
         setTotalRevenue(0)
+        setTotalServiceRevenue(0)
+        setTotalProductRevenue(0)
       } finally {
         setLoadingRevenue(false)
       }
@@ -904,28 +924,91 @@ export default function ReconciliationContent() {
         return
       }
 
-      const worksheetData = [
-        ["Tên sản phẩm", "Biến thể", "Số lượng đã bán", "Đơn giá", "Tổng tiền"],
-        ...rows.map((row) => [
-          row.productName || "N/A",
-          row.variantName || "Không có biến thể",
-          row.quantity ?? 0,
-          Math.round((row.unitPrice ?? 0) * 100) / 100,
-          Math.round((row.totalAmount ?? 0) * 100) / 100,
-        ]),
-      ]
+      const totalDiscount = data?.meta?.totalPromotionDiscount || 0
 
-      const worksheet = XLSX.utils.aoa_to_sheet(worksheetData)
-      worksheet["!cols"] = [
+      // Split rows into Product and Service
+      const productRows = rows.filter((row) => !row.isService)
+      const serviceRows = rows.filter((row) => row.isService)
+
+      // Helper function to create worksheet data with total
+      const createWorksheetData = (
+        dataRows: ExportSummaryRow[],
+        discountAmount: number = 0
+      ) => {
+        const totalQuantity = dataRows.reduce(
+          (sum, row) => sum + (row.quantity || 0),
+          0
+        )
+        const totalAmount = dataRows.reduce(
+          (sum, row) => sum + (row.totalAmount || 0),
+          0
+        )
+
+        // Final total subtracts discount
+        const finalTotal = Math.max(0, totalAmount - discountAmount)
+
+        const sheetData = [
+          [
+            "Tên sản phẩm",
+            "Biến thể",
+            "Số lượng đã bán",
+            "Đơn giá",
+            "Tổng tiền",
+          ],
+          ...dataRows.map((row) => [
+            row.productName || "N/A",
+            row.variantName || "Không có biến thể",
+            row.quantity ?? 0,
+            Math.round((row.unitPrice ?? 0) * 100) / 100,
+            Math.round((row.totalAmount ?? 0) * 100) / 100,
+          ]),
+        ]
+
+        // Add discount row (always show for consistency, formatted with '-')
+        sheetData.push([
+          "Tổng tiền khuyến mãi",
+          "",
+          "-",
+          "",
+          -Math.round(discountAmount * 100) / 100,
+        ])
+
+        // Empty row
+        sheetData.push([])
+
+        // Total row
+        sheetData.push([
+          "TỔNG CỘNG",
+          "",
+          totalQuantity,
+          "",
+          Math.round(finalTotal * 100) / 100,
+        ])
+
+        return sheetData
+      }
+
+      // Discount only applies to products
+      const productSheetData = createWorksheetData(productRows, totalDiscount)
+      const serviceSheetData = createWorksheetData(serviceRows, 0)
+
+      const productWorksheet = XLSX.utils.aoa_to_sheet(productSheetData)
+      const serviceWorksheet = XLSX.utils.aoa_to_sheet(serviceSheetData)
+
+      // Set column widths for both sheets
+      const cols = [
         { wch: 40 },
         { wch: 30 },
         { wch: 18 },
         { wch: 18 },
         { wch: 20 },
       ]
+      productWorksheet["!cols"] = cols
+      serviceWorksheet["!cols"] = cols
 
       const workbook = XLSX.utils.book_new()
-      XLSX.utils.book_append_sheet(workbook, worksheet, "Thong ke ban hang")
+      XLSX.utils.book_append_sheet(workbook, productWorksheet, "Sản phẩm")
+      XLSX.utils.book_append_sheet(workbook, serviceWorksheet, "Dịch vụ")
 
       const excelBuffer = XLSX.write(workbook, {
         bookType: "xlsx",
@@ -1723,6 +1806,22 @@ export default function ReconciliationContent() {
               }}
             />
           </LocalizationProvider>
+          <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="vi">
+            <DatePicker
+              label="Chọn tháng"
+              views={["month", "year"]}
+              format="MM/YYYY"
+              value={selectedMonth}
+              onChange={handleMonthChange}
+              slotProps={{
+                textField: {
+                  size: "small",
+                  fullWidth: true,
+                  placeholder: "Chọn tháng/năm",
+                },
+              }}
+            />
+          </LocalizationProvider>
         </div>
         <div className="flex flex-wrap gap-2 justify-end">
           <Button
@@ -1767,17 +1866,51 @@ export default function ReconciliationContent() {
       {/* Tổng doanh thu */}
       {!loading && (
         <div className="bg-white border border-gray-200 rounded-lg p-4 lg:p-6 mb-6">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-gray-900">
-              Tổng doanh thu (tiền hàng)
-            </h3>
-            {loadingRevenue ? (
-              <CircularProgress size={24} />
-            ) : (
-              <p className="text-2xl font-bold text-pink-700">
-                {formatBigNumber(totalRevenue, true)}
-              </p>
-            )}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="flex flex-col">
+              <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">
+                Tổng doanh thu
+              </h3>
+              {loadingRevenue ? (
+                <div className="mt-2">
+                  <CircularProgress size={20} />
+                </div>
+              ) : (
+                <p className="text-2xl font-bold text-gray-900 mt-1">
+                  {formatBigNumber(totalRevenue, true)}
+                </p>
+              )}
+            </div>
+
+            <div className="flex flex-col border-l border-gray-100 pl-6">
+              <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">
+                Doanh thu sản phẩm
+              </h3>
+              {loadingRevenue ? (
+                <div className="mt-2">
+                  <CircularProgress size={20} />
+                </div>
+              ) : (
+                <p className="text-2xl font-bold text-emerald-600 mt-1">
+                  {formatBigNumber(totalProductRevenue, true)}
+                </p>
+              )}
+            </div>
+
+            <div className="flex flex-col border-l border-gray-100 pl-6">
+              <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">
+                Doanh thu dịch vụ
+              </h3>
+              {loadingRevenue ? (
+                <div className="mt-2">
+                  <CircularProgress size={20} />
+                </div>
+              ) : (
+                <p className="text-2xl font-bold text-blue-600 mt-1">
+                  {formatBigNumber(totalServiceRevenue, true)}
+                </p>
+              )}
+            </div>
           </div>
         </div>
       )}

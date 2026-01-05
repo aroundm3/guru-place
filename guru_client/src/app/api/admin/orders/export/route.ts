@@ -79,10 +79,7 @@ export async function GET(request: NextRequest) {
         "populate[order_items][populate][variant][populate][product]",
         "true"
       )
-      params.set(
-        "populate[order_items][populate][product]",
-        "true"
-      )
+      params.set("populate[order_items][populate][product]", "true")
 
       if (phoneNumber) {
         params.set("filters[customer][phone_number][$containsi]", phoneNumber)
@@ -161,10 +158,16 @@ export async function GET(request: NextRequest) {
         totalAmount: number
         variantDocumentId?: string | null
         productDocumentId?: string | null
+        isService: boolean
       }
     >()
 
+    let totalPromotionDiscount = 0
+
     filteredOrders.forEach((order) => {
+      // Accumulate total discount
+      totalPromotionDiscount += Number(order.promotion_discount || 0)
+
       const items = order.order_items || []
       items.forEach((item: any) => {
         const quantity = toNumber(item.quantity || 0)
@@ -180,9 +183,13 @@ export async function GET(request: NextRequest) {
           variant?.sale_price ?? product?.sale_price ?? 0
         )
         const lineTotal = unitPrice * quantity
+        const isService = !!(
+          product?.isService === true || variant?.product?.isService === true
+        )
 
         const key =
-          variantDocumentId || `${productDocumentId || productName}-${variantName}`
+          variantDocumentId ||
+          `${productDocumentId || productName}-${variantName}`
 
         if (!summaryMap.has(key)) {
           summaryMap.set(key, {
@@ -192,6 +199,7 @@ export async function GET(request: NextRequest) {
             totalAmount: 0,
             variantDocumentId,
             productDocumentId,
+            isService,
           })
         }
 
@@ -208,9 +216,9 @@ export async function GET(request: NextRequest) {
         productName: entry.productName,
         variantName: entry.variantName,
         quantity: entry.quantity,
-        unitPrice:
-          entry.quantity > 0 ? entry.totalAmount / entry.quantity : 0,
+        unitPrice: entry.quantity > 0 ? entry.totalAmount / entry.quantity : 0,
         totalAmount: entry.totalAmount,
+        isService: entry.isService,
       }))
       .sort((a, b) => b.quantity - a.quantity)
 
@@ -219,6 +227,7 @@ export async function GET(request: NextRequest) {
       meta: {
         totalOrders: filteredOrders.length,
         totalVariants: rows.length,
+        totalPromotionDiscount,
       },
     })
   } catch (error: any) {
@@ -230,4 +239,3 @@ export async function GET(request: NextRequest) {
     )
   }
 }
-
